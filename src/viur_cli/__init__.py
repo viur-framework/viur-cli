@@ -120,12 +120,15 @@ def init():
                 createNewConfig()
 
 @cli.command()
-@click.argument("action", type=click.Choice(['add', 'remove', "info"]))
+@click.argument("action", type=click.Choice(['add', 'remove', "info", "addFlare"]))
 def config(action):
     """manage project.json and generate if missing"""
     global projectConfig
     if action == "add":
         addToConfig()
+    elif action == "addFlare":
+        _projectconf = addToFlareConfig(projectConfig)
+        writeConfig(_projectconf)
     elif action == "remove":
         removeFromConfig()
     elif action == "info":
