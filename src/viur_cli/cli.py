@@ -3,10 +3,16 @@ import click, json, os
 projectConfig = None
 projectConfigFilePath = "./project.json"
 
+__version__ = "0.5.0"
+
 
 @click.group(invoke_without_command=True)
-def cli():
+@click.option("-v", "--version", is_flag=True)
+def cli(version):
     """Info output"""
+    if version:
+        click.echo(f"ViUR-CLI {__version__}")
+        return 0
     click.echo("Welcome to ViUR-CLI")
     loadConfig()
 

@@ -27,6 +27,13 @@ def env():
 
     click.echo(f"Current Environment:")
 
+    # viur-cli
+    if shutil.which("viur-cli"):
+        app_server_version = subprocess.check_output(['viur-cli', '-v']).decode("utf-8")
+        click.echo(f"{valid_icon} {app_server_version}")
+    else:
+        click.echo(f"{failed_icon} ViUR-CLI")
+
     # app_server
     if shutil.which("app_server"):
         app_server_version = subprocess.check_output(['app_server', '-V']).decode("utf-8")
