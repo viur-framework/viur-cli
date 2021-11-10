@@ -1,31 +1,33 @@
-## ViUR-ClI
+# ViUR cli
 
-The ViUR-Cli project allows the control of ViUR projects from one central location.
+Command-line interface for ViUR application maintenance.
 
-### Installation
+## Installation
 
-use pip or pipenv to install this package
+Use pip or pipenv to install this package
 
- ```sh
-    pip install viur-cli
-   ```
+```sh
+$ pip install viur-cli
+```
 
-### Some Examples
+## Usage
 
- ```sh 
- viur-cli --help
- viur-cli init
- viur-cli run
- viur-cli deploy
- viur-cli index
- viur-cli vi
- viur-cli flare vi watch
- viur-cli env
- ```
+viur-cli allows you to control, maintain and develop a ViUR project from one central location.
 
-### Dependencies
+```sh
+$ viur-cli --help
+$ viur-cli init
+$ viur-cli run
+$ viur-cli deploy
+$ viur-cli index
+$ viur-cli vi
+$ viur-cli flare vi watch
+$ viur-cli env
+```
 
-The app server dependents on the following packages
+## Dependencies
+
+viur-cli depends on
 
 * [click](https://click.palletsprojects.com/)
 * [app_server](https://github.com/XeoN-GHMB/app_server)
