@@ -15,14 +15,15 @@ $ pip install viur-cli
 viur-cli allows you to control, maintain and develop a ViUR project from one central location.
 
 ```sh
-$ viur-cli --help
-$ viur-cli init
-$ viur-cli run
-$ viur-cli deploy
-$ viur-cli index
-$ viur-cli vi
-$ viur-cli flare vi watch
-$ viur-cli env
+$ viur --help
+$ viur init
+$ viur create myapp
+$ viur run
+$ viur deploy app
+$ viur deploy index
+$ viur vi
+$ viur flare watch vi
+$ viur env
 ```
 
 ## Dependencies
