@@ -1,7 +1,8 @@
-__version__ = "0.5.1"
+from .version import *
 
 from .cli import *
 from .flare import *
-from .gcloud import *
+from .deploy import *
 from .local import *
 from .vi import *
+from .setup import *

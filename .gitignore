@@ -1,1 +1,4 @@
 ﻿.idea/*
+dist
+*/*.egg-info
+**/__pycache__

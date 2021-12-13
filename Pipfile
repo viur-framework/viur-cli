@@ -4,10 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-build="*"
-twine="*"
+build = "*"
+twine = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.9"
+
+[scripts]
+build_release = "python -m build"
+test_release = "python -m twine upload --repository testpypi dist/*"

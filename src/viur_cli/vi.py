@@ -1,5 +1,5 @@
 import click, os, zipfile, shutil
-from . import cli, echoError, getConfig
+from . import cli, get_config
 from urllib.request import urlretrieve
 
 
@@ -7,7 +7,7 @@ from urllib.request import urlretrieve
 @click.argument("version", default="latest")
 def vi(version):
     """download latest vi or a specific version"""
-    projectConfig = getConfig()
+    projectConfig = get_config()
     distFolder = projectConfig["default"]["distribution_folder"]
 
     viRepo = "https://github.com/viur-framework/viur-vi"

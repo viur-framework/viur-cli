@@ -1,5 +1,5 @@
 import click, os, shutil, subprocess
-from . import cli, echoError, getConfig
+from . import cli, echo_error, get_config
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -7,10 +7,10 @@ from . import cli, echoError, getConfig
 @click.argument("additional_args", nargs=-1)
 def run(name, additional_args):
     """start your application locally"""
-    projectConfig = getConfig()
+    projectConfig = get_config()
 
     if name not in projectConfig:
-        echoError(f"{name} is not a valid config name.")
+        echo_error(f"{name} is not a valid config name.")
         return
 
     conf = projectConfig["default"].copy()
@@ -28,8 +28,8 @@ def env():
     click.echo(f"Current Environment:")
 
     # viur-cli
-    if shutil.which("viur-cli"):
-        app_server_version = subprocess.check_output(['viur-cli', '-v']).decode("utf-8")
+    if shutil.which("viur"):
+        app_server_version = subprocess.check_output(['viur', '-v']).decode("utf-8")
         click.echo(f"{valid_icon} {app_server_version}")
     else:
         click.echo(f"{failed_icon} ViUR-CLI")

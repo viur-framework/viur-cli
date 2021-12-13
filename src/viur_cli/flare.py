@@ -1,14 +1,14 @@
 import click, os
-from . import cli, echoError, getConfig
+from . import cli, echo_error, get_config
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("name")
 @click.argument("action")
+@click.argument("name", default="")
 @click.argument("additional_args", nargs=-1)
 def flare(action, name, additional_args):
     """build or watch a flare fontend"""
-    projectConfig = getConfig()
+    projectConfig = get_config()
     additional_args = list(additional_args)
 
     if action == "release":
@@ -18,8 +18,14 @@ def flare(action, name, additional_args):
     elif action == "watch":
         additional_args = ["-w"]
 
-    if name not in projectConfig["default"]["flare"]:
-        echoError(f"{name} is not a valid flare app name.")
+    if not name:
+        if len(projectConfig["default"]["flare"]) == 0:
+            echo_error(f"No flare app configured")
+        else:
+            name = list(projectConfig["default"]["flare"].keys())[0]
+
+    elif name not in projectConfig["default"]["flare"]:
+        echo_error(f"{name} is not a valid flare app name.")
         return
 
     conf = projectConfig["default"].copy()
