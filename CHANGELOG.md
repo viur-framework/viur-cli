@@ -9,6 +9,8 @@ This file documents any relevant changes.
 - [BREAKING]: `viur-cli index` is now `viur deploy index`
 - [BREAKING]: `viur-cli flare [appname] [release | debug | watch]` is
   now `viur flare [release | debug | watch] [appname]`
+- feat: `viur create [projectname]`
+- feat: `viur project [add | remove | list | addFlare]`
 
 ## [0.5.1] - 2021-12-03
 
