@@ -75,7 +75,7 @@ def load_config(path=None):
     return projectConfig
 
 
-def write_config(conf, path):
+def write_config(conf, path=None):
     """write current projectConfig dict to project.json"""
     global projectConfig
 
