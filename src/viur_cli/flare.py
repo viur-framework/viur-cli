@@ -1,4 +1,4 @@
-import click, os
+import click, os, shutil
 from . import cli, echo_error, get_config
 
 
@@ -12,6 +12,10 @@ def flare(action, name, additional_args):
     additional_args = list(additional_args)
 
     if action == "release":
+        if shutil.which("zip") is None:
+            echo_error(f'Please install "zip" to bundle a flare application.')
+            return
+
         additional_args = ["-mzc"]
     elif action == "debug":
         pass
