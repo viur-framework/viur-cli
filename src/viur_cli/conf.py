@@ -43,15 +43,24 @@ def create_new_config(ctx, path=None):
         ctx.invoke(vi)
     else:
         if os.path.exists("./sources/vi"):
-            if click.confirm("Do you want to add vi from sources as flare application (default)",
-                             default=True,
-                             show_default=True):
-                _projectconf["default"]["flare"].update({
-                    'vi': {
-                        "source": './sources/vi/vi',
-                        "target": './deploy/vi'
-                    }
-                })
+            echo_info("Found vi application. Added to projet.json.")
+            _projectconf["default"]["flare"].update({
+                'vi': {
+                    "source": './sources/vi/vi',
+                    "target": './deploy/vi'
+                }
+            })
+        elif click.confirm("Do you want to add vi as submodule(default)",
+                           default=True,
+                           show_default=True):
+            os.system(
+                f'git submodule add https://github.com/viur-framework/viur-vi sources/vi && git submodule update --init --recursive')
+            _projectconf["default"]["flare"].update({
+                'vi': {
+                    "source": './sources/vi/vi',
+                    "target": './deploy/vi'
+                }
+            })
 
     if click.confirm("Do you want to add additional flare application?"):
         _projectconf = add_to_flare_config(_projectconf)

@@ -41,6 +41,13 @@ def env():
     else:
         click.echo(f"{failed_icon} app_server")
 
+    # git
+    if shutil.which("git"):
+        git_version = subprocess.check_output(['git', '--version']).decode("utf-8")
+        click.echo(f"{valid_icon} {git_version}")
+    else:
+        click.echo(f"{failed_icon}")
+
     # python3
     if shutil.which("python3"):
         npm_version = subprocess.check_output(['python3', '-V']).decode("utf-8")
