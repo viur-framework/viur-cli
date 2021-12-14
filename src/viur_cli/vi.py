@@ -1,5 +1,5 @@
-import click, os, zipfile, shutil
-from . import cli, get_config
+import click, os, zipfile, shutil, urllib, json
+from . import cli, get_config, echo_error, write_config
 from urllib.request import urlretrieve
 
 
@@ -18,6 +18,21 @@ def vi(version):
         vibaseUrl = f"{viRepo}/releases/latest/download/viur-vi.zip"
     else:
         vibaseUrl = f"{viRepo}/releases/download/v{version}/viur-vi.zip"
+
+    def get_version_info(version):
+        url = "https://api.github.com/repos/viur-framework/viur-vi/releases"
+        if version == "latest":
+            try:
+                resp = json.loads(urllib.request.urlopen(url).read().decode("utf-8"))
+                projectConfig["default"]["vi"] = resp[0]["name"]
+                write_config(projectConfig)
+            except:
+                echo_error("Error while fetching version info")
+        else:
+            projectConfig["default"]["vi"] = f'v{version}'
+            write_config(projectConfig)
+
+    get_version_info(version)
 
     def step_label(step):
         if step == 1:

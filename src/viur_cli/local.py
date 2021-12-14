@@ -25,7 +25,15 @@ def env():
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
-    click.echo(f"Current Environment:")
+    projectConfig = get_config()
+
+    click.echo(f"Project Info:\n--------------------------------")
+    try:
+        click.echo(f'Vi: {projectConfig["default"]["vi"]}')
+        click.echo(f'Core: {projectConfig["default"]["core"]}')
+    except:
+        echo_error("Error while collecting viur info")
+    click.echo(f"\nCurrent Environment:\n--------------------------------")
 
     # viur-cli
     if shutil.which("viur"):

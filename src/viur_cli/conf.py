@@ -26,7 +26,9 @@ def create_new_config(ctx, path=None):
         "default": {
             "distribution_folder": deployFolder,
             "sources_folder": sourcesFolder,
-            "flare": {}
+            "flare": {},
+            "vi": "submodule",
+            "core": "submodule"
         },
 
         "develop": {
@@ -61,6 +63,7 @@ def create_new_config(ctx, path=None):
                     "target": './deploy/vi'
                 }
             })
+            _projectconf["default"]["vi"] = f'submodule'
 
     if click.confirm("Do you want to add additional flare application?"):
         _projectconf = add_to_flare_config(_projectconf)
@@ -154,3 +157,15 @@ def remove_from_flare_config(flareAppName):
         write_config(projectConfig)
     except:
         raise click.ClickException(click.style(f"{flareAppName} not found", fg="red"))
+
+
+def fetch_core_version():
+    try:
+        result = os.popen('pip list --format=json').read()
+        coreVersion = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
+
+        projectConfig["default"]["core"] = coreVersion
+        write_config(projectConfig)
+    except:
+        projectConfig["default"]["core"] = "submodule"
+        write_config(projectConfig)

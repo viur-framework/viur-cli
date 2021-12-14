@@ -14,6 +14,7 @@ def cli(version):
     click.echo("Welcome to ViUR-CLI")
 
     load_config()
+    fetch_core_version()
 
 
 @cli.command()
