@@ -19,16 +19,26 @@ def vi(version):
     else:
         vibaseUrl = f"{viRepo}/releases/download/v{version}/viur-vi.zip"
 
-    click.echo(f"downloading {version} vi...")
-    urlretrieve(vibaseUrl, tempZipFile)
+    def step_label(step):
+        if step == 1:
+            return f"downloading {version} vi..."
+        elif step == 2:
+            return f"remove old vi..."
+        elif step == 3:
+            return f"extracting new vi..."
+        elif step == 4:
+            return f"success!"
 
-    if os.path.exists(viPath):
-        click.echo(f"remove old vi...")
-        shutil.rmtree(viPath)
-
-    click.echo(f"extracting new vi...")
-    with zipfile.ZipFile(tempZipFile) as zip_f:
-        zip_f.extractall(viPath)
-
-    os.remove(tempZipFile)
-    click.echo(f"success!")
+    with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
+        for element in bar:
+            if element == 1:
+                urlretrieve(vibaseUrl, tempZipFile)
+            elif element == 2:
+                if os.path.exists(viPath):
+                    shutil.rmtree(viPath)
+            elif element == 3:
+                with zipfile.ZipFile(tempZipFile) as zip_f:
+                    zip_f.extractall(viPath)
+            elif element == 4:
+                os.remove(tempZipFile)
+                bar.label = "updated successful"
