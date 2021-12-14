@@ -135,19 +135,19 @@ def copyflareAssets(source, target):
             os.path.join(target, "flare", "flare", "files.json"),
         )
 
+
 def copyWebworkerScripts(source, target):
-    flarefolder = os.path.join( source, "flare", "flare", "webworker")
-    if os.path.exists( flarefolder ):
+    flarefolder = os.path.join(source, "flare", "flare", "webworker")
+    if os.path.exists(flarefolder):
         shutil.copytree(
-            flarefolder, os.path.join( target, "webworker" ), dirs_exist_ok = True
+            flarefolder, os.path.join(target, "webworker"), dirs_exist_ok=True
         )
 
     appfolder = os.path.join(source, "webworker")
-    if os.path.exists( appfolder ):
+    if os.path.exists(appfolder):
         shutil.copytree(
-            appfolder, os.path.join( target, "webworker" ), dirs_exist_ok = True
+            appfolder, os.path.join(target, "webworker"), dirs_exist_ok=True
         )
-
 
 
 def copypackageAssets(source, target):
@@ -178,13 +178,13 @@ def generateFilesJson(source):
             pathObject = pathlib.Path(root).joinpath(f)
             pathParts = pathObject.parts
             if (
-                f.endswith(".py")
-                and "(" not in f
-                and not any([f.startswith(i) for i in ["get-", "gen-", "test-"]])  # this might be unnecessary...
-                and not any([p in PATHBLACKLIST for p in pathParts])  # ignore folders from blacklist
+                    f.endswith(".py")
+                    and "(" not in f
+                    and not any([f.startswith(i) for i in ["get-", "gen-", "test-"]])  # this might be unnecessary...
+                    and not any([p in PATHBLACKLIST for p in pathParts])  # ignore folders from blacklist
             ):
                 f = pathObject.as_posix().rstrip("./")
-                #print(f)
+                # print(f)
                 files.append(f)
 
     with open("files.json", "w") as outputFile:
@@ -235,8 +235,8 @@ def main():
 
     copyWebworkerScripts(args.source, args.target)
     if args.minify:
-        minifyPy(os.path.join(args.target,"webworker"))
-    #if args.compile:
+        minifyPy(os.path.join(args.target, "webworker"))
+    # if args.compile:
     #    compilePy(os.path.join(args.target,"webworker"))
 
     copyAssets(args.source, args.target)
@@ -296,3 +296,5 @@ def main():
                 copyAssets(args.source, args.target)
 
 
+if __name__ == "__main__":
+    main()
