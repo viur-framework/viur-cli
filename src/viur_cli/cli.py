@@ -4,15 +4,10 @@ from .conf import *
 from .version import __version__
 
 
-@click.group(invoke_without_command=True)
-@click.option("-v", "--version", is_flag=True)
-def cli(version):
+@click.group(invoke_without_command=True, no_args_is_help=True)
+@click.version_option(__version__)
+def cli():
     """Info output"""
-    if version:
-        click.echo(f"ViUR-CLI v{__version__}")
-        return 0
-    click.echo("Welcome to ViUR-CLI")
-
     load_config()
     fetch_core_version()
 
