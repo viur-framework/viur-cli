@@ -3,7 +3,7 @@ from . import cli, echo_error, get_config
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action")
+@click.argument("action", type=click.Choice(['release', 'debug', 'watch']))
 @click.argument("name", default="")
 @click.argument("additional_args", nargs=-1)
 def flare(action, name, additional_args):

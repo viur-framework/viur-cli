@@ -3,7 +3,7 @@ from . import cli, echo_error, get_config
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action", default="run")
+@click.argument("action", default="build", type=click.Choice(['init', 'build']))
 @click.argument("additional_args", nargs=-1)
 def assets(action, additional_args):
     """build gulp assets"""

@@ -3,7 +3,7 @@ from . import cli, echo_error, get_config, echo_info
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action")
+@click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue']))
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 def deploy(action, name, additional_args):
