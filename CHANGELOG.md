@@ -2,6 +2,18 @@
 
 This file documents any relevant changes.
 
+## [0.6.0] - 2021-12-15
+
+- feat: `viur assets [init | build]`
+- feat: `viur vue [add | remove | serve | build]`
+- fix: show help if called wihout parameter
+- feat: collect core and vi version if not used as submodule
+- feat: optimized vi update handler
+- fix: block flare release if zip command is missing on System
+- chore: updated flare and get-pyodide scripts
+- feat: added git verison to env overview
+- feat: on init we now can add vi as submodule to project
+
 ## [0.5.5] - 2021-12-13
 
 - [BREAKING]: `viur-cli` is now `viur`
