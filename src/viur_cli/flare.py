@@ -7,7 +7,7 @@ from . import cli, echo_error, get_config
 @click.argument("name", default="")
 @click.argument("additional_args", nargs=-1)
 def flare(action, name, additional_args):
-    """build or watch a flare fontend"""
+    """build or watch a flare frontend"""
     projectConfig = get_config()
     additional_args = list(additional_args)
 

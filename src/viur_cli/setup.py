@@ -26,6 +26,7 @@ def init():
 @click.argument("name")
 @click.pass_context
 def create(ctx, name):
+    """create a new ViUR project"""
     if os.path.exists(f'./{name}'):
         echo_error(f'"{name}" Folder exists. Please use a different name or remove this folder ./{name}')
         return
