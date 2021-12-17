@@ -3,8 +3,8 @@ import os
 import json
 from .utils import *
 
-projectConfig = None
-projectConfigFilePath = "./project.json"
+projectConfig: dict = None
+projectConfigFilePath: str = "./project.json"
 
 
 # functions
@@ -167,5 +167,11 @@ def fetch_core_version():
         projectConfig["default"]["core"] = coreVersion
         write_config(projectConfig)
     except:
-        projectConfig["default"]["core"] = "submodule"
-        write_config(projectConfig)
+        if projectConfig:
+            if not projectConfig.get("default"):
+                projectConfig.update({
+                    "default": {}
+                })
+
+            projectConfig["default"]["core"] = "submodule"
+            write_config(projectConfig)
