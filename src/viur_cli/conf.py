@@ -167,5 +167,6 @@ def fetch_core_version():
         projectConfig["default"]["core"] = coreVersion
         write_config(projectConfig)
     except:
-        projectConfig["default"]["core"] = "submodule"
-        write_config(projectConfig)
+        if projectConfig and projectConfig["default"]:
+            projectConfig["default"]["core"] = "submodule"
+            write_config(projectConfig)

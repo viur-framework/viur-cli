@@ -2,6 +2,10 @@
 
 This file documents any relevant changes.
 
+## [0.6.1] - 2021-12-21
+
+- fix: `viur init` with no project.json
+
 ## [0.6.0] - 2021-12-15
 
 - feat: `viur assets [init | build]`
