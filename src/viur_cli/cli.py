@@ -18,11 +18,14 @@ def project(action):
     """manage project.json and generate if missing"""
     projectConfig = get_config()
     if action == "add":
-        add_to_config()
+        if projectConfig:
+        	add_to_config(click.prompt('name'), click.prompt('application name'), click.prompt('develop version name'))
     elif action == "addFlare":
-        _projectconf = add_to_flare_config(projectConfig)
+        if "default" not in projectConfig:
+            raise click.ClickException(click.style("default entry is missing", fg="red"))
+        _projectconf = add_to_flare_config(projectConfig, click.prompt('name'), click.prompt('source'), click.prompt('target'))
         write_config(_projectconf)
     elif action == "remove":
-        remove_from_config()
+        remove_from_config(click.prompt('name'))
     elif action == "list":
         click.echo(click.style(json.dumps(projectConfig, indent=4, sort_keys=True), fg="cyan"))

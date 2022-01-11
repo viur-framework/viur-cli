@@ -2,25 +2,32 @@ import click
 import os
 import json
 from .utils import *
+from typing import Callable, Union, Dict
 
 projectConfig = None
 projectConfigFilePath = "./project.json"
 
 
 # functions
-@click.pass_context
-def create_new_config(ctx, path=None):
+#@click.pass_context
+def create_new_config(path=None, deploy_cb: Callable[[], str] = None, 
+                      sources_cb: Callable[[], str] = None, 
+                      app_name: str = "",
+                      version_name: str = "",
+                      use_prebuild_vi: bool = True,
+                      vi_as_submodule : Callable[[], bool] = None,
+                      additional_flare_app: Callable[[], bool] = None) -> None:
     """create new config with project.json default template"""
 
     if path and os.path.exists(os.path.join(os.path.dirname(path), "deploy")):
         deployFolder = "./deploy"
     else:
-        deployFolder = click.prompt('distribution folder', default="./deploy")
+        deployFolder = deploy_cb()
 
     if path and os.path.exists(os.path.join(os.path.dirname(path), "sources")):
         sourcesFolder = "./sources"
     else:
-        sourcesFolder = click.prompt('distribution folder', default="./sources")
+        sourcesFolder = sources_cb()
 
     _projectconf = {
         "default": {
@@ -32,29 +39,26 @@ def create_new_config(ctx, path=None):
         },
 
         "develop": {
-            "application_name": click.prompt('application name'),
-            "version": click.prompt('develop version name')
+            "application_name": app_name,
+            "version": version_name,
         }
     }
 
-    if click.confirm("Do you want to use a prebuild Vi? (default)",
-                     default=True,
-                     show_default=True):
+    if use_prebuild_vi:
         write_config(_projectconf, path)
-        from .vi import vi
-        ctx.invoke(vi)
+        from .vi import _vi
+        #ctx.invoke(vi)
+        _vi()
     else:
         if os.path.exists("./sources/vi"):
-            echo_info("Found vi application. Added to projet.json.")
+            echo_info("Found vi application. Added to project.json.")
             _projectconf["default"]["flare"].update({
                 'vi': {
                     "source": './sources/vi/vi',
                     "target": './deploy/vi'
                 }
             })
-        elif click.confirm("Do you want to add vi as submodule(default)",
-                           default=True,
-                           show_default=True):
+        elif vi_as_submodule():
             os.system(
                 f'git submodule add https://github.com/viur-framework/viur-vi sources/vi && git submodule update --init --recursive')
             _projectconf["default"]["flare"].update({
@@ -65,11 +69,21 @@ def create_new_config(ctx, path=None):
             })
             _projectconf["default"]["vi"] = f'submodule'
 
-    if click.confirm("Do you want to add additional flare application?"):
+    if additional_flare_app():
         _projectconf = add_to_flare_config(_projectconf)
 
     write_config(_projectconf, path)
 
+def create_new_config_extended(path=None):
+    create_new_config(path=path, 
+        deploy_cb=lambda: click.prompt('distribution folder', default="./deploy"),
+        sources_cb=lambda: click.prompt('distribution folder', default="./sources"),
+        app_name = click.prompt('application name'),
+        version_name = click.prompt('develop version name'),
+        use_prebuild_vi = click.confirm("Do you want to use a prebuild Vi? (default)",default=True,show_default=True),
+        vi_as_submodule = lambda: click.confirm("Do you want to add vi as submodule(default)", default=True, show_default=True),
+        additional_flare_app = lambda: click.confirm("Do you want to add additional flare application?")
+    )
 
 def load_config(path=None):
     """load project.json and write to global projetConfig"""
@@ -87,7 +101,7 @@ def load_config(path=None):
     return projectConfig
 
 
-def write_config(conf, path=None):
+def write_config(conf, path : Union[None, str] = None) -> None:
     """write current projectConfig dict to project.json"""
     global projectConfig
 
@@ -101,65 +115,59 @@ def write_config(conf, path=None):
     f.close()
 
 
-def get_config():
+def get_config() -> Union[Dict[str, str], None]:
     global projectConfig
     return projectConfig
 
 
-def add_to_config():
+def add_to_config(name: str, application_name: str, version: str) -> None:
     """add a new config to project.json"""
     global projectConfig
     if not projectConfig:
         return
 
-    projectConfig.update({click.prompt('name'): {
-        "application_name": click.prompt('application name'),
-        "version": click.prompt('develop version name')
+    projectConfig.update({name: {
+        "application_name": application_name,
+        "version": version
     }})
 
     write_config(projectConfig)
 
-
-def remove_from_config():
-    """remove a config from project.json"""
+def remove_from_config(config_name: str);
     global projectConfig
-    configname = click.prompt('name')
     try:
-        del projectConfig[configname]
+        del projectConfig[config_name]
         write_config(projectConfig)
     except:
-        raise click.ClickException(click.style(f"{configname} not found", fg="red"))
+        raise click.ClickException(click.style(f"{config_name} not found", fg="red"))
 
-
-def add_to_flare_config(projectconf):
-    """add a new flare app to project.json"""
+def add_to_flare_config(projectconf: Dict[str, str], name: str, source: str, target: str) -> Dict[str, str]:
     if "default" not in projectconf:
-        raise click.ClickException(click.style("default entry is missing", fg="red"))
+        raise ValueError("default entry is missing")
 
     if not "flare" in projectconf["default"]:
         projectconf["default"].update({"flare": {}})
 
     projectconf["default"]["flare"].update({
-        click.prompt('name'): {
-            "source": click.prompt('source'),
-            "target": click.prompt('target')
+        name: {
+            "source": source,
+            "target": target
         }
     })
 
     return projectconf
 
-
-def remove_from_flare_config(flareAppName):
+def remove_from_flare_config(flare_app_name: str):
     """remove a flare app from project.json"""
     global projectConfig
     try:
-        del projectConfig["default"]["flare"][flareAppName]
+        del projectConfig["default"]["flare"][flare_app_name]
         write_config(projectConfig)
     except:
-        raise click.ClickException(click.style(f"{flareAppName} not found", fg="red"))
+        raise click.ClickException(click.style(f"{flare_app_name} not found", fg="red"))
 
 
-def fetch_core_version():
+def fetch_core_version() -> None:
     try:
         result = os.popen('pip list --format=json').read()
         coreVersion = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]

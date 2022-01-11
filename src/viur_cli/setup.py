@@ -14,12 +14,12 @@ def init():
         f = open(projectConfigFilePath)
         if click.confirm("project.json already exists, do you want to delete it and create a new project.json?"):
             os.remove(projectConfigFilePath)
-            create_new_config()
+            create_new_config_extended()
     except:
 
         if not projectConfig:
             if click.confirm("Do you want to create a new project.json file?"):
-                create_new_config()
+                create_new_config_extended()
 
 
 @cli.command()
@@ -37,7 +37,7 @@ def create(ctx, name):
     project_json_path = f'./{name}/project.json'
 
     # collect project info
-    create_new_config(project_json_path)
+    create_new_config_extended(project_json_path)
     projectConfig = load_config(path=project_json_path)
     appname = projectConfig["develop"]['application_name']
 

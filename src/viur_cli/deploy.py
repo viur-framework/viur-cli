@@ -19,7 +19,9 @@ def deploy(action, name, additional_args):
 
     if action == "app":
         # rebuild requirements.txt
-        create_req()
+        projectConfig = get_config()
+        distFolder = projectConfig["default"]["distribution_folder"]
+        create_req(regenerate=click.confirm(f"Do you want to regenerate the requirements.txt located in the {distFolder}?"))
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} --version={conf["version"]} --no-promote {" ".join(additional_args)} {conf["distribution_folder"]}')
@@ -31,16 +33,17 @@ def deploy(action, name, additional_args):
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {conf["distribution_folder"]}/{action}.yaml')
 
 
-def create_req():
+def create_req(regenerate: bool):
     """
     load projects pipenv and build a requirements.txt
 
     cores requirements.txt cant be validated currently, because of the core does not provide a feature for that
     """
 
+
     projectConfig = get_config()
     distFolder = projectConfig["default"]["distribution_folder"]
 
-    if click.confirm(f"Do you want to regenerate the requirements.txt located in the {distFolder}?"):
+    if regenerate:
         os.system(f"pipfile2req  --hashes > {distFolder}/requirements.txt")
         echo_info("requirements.txt successfully generated")
