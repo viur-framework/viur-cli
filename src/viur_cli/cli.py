@@ -19,7 +19,7 @@ def project(action):
     projectConfig = get_config()
     if action == "add":
         if projectConfig:
-        	add_to_config(click.prompt('name'), click.prompt('application name'), click.prompt('develop version name'))
+            add_to_config(click.prompt('name'), click.prompt('application name'), click.prompt('develop version name'))
     elif action == "addFlare":
         if "default" not in projectConfig:
             raise click.ClickException(click.style("default entry is missing", fg="red"))

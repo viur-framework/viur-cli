@@ -133,7 +133,7 @@ def add_to_config(name: str, application_name: str, version: str) -> None:
 
     write_config(projectConfig)
 
-def remove_from_config(config_name: str);
+def remove_from_config(config_name: str):
     global projectConfig
     try:
         del projectConfig[config_name]
