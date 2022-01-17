@@ -21,11 +21,7 @@ def init():
             if click.confirm("Do you want to create a new project.json file?"):
                 create_new_config_extended()
 
-
-@cli.command()
-@click.argument("name")
-@click.pass_context
-def create(ctx, name):
+def create(name: str, configure_gcloud_project: Callable[[str], bool] = None):
     """create a new ViUR project"""
     if os.path.exists(f'./{name}'):
         echo_error(f'"{name}" Folder exists. Please use a different name or remove this folder ./{name}')
@@ -44,6 +40,14 @@ def create(ctx, name):
     # run clean-base
     os.system(f'cd ./{name} && python3 clean-base.py -A={appname}')
 
-    # run gcloud config
-    if click.confirm(f'Do you want to configure "{appname}" as a new gcloud project?'):
-        os.system(f'cd ./{name} && ./viur-gcloud-setup.sh {appname}')
+    if configure_gcloud_project:
+        # run gcloud config
+        if configure_gcloud_project(appname):
+            os.system(f'cd ./{name} && ./viur-gcloud-setup.sh {appname}')
+
+@cli.command(name="create")
+@click.argument("name")
+@click.pass_context
+def create(ctx, name):
+    """create a new ViUR project"""
+    create(name, lambda app_name: click.confirm(f'Do you want to configure "{app_name}" as a new gcloud project?'))

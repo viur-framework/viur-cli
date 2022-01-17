@@ -3,7 +3,7 @@ from . import cli, get_config, echo_error, write_config
 from urllib.request import urlretrieve
 
 
-def _vi(version: str = "latest") -> None:
+def vi(version: str = "latest") -> None:
     """download latest vi or a specific version"""
     projectConfig = get_config()
     distFolder = projectConfig["default"]["distribution_folder"]
@@ -56,8 +56,8 @@ def _vi(version: str = "latest") -> None:
                 os.remove(tempZipFile)
                 bar.label = "updated successful"
 
-@cli.command(context_settings={"ignore_unknown_options": True})
+@cli.command(name="vi", context_settings={"ignore_unknown_options": True})
 @click.argument("version", default="latest")
-def vi(version):
+def _vi(version):
     """download latest vi or a specific version"""
-    _vi(version)
+    vi(version)

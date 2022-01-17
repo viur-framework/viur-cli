@@ -1,6 +1,20 @@
 import click, os, shutil, subprocess
 from . import cli, echo_error, get_config
 
+from typing import List
+
+def _run(name: str, additional_args: List[str]):
+    projectConfig = get_config()
+
+    if name not in projectConfig:
+        echo_error(f"{name} is not a valid config name.")
+        return False
+    
+    conf = projectConfig["default"].copy()
+    conf.update(projectConfig[name])
+
+    os.system(f'app_server -A={app_name} {distribution_folder} {" ".join(additional_args)}')
+    return True
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("name", default='develop')
@@ -13,13 +27,10 @@ def run(name, additional_args):
         echo_error(f"{name} is not a valid config name.")
         return
 
-    conf = projectConfig["default"].copy()
-    conf.update(projectConfig[name])
+    _run(name, " ".join(additional_args))
 
-    os.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
+   # os.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
-
-@cli.command()
 def env():
     """check local Environment"""
     valid_icon = "\U00002714"
@@ -105,3 +116,7 @@ def env():
         click.echo(f"{valid_icon} {versionString}")
     else:
         click.echo(f"{failed_icon} gcloud")
+
+@cli.command(name="env")
+def _env():
+    env()
