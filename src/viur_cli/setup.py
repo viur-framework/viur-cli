@@ -48,6 +48,6 @@ def create(name: str, configure_gcloud_project: Callable[[str], bool] = None):
 @cli.command(name="create")
 @click.argument("name")
 @click.pass_context
-def create(ctx, name):
+def _create(ctx: click.Context, name: str):
     """create a new ViUR project"""
     create(name, lambda app_name: click.confirm(f'Do you want to configure "{app_name}" as a new gcloud project?'))

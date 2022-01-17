@@ -3,7 +3,7 @@ from . import cli, echo_error, get_config
 
 from typing import List
 
-def _run(name: str, additional_args: List[str]):
+def run(name: str, additional_args: List[str]):
     projectConfig = get_config()
 
     if name not in projectConfig:
@@ -13,13 +13,13 @@ def _run(name: str, additional_args: List[str]):
     conf = projectConfig["default"].copy()
     conf.update(projectConfig[name])
 
-    os.system(f'app_server -A={app_name} {distribution_folder} {" ".join(additional_args)}')
+    os.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
     return True
 
-@cli.command(context_settings={"ignore_unknown_options": True})
+@cli.command(name="run", context_settings={"ignore_unknown_options": True})
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
-def run(name, additional_args):
+def _run(name: str, additional_args: List[str]):
     """start your application locally"""
     projectConfig = get_config()
 

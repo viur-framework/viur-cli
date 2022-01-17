@@ -58,6 +58,6 @@ def vi(version: str = "latest") -> None:
 
 @cli.command(name="vi", context_settings={"ignore_unknown_options": True})
 @click.argument("version", default="latest")
-def _vi(version):
+def _vi(version: str):
     """download latest vi or a specific version"""
     vi(version)

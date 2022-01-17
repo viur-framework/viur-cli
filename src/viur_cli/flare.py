@@ -1,12 +1,13 @@
 import click, os, shutil
 from . import cli, echo_error, get_config
+from typing import List
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(['release', 'debug', 'watch']))
 @click.argument("name", default="")
 @click.argument("additional_args", nargs=-1)
-def flare(action, name, additional_args):
+def flare(action: str, name: str, additional_args: List[str]):
     """build or watch a flare frontend"""
     projectConfig = get_config()
     additional_args = list(additional_args)

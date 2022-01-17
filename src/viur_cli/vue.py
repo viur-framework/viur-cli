@@ -1,11 +1,12 @@
 import click, os, shutil, json
 from . import cli, echo_error, get_config, write_config
+from typing import List
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(['add', 'remove', 'build', 'serve']))
 @click.argument("additional_args", nargs=-1)
-def vue(action, additional_args):
+def vue(action: str, additional_args: List[str]):
     """build gulp assets"""
 
     additional_args = list(additional_args)
@@ -20,7 +21,7 @@ def vue(action, additional_args):
         vue_serve(additional_args)
 
 
-def vue_add(additional_args):
+def vue_add(additional_args: List[str]):
     """add a vue app to project.json"""
     projectConfig = get_config()
     if "default" not in projectConfig:
@@ -38,7 +39,7 @@ def vue_add(additional_args):
     write_config(projectConfig)
 
 
-def vue_remove(additional_args):
+def vue_remove(additional_args: List[str]):
     """remove a vue app from project.json"""
     projectConfig = get_config()
     if "default" not in projectConfig:
@@ -56,7 +57,7 @@ def vue_remove(additional_args):
     write_config(projectConfig)
 
 
-def vue_build(additional_args):
+def vue_build(additional_args: List[str]):
     projectConfig = get_config()
     try:
         if len(additional_args) == 0:
@@ -73,7 +74,7 @@ def vue_build(additional_args):
     os.system(f'cd {app_entry["source"]} && npm run build')
 
 
-def vue_serve(additional_args):
+def vue_serve(additional_args: List[str]):
     projectConfig = get_config()
     try:
         if len(additional_args) == 0:
