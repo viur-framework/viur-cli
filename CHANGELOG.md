@@ -1,6 +1,8 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.2] - 2022-01-21
+- feat: Autocompletion for bash and zsh
 
 ## [0.6.1] - 2021-12-21
 
