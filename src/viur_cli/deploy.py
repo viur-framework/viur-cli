@@ -43,4 +43,9 @@ def create_req():
 
     if click.confirm(f"Do you want to regenerate the requirements.txt located in the {distFolder}?"):
         os.system(f"pipfile2req  --hashes > {distFolder}/requirements.txt")
+        #append setupTools for GCP
+        file_object = open(f"{distFolder}/requirements.txt", 'a')
+        file_object.write('\nsetuptools==59.5.0 --hash=sha256:6d10741ff20b89cd8c6a536ee9dc90d3002dec0226c78fb98605bfb9ef8a7adf')
+        file_object.close()
+
         echo_info("requirements.txt successfully generated")
