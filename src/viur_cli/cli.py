@@ -26,3 +26,12 @@ def project(action):
         remove_from_config()
     elif action == "list":
         click.echo(click.style(json.dumps(projectConfig, indent=4, sort_keys=True), fg="cyan"))
+
+
+@cli.command()
+@click.argument("action", type=click.Choice(['ssl']))
+def fix(action):
+    if action =="ssl":
+        os.system("chmod +x scripts/macos_certificate_fix.command && ./scripts/macos_certificate_fix.command")
+        click.echo()
+
