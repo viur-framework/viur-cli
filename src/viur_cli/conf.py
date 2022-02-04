@@ -9,25 +9,20 @@ projectConfigFilePath = "./project.json"
 
 
 # functions
-#@click.pass_context
-def create_new_config(path=None, deploy_cb: Callable[[], str] = None, 
-                      sources_cb: Callable[[], str] = None, 
-                      app_name: str = "",
-                      version_name: str = "",
-                      use_prebuild_vi: bool = True,
-                      vi_as_submodule : Callable[[], bool] = None,
-                      additional_flare_app: Callable[[], bool] = None) -> None:
+# functions
+@click.pass_context
+def create_new_config(ctx, path=None):
     """create new config with project.json default template"""
 
     if path and os.path.exists(os.path.join(os.path.dirname(path), "deploy")):
         deployFolder = "./deploy"
     else:
-        deployFolder = deploy_cb()
+        deployFolder = click.prompt('distribution folder', default="./deploy")
 
     if path and os.path.exists(os.path.join(os.path.dirname(path), "sources")):
         sourcesFolder = "./sources"
     else:
-        sourcesFolder = sources_cb()
+        sourcesFolder = click.prompt('distribution folder', default="./sources")
 
     _projectconf = {
         "default": {
@@ -39,26 +34,29 @@ def create_new_config(path=None, deploy_cb: Callable[[], str] = None,
         },
 
         "develop": {
-            "application_name": app_name,
-            "version": version_name,
+            "application_name": click.prompt('application name'),
+            "version": click.prompt('develop version name')
         }
     }
 
-    if use_prebuild_vi:
+    if click.confirm("Do you want to use a prebuild Vi? (default)",
+                     default=True,
+                     show_default=True):
         write_config(_projectconf, path)
-        from .vi import _vi
-        #ctx.invoke(vi)
-        _vi()
+        from .vi import vi
+        ctx.invoke(vi)
     else:
         if os.path.exists("./sources/vi"):
-            echo_info("Found vi application. Added to project.json.")
+            echo_info("Found vi application. Added to projet.json.")
             _projectconf["default"]["flare"].update({
                 'vi': {
                     "source": './sources/vi/vi',
                     "target": './deploy/vi'
                 }
             })
-        elif vi_as_submodule():
+        elif click.confirm("Do you want to add vi as submodule(default)",
+                           default=True,
+                           show_default=True):
             os.system(
                 f'git submodule add https://github.com/viur-framework/viur-vi sources/vi && git submodule update --init --recursive')
             _projectconf["default"]["flare"].update({
@@ -69,21 +67,10 @@ def create_new_config(path=None, deploy_cb: Callable[[], str] = None,
             })
             _projectconf["default"]["vi"] = f'submodule'
 
-    if additional_flare_app():
+    if click.confirm("Do you want to add additional flare application?"):
         _projectconf = add_to_flare_config(_projectconf)
 
     write_config(_projectconf, path)
-
-def create_new_config_extended(path=None):
-    create_new_config(path=path, 
-        deploy_cb=lambda: click.prompt('distribution folder', default="./deploy"),
-        sources_cb=lambda: click.prompt('distribution folder', default="./sources"),
-        app_name = click.prompt('application name'),
-        version_name = click.prompt('develop version name'),
-        use_prebuild_vi = click.confirm("Do you want to use a prebuild Vi? (default)",default=True,show_default=True),
-        vi_as_submodule = lambda: click.confirm("Do you want to add vi as submodule(default)", default=True, show_default=True),
-        additional_flare_app = lambda: click.confirm("Do you want to add additional flare application?")
-    )
 
 def load_config(path=None):
     """load project.json and write to global projetConfig"""

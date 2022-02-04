@@ -2,14 +2,15 @@ import click, os, shutil, subprocess
 from . import cli, echo_error, get_config
 
 from typing import List
+import logging
 
 def run(name: str, additional_args: List[str]):
     projectConfig = get_config()
 
     if name not in projectConfig:
-        echo_error(f"{name} is not a valid config name.")
-        return False
-    
+        #logging.error(f"{name} is not a valid config name.")
+        raise 
+
     conf = projectConfig["default"].copy()
     conf.update(projectConfig[name])
 
@@ -27,7 +28,7 @@ def _run(name: str, additional_args: List[str]):
         echo_error(f"{name} is not a valid config name.")
         return
 
-    _run(name, " ".join(additional_args))
+    run(name, " ".join(additional_args))
 
    # os.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
