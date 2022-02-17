@@ -17,7 +17,7 @@ def vi(version: str = "latest") -> None:
     else:
         vibaseUrl = f"{viRepo}/releases/download/v{version}/viur-vi.zip"
 
-    def get_version_info(version):
+    def get_version_info(version: str):
         url = "https://api.github.com/repos/viur-framework/viur-vi/releases"
         if version == "latest":
             try:
@@ -32,7 +32,7 @@ def vi(version: str = "latest") -> None:
 
     get_version_info(version)
 
-    def step_label(step):
+    def step_label(step: int):
         if step == 1:
             return f"downloading {version} vi..."
         elif step == 2:

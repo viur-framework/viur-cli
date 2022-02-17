@@ -14,7 +14,7 @@ def cli():
 
 @cli.command()
 @click.argument("action", type=click.Choice(['add', 'remove', 'list', 'addFlare']))
-def project(action: str):
+def project(action: str) -> None:
     """manage project.json and generate if missing"""
     projectConfig = get_config()
     if action == "add":

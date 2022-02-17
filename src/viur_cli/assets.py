@@ -1,12 +1,12 @@
 import click, os, shutil, json
 from . import cli, echo_error, get_config
-from typing import List
+from typing import List, Union
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", default="build", type=click.Choice(['init', 'build']))
 @click.argument("additional_args", nargs=-1)
-def assets(action: str, additional_args: List[str]):
+def assets(action: str, additional_args: List[str]) -> None:
     """build gulp assets"""
 
     additional_args = list(additional_args)
@@ -17,7 +17,7 @@ def assets(action: str, additional_args: List[str]):
         assets_build(additional_args)
 
 
-def assets_init(additional_args: List[str]):
+def assets_init(additional_args: List[str]) -> bool:
     sources_folder = get_config()["default"]["sources_folder"]
     try:
         f = open(os.path.join(sources_folder, "package.json"), "r")
@@ -34,7 +34,7 @@ def assets_init(additional_args: List[str]):
     return False
 
 
-def assets_build(additional_args: List[str]):
+def assets_build(additional_args: List[str]) -> Union[int, None]:
     sources_folder = get_config()["default"]["sources_folder"]
 
     if not os.path.exists(os.path.join(sources_folder, "node_modules")):

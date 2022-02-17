@@ -22,7 +22,7 @@ def init():
             if click.confirm("Do you want to create a new project.json file?"):
                 create_new_config()
 
-def create(name: str, configure_gcloud_project: bool = False):
+def create(name: str, configure_gcloud_project: bool = False) -> None:
     """create a new ViUR project"""
     if os.path.exists(f'./{name}'):
         echo_error(f'"{name}" Folder exists. Please use a different name or remove this folder ./{name}')

@@ -11,7 +11,7 @@ projectConfigFilePath = "./project.json"
 # functions
 # functions
 @click.pass_context
-def create_new_config(ctx, path=None):
+def create_new_config(ctx : click.Context, path: Union[str, None] = None):
     """create new config with project.json default template"""
 
     if path and os.path.exists(os.path.join(os.path.dirname(path), "deploy")):
@@ -120,7 +120,7 @@ def add_to_config(name: str, application_name: str, version: str) -> None:
 
     write_config(projectConfig)
 
-def remove_from_config(config_name: str):
+def remove_from_config(config_name: str) -> None:
     global projectConfig
     try:
         del projectConfig[config_name]
@@ -144,7 +144,7 @@ def add_to_flare_config(projectconf: Dict[str, str], name: str, source: str, tar
 
     return projectconf
 
-def remove_from_flare_config(flare_app_name: str):
+def remove_from_flare_config(flare_app_name: str) -> None:
     """remove a flare app from project.json"""
     global projectConfig
     try:

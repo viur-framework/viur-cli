@@ -6,7 +6,7 @@ from typing import List
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue']))
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
-def deploy(action: str, name: str, additional_args: List[str]):
+def deploy(action: str, name: str, additional_args: List[str]) -> None:
     """deploy gcloud app or different yaml files"""
     projectConfig = get_config()
 
@@ -33,7 +33,7 @@ def deploy(action: str, name: str, additional_args: List[str]):
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {conf["distribution_folder"]}/{action}.yaml')
 
 
-def create_req(regenerate: bool):
+def create_req(regenerate: bool) -> None:
     """
     load projects pipenv and build a requirements.txt
 
