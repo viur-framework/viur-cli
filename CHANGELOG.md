@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.4] - 2022-02-21
+- fix: get-pyodide now uses 0.19
+
 ## [0.6.3] - 2022-01-21
 - feat: Updated python-minifier to allow Python 3.10
 
