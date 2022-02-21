@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.3] - 2022-01-21
+- feat: Updated python-minifier to allow Python 3.10
+
 ## [0.6.2] - 2022-01-21
 - feat: Autocompletion for bash and zsh
 
