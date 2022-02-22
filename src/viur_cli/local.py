@@ -31,6 +31,8 @@ def env():
     try:
         click.echo(f'Vi: {projectConfig["default"]["vi"]}')
         click.echo(f'Core: {projectConfig["default"]["core"]}')
+        click.echo(f'Pyodide: {projectConfig["default"]["pyodide"]}')
+        click.echo(f'format: {projectConfig["default"]["format"]}')
     except:
         echo_error("Error while collecting viur info")
     click.echo(f"\nCurrent Environment:\n--------------------------------")

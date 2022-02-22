@@ -22,13 +22,17 @@ def create_new_config(ctx, path=None):
     else:
         sourcesFolder = click.prompt('distribution folder', default="./sources")
 
+
+
     _projectconf = {
         "default": {
+            "format":"1.0.0",
             "distribution_folder": deployFolder,
             "sources_folder": sourcesFolder,
             "flare": {},
             "vi": "submodule",
-            "core": "submodule"
+            "core": "submodule",
+            "pyodide": click.prompt('pyodide', default="v0.19.0")
         },
 
         "develop": {
@@ -83,6 +87,9 @@ def load_config(path=None):
         projectConfig = json.loads(f.read())
     except:
         echo_error("no project.json found")
+
+
+    update_config()
 
     return projectConfig
 
@@ -170,3 +177,15 @@ def fetch_core_version():
         if projectConfig and projectConfig["default"]:
             projectConfig["default"]["core"] = "submodule"
             write_config(projectConfig)
+
+def update_config():
+    if "format" not in projectConfig["default"]:
+        projectConfig["default"]["format"] = "1.0.0"
+
+    if "pyodide" not in projectConfig["default"]:
+        projectConfig["default"]["pyodide"] = "v0.19.0"
+
+    # conf updates musst increase format version
+
+
+    write_config(projectConfig)

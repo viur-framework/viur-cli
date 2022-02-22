@@ -1,6 +1,15 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.5] - 2022-02-22
+- added: config format versioning
+- added: pyodide version
+- added: conf update function
+- added: npm command by default it tries to call npm run build
+- added: release command
+- [BREAKING]: vue command removed, use npm instead
+- [BREAKING]: assets command removed, use npm instead
+- 
 ## [0.6.4] - 2022-02-21
 - fix: get-pyodide now uses 0.19
 

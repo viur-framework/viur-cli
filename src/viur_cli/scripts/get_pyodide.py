@@ -154,3 +154,6 @@ with open(file, "w") as f:
 print("Done")
 
 print(f"Done installing Pyodide {args.version}")
+
+def main():
+    pass
