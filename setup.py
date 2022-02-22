@@ -20,7 +20,14 @@ class PostInstallCommand(install):
         call(['./postinstall.sh'])
 
 
-setuptools.setup(cmdclass={
+package_data = {
+    'static': ['*']
+}
+
+setuptools.setup(
+	cmdclass={
         'develop': PostDevelopCommand,
         'install': PostInstallCommand,
-    })
+    },
+	include_package_data = True
+)

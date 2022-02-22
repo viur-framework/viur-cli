@@ -54,3 +54,12 @@ def _create(ctx: click.Context, name: str):
     app_name = projectConfig["develop"]['application_name']
 
     create(name, click.confirm(f'Do you want to configure "{app_name}" as a new gcloud project?'))
+
+
+import runpy
+
+@cli.command(name="web")
+def _web():
+    from .ui import main
+    main()
+    
