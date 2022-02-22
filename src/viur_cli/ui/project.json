@@ -1,0 +1,13 @@
+{
+    "default": {
+        "core": "submodule",
+        "distribution_folder": "1",
+        "flare": {},
+        "sources_folder": "1",
+        "vi": "submodule"
+    },
+    "develop": {
+        "application_name": "adkwdkw",
+        "version": "abc"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "default": {
+        "core": "submodule",
+        "distribution_folder": "Hello",
+        "flare": {},
+        "sources_folder": "Test",
+        "vi": "submodule"
+    },
+    "develop": {
+        "application_name": "dev",
+        "version": "Kevin"
+    }
+}
