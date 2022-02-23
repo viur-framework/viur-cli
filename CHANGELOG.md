@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.6] - 2022-02-23
+- [BREAKING]: `viur release` requires pyenv to enforce python 3.9.5
+
 ## [0.6.5] - 2022-02-22
 - added: config format versioning
 - added: pyodide version

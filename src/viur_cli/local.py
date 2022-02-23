@@ -72,6 +72,13 @@ def env():
     else:
         click.echo(f"{failed_icon}")
 
+    # python3
+    if shutil.which("pyenv"):
+        pyenv_version = subprocess.check_output(['pyenv', '--version']).decode("utf-8")
+        click.echo(f"{valid_icon} {pyenv_version}")
+    else:
+        click.echo(f"{failed_icon}")
+
     # npm
     if shutil.which("npm"):
         npm_version = subprocess.check_output(['npm', '-v']).decode("utf-8")
