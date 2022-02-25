@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.7] - 2022-02-25
+- fix: cant use viur with missing project.json
+
 ## [0.6.6] - 2022-02-23
 - [BREAKING]: `viur release` requires pyenv to enforce python 3.9.5
 

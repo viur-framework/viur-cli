@@ -179,6 +179,9 @@ def fetch_core_version():
             write_config(projectConfig)
 
 def update_config():
+    if not projectConfig:
+        return 0
+
     if "format" not in projectConfig["default"]:
         projectConfig["default"]["format"] = "1.0.0"
 
