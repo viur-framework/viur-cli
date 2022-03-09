@@ -1,7 +1,7 @@
 # Changelog
 
 This file documents any relevant changes.
-## [0.6.7] - 2022-03-09
+## [0.6.8] - 2022-03-09
 - chore: updated app_server to 0.7.3
 
 ## [0.6.7] - 2022-02-25
