@@ -20,7 +20,4 @@ class PostInstallCommand(install):
         call(['./postinstall.sh'])
 
 
-setuptools.setup(cmdclass={
-        'develop': PostDevelopCommand,
-        'install': PostInstallCommand,
-    })
+setuptools.setup()
