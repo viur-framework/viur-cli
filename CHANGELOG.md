@@ -1,11 +1,15 @@
 # Changelog
 
 This file documents any relevant changes.
+
+## [0.6.9] - 2022-03-17
+- chore: refactored flare.py to use Python standard library tools and pyminifier directly. 
+
 ## [0.6.8] - 2022-03-09
 - chore: updated app_server to 0.7.3
 
 ## [0.6.7] - 2022-02-25
-- fix: cant use viur with missing project.json
+- fix: can't use viur with missing project.json
 
 ## [0.6.6] - 2022-02-23
 - [BREAKING]: `viur release` requires pyenv to enforce python 3.9.5
