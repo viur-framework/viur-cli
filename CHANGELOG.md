@@ -1,9 +1,12 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.11] - 2022-03-18
+- chore: updated app_server to 0.7.4
+
 ## [0.6.10] - 2022-03-17
 - fix: disabled autoinstall of Autocompletion for bash and zsh
-- 
+
 ## [0.6.9] - 2022-03-17
 - chore: refactored flare.py to use Python standard library tools and pyminifier directly.
 
