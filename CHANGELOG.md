@@ -1,9 +1,19 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.14] - 2022-04-08
+- Updated get_pyodide.py for Pyodide v0.19.1
+- Improved release module
+  - Only install pyodide when flare apps are configured
+  - Some verbose output improvements
+  - Some code refactoring
+- conf.py holds the default Pyodide version
+- Allows to run viur command from anywhere inside the project folder by resolving and chdir'ing backwards
+- Improved error reporting and output (fatal error stops program execution)
+
 ## [0.6.13] - 2022-03-30
 - chore: updated app_server to 0.8.5
-- 
+
 ## [0.6.12] - 2022-03-30
 - chore: updated app_server to 0.8.5
 
