@@ -1,5 +1,7 @@
 ﻿.idea/*
-dist
+dist/
+build/
 */*.egg-info
 **/__pycache__
 vue/node_modules
+*.pyc
