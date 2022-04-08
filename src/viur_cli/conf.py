@@ -1,3 +1,7 @@
+"""
+Everything related to maintaining the project.json configuration file for a viur project.
+"""
+
 import click
 import os
 import json
@@ -6,7 +10,7 @@ from .utils import *
 DEFAULT_PYODIDE_VERSION = "v0.19.1"
 
 projectConfig = None
-projectConfigFilePath = "./project.json"
+projectConfigFilePath = "project.json"
 
 
 # functions
@@ -78,21 +82,36 @@ def create_new_config(ctx, path=None):
 
 
 def load_config(path=None):
-    """load project.json and write to global projetConfig"""
+    """load project.json and write to global projectConfig"""
     global projectConfig
 
-    try:
-        if not path:
-            path = projectConfigFilePath
+    if not path:
+        path = projectConfigFilePath
 
+        # Search in any parent folder for a project.json,
+        # change working directory because subsequent commands
+        # require for project root folder.
+        changed = False
+        while not os.path.exists(path):
+            os.chdir("..")
+            changed = True
+
+            if os.getcwd() == "/":
+                echo_fatal(f"{path} not found - please check if you are in the right folder.")
+
+        if changed:
+            echo_info(f"Project root is {os.getcwd()}")
+
+    try:
         f = open(path, "r")
         projectConfig = json.loads(f.read())
-    except:
-        echo_error("no project.json found")
+    except FileNotFoundError:
+        echo_fatal(f"Can't open {path} for reading")
 
+    except json.decoder.JSONDecodeError as e:
+        echo_fatal(f"The configuration in {path} contains invalid JSON: {str(e)}. Please verify right syntax.")
 
-    update_config()
-
+    update_config(path)
     return projectConfig
 
 
@@ -180,9 +199,9 @@ def fetch_core_version():
             projectConfig["default"]["core"] = "submodule"
             write_config(projectConfig)
 
-def update_config():
-    if not projectConfig:
-        return 0
+
+def update_config(path=None):
+    assert projectConfig, "load_config() must be called first!"
 
     if "format" not in projectConfig["default"]:
         projectConfig["default"]["format"] = "1.0.0"
@@ -190,7 +209,5 @@ def update_config():
     if "pyodide" not in projectConfig["default"]:
         projectConfig["default"]["pyodide"] = DEFAULT_PYODIDE_VERSION
 
-    # conf updates musst increase format version
-
-
-    write_config(projectConfig)
+    # conf updates must increase format version
+    write_config(projectConfig, path)
