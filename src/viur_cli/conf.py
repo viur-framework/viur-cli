@@ -3,6 +3,8 @@ import os
 import json
 from .utils import *
 
+DEFAULT_PYODIDE_VERSION = "v0.19.1"
+
 projectConfig = None
 projectConfigFilePath = "./project.json"
 
@@ -32,7 +34,7 @@ def create_new_config(ctx, path=None):
             "flare": {},
             "vi": "submodule",
             "core": "submodule",
-            "pyodide": click.prompt('pyodide', default="v0.19.0")
+            "pyodide": click.prompt('pyodide', default=DEFAULT_PYODIDE_VERSION)
         },
 
         "develop": {
@@ -186,7 +188,7 @@ def update_config():
         projectConfig["default"]["format"] = "1.0.0"
 
     if "pyodide" not in projectConfig["default"]:
-        projectConfig["default"]["pyodide"] = "v0.19.0"
+        projectConfig["default"]["pyodide"] = DEFAULT_PYODIDE_VERSION
 
     # conf updates musst increase format version
 

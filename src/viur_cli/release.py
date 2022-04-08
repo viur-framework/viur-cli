@@ -1,5 +1,5 @@
 import click, os, shutil
-from . import cli, echo_error, get_config,utils
+from . import cli, echo_error, utils, conf
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -9,7 +9,7 @@ def release(name, additional_args):
     """create a release build"""
 
     utils.echo_info("building started...")
-    projectConfig = get_config()
+    projectConfig = conf.get_config()
 
     if not os.popen("pyenv versions").read():
         echo_error(f"pyenv not found!")
@@ -19,19 +19,17 @@ def release(name, additional_args):
         echo_error(f"{name} is not a valid config name.")
         return
 
-    conf = projectConfig["default"].copy()
-    conf.update(projectConfig[name])
-
-    #get pyodide 0.19. Enforce pyodide
-    if not conf.get("pyodide"):
-        pyodide_version = "v0.19.0"
-    else:
-        pyodide_version = conf.get("pyodide")
-
-    os.system(f'get-pyodide -t {conf["distribution_folder"]}/pyodide -v {pyodide_version}')
+    cfg = projectConfig["default"].copy()
+    cfg.update(projectConfig[name])
 
     #build all flare apps
-    if conf.get("flare"):
+    if flare_cfg := cfg.get("flare"):
+        # Ensure for local pyodide.
+        pyodide_version = cfg.get("pyodide", conf.DEFAULT_PYODIDE_VERSION)
+        utils.echo_info(f"- Ensuring Pyodide {pyodide_version} local install")
+
+        os.system(f'get-pyodide -t {cfg["distribution_folder"]}/pyodide -v {pyodide_version}')
+
         if "debug" in additional_args:
             flare_build_type = "debug"
             flare_build_env = ""
@@ -44,7 +42,8 @@ def release(name, additional_args):
                 os.system(f'pyenv install 3.9.5')
             os.system("pyenv local 3.9.5")
 
-        for name,flare in conf["flare"].items():
+        for name in flare_cfg.keys():
+            utils.echo_info(f"- Building {flare_build_type} {name}")
             os.system(f'{flare_build_env} viur flare {flare_build_type} {name}')
 
         if flare_build_type == "release":
