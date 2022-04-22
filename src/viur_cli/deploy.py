@@ -72,7 +72,7 @@ def check_req(projects_requirements_path):
         return ret
 
     core_requirements = os.path.join(site.getsitepackages()[0],"viur","requirements.txt")
-    
+
     if not os.path.exists(core_requirements):
         echo_info("could now find core package, please update the core to validate the requirements.txt")
         return []
