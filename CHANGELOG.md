@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.15] - 2022-04-22
+- chore: updated app_server to 0.9.0
+
 ## [0.6.14] - 2022-04-08
 - Updated get_pyodide.py for Pyodide v0.19.1
 - Improved release module
