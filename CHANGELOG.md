@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.16] - 2022-04-22
+- feat: 
+
 ## [0.6.15] - 2022-04-22
 - chore: updated app_server to 0.9.0
 
