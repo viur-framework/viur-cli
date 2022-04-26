@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.17] - 2022-04-26
+- chore: fixes some typos
+
 ## [0.6.16] - 2022-04-22
 - fix: only ask for rebuild requirements if core is not submodule
 - feat: added dependency hash and version check for core package

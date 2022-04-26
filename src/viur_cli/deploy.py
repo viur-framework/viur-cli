@@ -51,7 +51,7 @@ def create_req():
             echo_info("requirements.txt successfully generated")
 
         if check_req(f"{distFolder}/requirements.txt"):
-            if not click.confirm(f"There are some depencencie errors, are you sure you want to continue?"):
+            if not click.confirm(f"There are some depencency errors, are you sure you want to continue?"):
                 sys.exit(0)
 
 
@@ -88,7 +88,7 @@ def check_req(projects_requirements_path):
             errors.append(f"missing package: {package} with version {options['version']}")
             continue
         elif options["version"]!=projects_requirements_obj[package]["version"]:
-            errors.append(f"version missmatch: expected {options['version']} got {projects_requirements_obj[package]['version']}: {package}")
+            errors.append(f"version mismatch: expected {options['version']} got {projects_requirements_obj[package]['version']}: {package}")
             continue
         else:
             # package exists, test hash
@@ -96,7 +96,7 @@ def check_req(projects_requirements_path):
             core_hashes = options["hashes"]["sha256"]
 
             if not set(core_hashes).issubset(set(project_hashes)):
-                errors.append(f"package hash missmatch: {package}")
+                errors.append(f"package hash mismatch: {package}")
 
     for error in errors:
         echo_error(error)
