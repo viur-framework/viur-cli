@@ -6,9 +6,11 @@ from .version import __version__
 
 @click.group(invoke_without_command=True, no_args_is_help=True)
 @click.version_option(__version__)
-def cli():
+@click.pass_context
+def cli(ctx):
     """Info output"""
-    load_config()
+    if ctx.invoked_subcommand not in ["init","create"]:
+        load_config()
     fetch_core_version()
 
 
