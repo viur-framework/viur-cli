@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.6.18] - 2022-05-17
+- fix: `viur init` and `viur create` working again
+
 ## [0.6.17] - 2022-04-26
 - chore: fixes some typos
 
