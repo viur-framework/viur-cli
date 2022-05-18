@@ -1,6 +1,10 @@
 # Changelog
 
 This file documents any relevant changes.
+
+## [0.6.19] - 2022-05-18
+- fix: requirements regeneration now respects dependency extras with hash
+
 ## [0.6.18] - 2022-05-17
 - fix: `viur init` and `viur create` working again
 

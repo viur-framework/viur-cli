@@ -1,4 +1,4 @@
-import click, os, json, sys
+import click, os, json, sys, re
 from . import cli, echo_error, get_config, echo_info
 
 
@@ -43,11 +43,18 @@ def create_req():
 
         if click.confirm(f"Do you want to regenerate the requirements.txt located in the {distFolder}?"):
             os.system(f"pipfile2req  --hashes > {distFolder}/requirements.txt")
-            #append setupTools for GCP
-            file_object = open(f"{distFolder}/requirements.txt", 'a')
-            file_object.write('\nsetuptools==62.0.0 --hash=sha256:7999cbd87f1b6e1f33bf47efa368b224bed5e27b5ef2c4d46580186cbcb1a86a')
+
+            file_object = open(f"{distFolder}/requirements.txt", 'r')
+            generated_requirements = file_object.read()
+            for line in generated_requirements.splitlines():
+                if "]==" in line:
+                    # we got a dependency with extras
+                    generated_requirements+=re.sub(r"\[.*?\]","",line)+"\n"
             file_object.close()
 
+            file_obj = open(f"{distFolder}/requirements.txt", 'w')
+            file_obj.write(generated_requirements)
+            file_obj.close()
             echo_info("requirements.txt successfully generated")
 
         if check_req(f"{distFolder}/requirements.txt"):
