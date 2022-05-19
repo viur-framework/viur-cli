@@ -2,7 +2,7 @@
 
 This file documents any relevant changes.
 
-## [0.6.20] - 2022-05-20
+## [main] - current main branch
 - feat: use of `$(variable)` placeholders in version strings, allows to use
   - `$(user)` for the username
   - `$(day)` for current date's day
