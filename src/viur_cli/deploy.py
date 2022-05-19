@@ -1,4 +1,4 @@
-import click, os, json, sys, re
+import click, os, yaml, sys, re
 from . import cli, echo_error, get_config, echo_info
 
 
@@ -27,9 +27,47 @@ def deploy(action, name, additional_args):
         if action not in ["index", "queue", "cron"]:
             echo_error(f"{action} is not a valid action. Valid is app, index, queue, cron")
 
-        os.system(
-            f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {conf["distribution_folder"]}/{action}.yaml')
+        yaml_file = f'{conf["distribution_folder"]}/{action}.yaml'
 
+        # Sort index.yaml by kind name, making it more clean to view.
+        if action == "index":
+            try:
+                with open(yaml_file, "r") as source_file:
+                    try:
+                        data = yaml.safe_load(source_file)
+                    except:
+                        raise ValueError()
+
+                    if "indexes" not in data:
+                        raise ValueError()
+
+                    indexes = sorted(
+                        data["indexes"],
+                        key=lambda k: k["kind"] if isinstance(k, dict) and "kind" in k else k
+                    )
+
+                    # Only update index.yaml when something has changed
+                    if data["indexes"] != indexes:
+                        data["indexes"] = indexes
+
+                        with open(yaml_file, "a+") as dst_file:
+                            dst_file.seek(0)
+                            dst_file.truncate()
+                            dst_file.write(
+                                yaml.dump(data).replace("- kind: ", "\n- kind: ")
+                            )
+
+                        echo_info(f"{yaml_file} has been sorted by kind")
+
+            except FileNotFoundError:
+                echo_error(f"{yaml_file} not found")
+                return
+            except ValueError:
+                echo_error(f"{yaml_file} is not a valid")
+                return
+
+        os.system(
+            f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file}')
 
 def create_req():
     """
