@@ -1,5 +1,5 @@
-import click, os, json, sys, re
-from . import cli, echo_error, get_config, echo_info
+import click, os, string, sys, re
+from . import cli, echo_error, get_config, echo_info, replace_vars
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -18,11 +18,21 @@ def deploy(action, name, additional_args):
     conf.update(projectConfig[name])
 
     if action == "app":
+        version = replace_vars(
+            conf["version"],
+            {k: v for k, v in conf.items() if k not in ["version"]}
+        )
+
+        # gcloud only allows for version identifiers following these rules
+        if not all([ch in (string.ascii_letters + string.digits + "-") for ch in version]):
+            echo_error(f"version name '{version}' contains invalid characters!")
+            return
+
         # rebuild requirements.txt
         create_req()
 
         os.system(
-            f'gcloud app deploy --project={conf["application_name"]} --version={conf["version"]} --no-promote {" ".join(additional_args)} {conf["distribution_folder"]}')
+            f'gcloud app deploy --project={conf["application_name"]} --version={version} --no-promote {" ".join(additional_args)} {conf["distribution_folder"]}')
     else:
         if action not in ["index", "queue", "cron"]:
             echo_error(f"{action} is not a valid action. Valid is app, index, queue, cron")
