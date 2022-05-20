@@ -2,6 +2,13 @@
 
 This file documents any relevant changes.
 
+## [main] - current main branch
+- feat: use of `$(variable)` placeholders in version strings, allows to use
+  - `$(user)` for the username
+  - `$(day)` for current date's day
+  - `$(month)` for current date's month
+  - `$(year)` for current date's year
+
 ## [0.6.19] - 2022-05-18
 - fix: requirements regeneration now respects dependency extras with hash
 
