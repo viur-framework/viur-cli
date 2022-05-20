@@ -2,7 +2,8 @@
 
 This file documents any relevant changes.
 
-## [main] - current main branch
+## [0.7.0] - 2022-05-20
+- feat: index.yaml will be sorted before deployment
 - feat: use of `$(variable)` placeholders in version strings, allows to use all
   project configuration values, and additionally for these placeholders:
   - `$(user)` for the username
