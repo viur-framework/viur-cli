@@ -39,7 +39,7 @@ def replace_vars(string: str, vars: typing.Optional[typing.Dict[str, str]] = Non
 
     # date values
     now = datetime.datetime.now()
-    for item in ["day", "month", "year"]:
+    for item in ["day", "month", "year", "hour", "minute", "second"]:
         if item not in vars:
             vars[item] = "%02d" % getattr(now, item)
 
