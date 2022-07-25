@@ -2,6 +2,9 @@
 
 This file documents any relevant changes.
 
+## [0.7.1] - 2022-07-25
+- chore: updated app_server to 0.9.1
+
 ## [0.7.0] - 2022-05-20
 - feat: index.yaml will be sorted before deployment
 - feat: use of `$(variable)` placeholders in version strings, allows to use all
