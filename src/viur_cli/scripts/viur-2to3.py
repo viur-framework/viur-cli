@@ -14,6 +14,7 @@ lookup = {
     "editItemSuccess": "editSuccess",
     "from server import": "from viur.core import",
     "from server.bones import": "from viur.core.bones import",
+   "getEmtpyValueFunc": "getEmptyValueFunc",
 }
 
 bones = [
