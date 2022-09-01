@@ -23,10 +23,8 @@ def deploy(action, name, additional_args):
             {k: v for k, v in conf.items() if k not in ["version"]}
         )
 
-        # gcloud only allows for version identifiers following these rules
-        if not all([ch in (string.ascii_letters + string.digits + "-") for ch in version]):
-            echo_error(f"version name '{version}' contains invalid characters!")
-            return
+        # gcloud only allows for version identifiers in lower-case order and only accepting these characters
+        version = "".join([c for c in version.lower() if c in string.ascii_lowercase + string.digits + "-"])
 
         # rebuild requirements.txt
         create_req()
