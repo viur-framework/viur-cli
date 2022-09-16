@@ -1,6 +1,10 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.7.3] - 2022-09-16
+- feat: added 2-to-3 script
+- fix: proejctname enforces lowercase
+
 ## [0.7.2] - 2022-07-25
 - chore: updated app_server to 0.9.2
 
