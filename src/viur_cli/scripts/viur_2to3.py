@@ -48,7 +48,7 @@ lookup.update({
     f"{name}Bone": f"{name[0].upper()}{name[1:]}Bone" for name in bones
 })
 
-if __name__ == "__main__":
+def main():
     # Get arguments
     ap = argparse.ArgumentParser(
         description="ViUR2-to-ViUR3 porting tool"
@@ -116,3 +116,6 @@ if __name__ == "__main__":
                             )
                         )
                     )
+
+if __name__ == "__main__":
+    main()

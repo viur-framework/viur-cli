@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.7.4] - 2022-09-23
+- fix: 2-to-3 script was broken 
+
 ## [0.7.3] - 2022-09-16
 - feat: added 2-to-3 script
 - fix: proejctname enforces lowercase
