@@ -14,7 +14,12 @@ lookup = {
     "editItemSuccess": "editSuccess",
     "from server import": "from viur.core import",
     "from server.bones import": "from viur.core.bones import",
-   "getEmtpyValueFunc": "getEmptyValueFunc",
+    "getEmtpyValueFunc": "getEmptyValueFunc",
+    "utils.projectID": "conf[\"viur.instance.project_id\"]",
+    "utils.isLocalDevelopmentServer": "conf[\"viur.instance.is_dev_server\"]",
+    "projectID": "conf[\"viur.instance.project_id\"]",
+    "isLocalDevelopmentServer": "conf[\"viur.instance.is_dev_server\"]",
+    "callDeferred": "CallDeferred",
 }
 
 bones = [
