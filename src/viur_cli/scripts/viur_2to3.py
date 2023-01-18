@@ -53,16 +53,52 @@ lookup.update({
     f"{name}Bone": f"{name[0].upper()}{name[1:]}Bone" for name in bones
 })
 
+
+def make_2to3(args, filename):
+    """
+    Performs the conversion on a file with the provided options.
+    """
+    with open(filename, "r") as f:
+        original_content = content = f.read()
+
+    count = 0
+    for k, v in lookup.items():
+        if k in content:
+            content = content.replace(k, v)
+            count += 1
+
+    if count:
+        if not args.dryrun:
+            if not args.daredevil:
+                os.rename(filename, filename + ".bak")
+
+            with open(filename, "w") as f:
+                f.write(content)
+
+            print("Modified %r" % filename)
+        else:
+            print(
+                "\n".join(
+                    difflib.unified_diff(
+                        original_content.splitlines(),
+                        content.splitlines(),
+                        filename,
+                        filename
+                    )
+                )
+            )
+
+
 def main():
     # Get arguments
     ap = argparse.ArgumentParser(
-        description="ViUR2-to-ViUR3 porting tool"
+        description="ViUR3 porting tool"
     )
 
     ap.add_argument(
-        "project_root",
+        "path",
         type=str,
-        help="ViUR project root"
+        help="Path to file or folder"
     )
 
     ap.add_argument(
@@ -78,49 +114,25 @@ def main():
 
     args = ap.parse_args()
 
-    # Iterate all files in current folder
-    for root, dirs, files in os.walk(args.project_root):
-        # Ignore ViUR library folders
-        if any(ignore in root for ignore in ["viur", "flare", "html5"]):
-            continue
+    if os.path.isfile(args.path):
+        make_2to3(args, args.path)
+    else:
+        assert os.path.isdir(args.path), f"The path {args.path!r} is invalid!"
 
-        for filename in files:
-            # Ignore anything without a .py-extension
-            ext = os.path.splitext(filename)[1].lower()[1:]
-            if ext not in ["py"]:
+        # Iterate all files in current folder
+        for root, dirs, files in os.walk(args.path):
+            # Ignore ViUR library folders
+            if any(ignore in root for ignore in ["viur", "flare", "html5"]):
                 continue
 
-            filename = os.path.join(root, filename)
+            for filename in files:
+                # Ignore anything without a .py-extension
+                ext = os.path.splitext(filename)[1].lower()[1:]
+                if ext not in ["py"]:
+                    continue
 
-            with open(filename, "r") as f:
-                original_content = content = f.read()
+                make_2to3(args, os.path.join(root, filename))
 
-            count = 0
-            for k, v in lookup.items():
-                if k in content:
-                    content = content.replace(k, v)
-                    count += 1
-
-            if count:
-                if not args.dryrun:
-                    if not args.daredevil:
-                        os.rename(filename, filename + ".bak")
-
-                    with open(filename, "w") as f:
-                        f.write(content)
-
-                    print("Modified %r" % filename)
-                else:
-                    print(
-                        "\n".join(
-                            difflib.unified_diff(
-                                original_content.splitlines(),
-                                content.splitlines(),
-                                filename,
-                                filename
-                            )
-                        )
-                    )
 
 if __name__ == "__main__":
     main()
