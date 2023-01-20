@@ -34,18 +34,18 @@ bones = [
     "key",
     "numeric",
     "password",
-    "randomslice",
+    "randomSlice",
     "raw",
     "record",
     "relational",
-    "selectcountry",
+    "selectCountry",
     "select",
     "sortindex",
     "spatial",
     "string",
     "text",
-    "treeleaf",
-    "treenode",
+    "treeLeaf",
+    "treeNode",
     "user"
 ]
 
