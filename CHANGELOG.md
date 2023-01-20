@@ -1,6 +1,11 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.7.5] - 2023-01-20
+- fix: 2-to-3 correct some old boneNames
+- docu: 2-to-3 documentation added to readme
+- feat: 2-to-3 can be applied to a single file
+
 ## [0.7.4] - 2022-09-23
 - fix: 2-to-3 script was broken 
 
