@@ -1,6 +1,10 @@
 # Changelog
 
 This file documents any relevant changes.
+
+## [0.7.6] - 2023-02-17
+- feat: download vi 4 with: `viur vi --next`
+
 ## [0.7.5] - 2023-01-20
 - fix: 2-to-3 correct some old boneNames
 - docu: 2-to-3 documentation added to readme
