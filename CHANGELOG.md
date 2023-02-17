@@ -2,6 +2,9 @@
 
 This file documents any relevant changes.
 
+## [0.7.7] - 2023-02-17
+- fix: broken `viur vi` command
+
 ## [0.7.6] - 2023-02-17
 - feat: download vi 4 with: `viur vi --next`
 

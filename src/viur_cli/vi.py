@@ -5,7 +5,7 @@ from urllib.request import urlretrieve
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("version", default="latest")
-@click.option('--next', '-n', is_flag=True)
+@click.option('--next', '-n', 'next_',  is_flag=True, default=False)
 def vi(version, next_):
 
     if next_:
