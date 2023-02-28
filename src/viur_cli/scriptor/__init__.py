@@ -1,1 +1,1 @@
-from .cli import scriptor
+from .cli import script

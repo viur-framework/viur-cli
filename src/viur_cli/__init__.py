@@ -8,4 +8,4 @@ from .deploy import *
 from .local import *
 from .vi import *
 from .setup import *
-from .scriptor import scriptor
+from .scriptor import script

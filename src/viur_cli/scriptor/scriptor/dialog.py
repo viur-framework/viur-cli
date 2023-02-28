@@ -1,3 +1,14 @@
+"""
+Dialogs API.
+
+This module provides several dialogs to be used for several user-interactions.
+
+- alert: Show a modal message to be confirmed
+- confirm: Show a Yes-No or Yes-No-Cancel dialog
+- input: Input dialog with various types
+- select: Select choice of several options, with multi-selection option.
+"""
+
 from .utils import is_pyodide_context
 
 if is_pyodide_context():
@@ -11,8 +22,8 @@ else:
 
 import time
 import datetime
-import time
 import math
+
 
 async def wait():
     if is_pyodide_context():
@@ -22,41 +33,50 @@ async def wait():
         await asyncio.sleep(250)
 
 async def alert(text: str):
+    """
+    Provide a message and stop program execution until accepted.
+    """
     if is_pyodide_context():
         _self.postMessage(type="alert", text=text)
-        await wait();
+        await wait()
         manager.reset()
         manager.resultValue = None
     else:
-        click.prompt("Press a key")
-        
+        click.pause("Press any key to continue")
 
-async def confirm(title: str, text: str, cancel: bool = False) -> str:
+
+async def confirm(text: str, *, title: str = "Confirm", allow_cancel: bool = False) -> bool | None:
+    """
+    Provide a Yes-No or Yes-No-Cancel-dialog.
+    """
     if is_pyodide_context():
-        _self.postMessage(type="confirm", title=title, text=text, cancel=cancel)
-        await wait(); 
-        tmp = manager.copyResult()
+        _self.postMessage(type="confirm", title=title, text=text, cancel=allow_cancel)
+        await wait()
+        ret = manager.copyResult()
         manager.reset()
         manager.resultValue = None
 
-        return tmp
+        if ret < 0:
+            return None
+        elif ret == 0:
+            return False
+
+        ret = True
+
     else:
-        value = 0
-        try:
-            value = int(click.confirm(text, abort=True))
-        except:
-            value = -1
-        return value
+        ret = click.confirm(text, abort=allow_cancel)
+
+    return ret
 
 
-# time = true
-# datetim-picker local
+async def input(text: str, *, title: str = "Input", type: str = "input", use_time: bool = False, empty: bool = False):
+    """
+    Provide a dialog asking for some value.
+    """
 
-
-async def input(title: str, text: str, type: str, use_time: bool = False, empty: bool = False):
     if is_pyodide_context():
         _self.postMessage(type="input", title=title, text=text, input_type=type, use_time=use_time, empty=empty)
-        await wait(); 
+        await wait()
         tmp = manager.copyResult()
         manager.reset()
         manager.resultValue = None
@@ -64,10 +84,10 @@ async def input(title: str, text: str, type: str, use_time: bool = False, empty:
         if type == "date":
             console.error(tmp)
             return datetime.datetime.fromtimestamp(math.floor(tmp/1000.0))
-        
+
         return tmp
     else:
-        click.echo(title)
+        # click.echo(title)  # not required
         ret = click.prompt(text)
         if type == "date":
             def validate_date(date_text):
@@ -76,7 +96,7 @@ async def input(title: str, text: str, type: str, use_time: bool = False, empty:
                 except ValueError:
                     click.echo("Incorrect data format, should be YYYY-MM-DD")
 
-            
+
                 return None
 
             def validate_datetime(date_text):
@@ -84,16 +104,16 @@ async def input(title: str, text: str, type: str, use_time: bool = False, empty:
                     return datetime.datetime.fromisoformat(date_text)
                 except ValueError:
                     click.echo("Incorrect data format, should be YYYY-MM-DD HH:MM:SS")
-            
+
                 return None
- 
+
             if use_time:
                 while not validate_date(ret):
                     ret = click.prompt(text)
             else:
                 while not validate_datetime(ret):
                     ret = click.prompt(text)
-            
+
             return ret
         elif type == "number":
             def check_number(value: str):
@@ -120,19 +140,19 @@ async def input(title: str, text: str, type: str, use_time: bool = False, empty:
             return ret
 
 async def input_date(*args, **kwargs):
-    kwargs.update({"type": "date"})
+    kwargs |= {"type": "date"}
     return await input(*args, **kwargs)
 
 async def input_number(*args, **kwargs):
-    kwargs.update({"type": "number"})
+    kwargs |= {"type": "number"}
     return await input(*args, **kwargs)
 
 async def input_string(*args, **kwargs):
-    kwargs.update({"type": "string"})
+    kwargs |= {"type": "string"}
     return await input(*args, **kwargs)
 
 async def input_text(*args, **kwargs):
-    kwargs.update({"type": "text"})
+    kwargs |= {"type": "text"}
     return await input(*args, **kwargs)
 
 input.date = input_date
@@ -151,7 +171,7 @@ async def select(title: str, text: str, choices: list[int], multiple: bool = Fal
         _choices = to_js(_choices)
 
         _self.postMessage(type="select", title=title, text=text, choices=_choices, multiple=multiple)
-        await wait(); 
+        await wait()
 
         tmp = manager.resultValue
         if multiple:
@@ -161,13 +181,13 @@ async def select(title: str, text: str, choices: list[int], multiple: bool = Fal
 
         return tmp
     else:
-        click.echo(title)
+        # click.echo(title)  # not required
         text += "\n\n"
         for i, _ in enumerate(choices):
             text += str(choices[i]) + (", " if i != len(choices)-1 else "")
             if i > 0 and i % 3 == 0:
                 text += "\n"
-            
+
         lower_choices = [e.lower() for e in choices]
         result_value = -1
         while True:
@@ -203,8 +223,6 @@ async def select(title: str, text: str, choices: list[int], multiple: bool = Fal
                     break
 
         return result_value
-
-
 
     return None
 
