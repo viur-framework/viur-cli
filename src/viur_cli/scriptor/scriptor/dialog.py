@@ -12,9 +12,8 @@ This module provides several dialogs to be used for several user-interactions.
 from .utils import is_pyodide_context
 
 if is_pyodide_context():
-    from js import eval as js_eval, self as _self, Blob
-    from js import console
-
+    import js, pyodide
+    from js import self as _self
     import manager
 else:
     import asyncio
@@ -82,7 +81,7 @@ async def input(text: str, *, title: str = "Input", type: str = "input", use_tim
         manager.resultValue = None
 
         if type == "date":
-            console.error(tmp)
+            js.console.error(tmp)
             return datetime.datetime.fromtimestamp(math.floor(tmp/1000.0))
 
         return tmp
@@ -160,70 +159,52 @@ input.number = input_number
 input.text = input_text
 input.string = input_string
 
-if is_pyodide_context():
-    from pyodide.ffi import to_js
 
+async def select(text: str, choices: tuple[str] | list[str] | dict[str, str], *,
+                 title: str = "Select", multiple: bool = False):
+    if isinstance(choices, (list, tuple)):
+        choices = {str(k): str(k) for k in choices}
 
-async def select(title: str, text: str, choices: list[int], multiple: bool = False):
+    if not isinstance(choices, dict):
+        raise ValueError("'choices' must be either a list or a dict.")
 
-    _choices = choices
+    # Browser-mode
     if is_pyodide_context():
-        _choices = to_js(_choices)
+        choices = pyodide.ffi.to_js(choices, dict_converter=js.Object.fromEntries)
 
-        _self.postMessage(type="select", title=title, text=text, choices=_choices, multiple=multiple)
+        _self.postMessage(type="select", title=title, text=text, choices=choices, multiple=multiple)
         await wait()
 
-        tmp = manager.resultValue
+        ret = manager.resultValue
         if multiple:
-            tmp = list(tmp)
+            ret = ret.to_py()
+
         manager.reset()
         manager.resultValue = None
 
-        return tmp
+        return ret
+
+    # CLI-mode
+    maxkey = max([len(k) for k in choices])
+    menu = [f"{k: <{maxkey}} - {v}" if k != v else str(v) for k, v in choices.items()]
+
+    if not multiple:
+        ret = click.prompt(
+            "\n".join(menu) + "\n" + text,
+            type=click.Choice(list(choices.keys()))
+        )
     else:
-        # click.echo(title)  # not required
-        text += "\n\n"
-        for i, _ in enumerate(choices):
-            text += str(choices[i]) + (", " if i != len(choices)-1 else "")
-            if i > 0 and i % 3 == 0:
-                text += "\n"
+        options = list(choices.keys())
 
-        lower_choices = [e.lower() for e in choices]
-        result_value = -1
         while True:
-            _ret = click.prompt(text)
-            if not multiple:
-                if _ret.lower() in lower_choices:
-                    result_value = lower_choices.index(_ret.lower())
-                    break
-                else:
-                    click.echo("You entered a invalid input!")
-            else:
-                if _ret.find(",") == -1:
-                    if _ret.lower() in lower_choices:
-                        result_value = [lower_choices.index(_ret.lower()), ]
-                        break
-                    else:
-                        click.echo("You entered a invalid input!")
+            ret = click.prompt("\n".join(menu) + "\n" + text + f" ({', '.join(options)})", type=str)
+            ret = [c.strip() for c in ret.split(",")]
+            if all([v in options for v in ret]):
+                break
 
-                else:
-                    result = _ret.split(",")
-                    valid = True
-                    result_value = []
-                    for res in result:
-                        _tmp = res.lower().lstrip()
-                        if not (_tmp in lower_choices):
-                            valid = False
-                            break
-                        result_value.append(lower_choices.index(_tmp))
+            click.echo(f"Invalid input entered. Allowed values: {options}")
 
-                    if not valid:
-                        click.echo("You entered a invalid input!")
-                        continue
-                    break
+    return ret
 
-        return result_value
-
-    return None
 
 
