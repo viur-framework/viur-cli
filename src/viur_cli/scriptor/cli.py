@@ -57,7 +57,9 @@ viur.request.build_url = staticmethod(build_url)
 
 @cli.group()
 def script():
-    """Manage and run scriptor scripts locally on the console"""
+    """
+    Manage and run scriptor scripts locally on the console
+    """
 
 
 @script.command()
@@ -65,6 +67,9 @@ def script():
 @click.option('--username', default=None, help='Set the username')
 @click.option('--working_dir', default=None, help='Set the working directory where scripts are stored to')
 def configure(url: str, username: str, working_dir: str):
+    """
+    Manage configuration settings
+    """
     conf = Config()
 
     if url:
@@ -79,6 +84,9 @@ def configure(url: str, username: str, working_dir: str):
 
 @script.command()
 def setup():
+    """
+    Setup user session with a given username and password
+    """
     config = Config()
     base_url = config.get("base_url")
     try:
@@ -123,6 +131,9 @@ def check_session(ctx: click.Context):
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
 @click.pass_context
 def pull(ctx: click.Context, force: bool):
+    """
+    Pull contents from server to working_dir.
+    """
     check_session(ctx)
     Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
     from .scriptor.module import TreeModule
@@ -172,6 +183,9 @@ def pull(ctx: click.Context, force: bool):
               help='Force push files from the local working directory onto the server')
 @click.pass_context
 def push(ctx: click.Context, force: bool):
+    """
+    Push contents of working_dir to server.
+    """
     check_session(ctx)
     Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
 
@@ -283,6 +297,9 @@ def push(ctx: click.Context, force: bool):
 @click.argument('path', required=True)
 @click.pass_context
 def run(ctx: click.Context, path: str):
+    """
+    Locally run a scriptor script located in the working_dir
+    """
     check_session(ctx)
     Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
 
