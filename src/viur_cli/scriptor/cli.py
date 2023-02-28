@@ -166,7 +166,7 @@ def pull(ctx: click.Context, force: bool):
                             online_content = entry["script"].replace("\r", "").encode("utf-8")
                             file_content = f.read().replace("\r", "").encode("utf-8")
                             if hashlib.sha256(online_content).digest() != hashlib.sha256(file_content).digest():
-                                if click.confirm(f"There is a difference of this file: {entry['path']}. Do you wanna use it?"):
+                                if click.confirm(f"There is a difference with {entry['path']}. Override?"):
                                     os.remove(_path)
                                     create_file()
 
@@ -193,11 +193,7 @@ def push(ctx: click.Context, force: bool):
     tree = TreeModule("script")
 
     async def main():
-        try:
-            await tree.structure("node")
-        except:
-            click.echo("Failed to push... Is the script module included?")
-            return
+        await tree.structure("node")
 
         working_dir = Config().get("WORKING_DIR")
         _files = glob.glob(f"{working_dir}/**/*", recursive=True)
@@ -230,7 +226,7 @@ def push(ctx: click.Context, force: bool):
                         if hashlib.sha256(online_content).digest() != hashlib.sha256(file_content).digest():
                             _state = force
                             if not _state:
-                                _state = click.confirm(f"The content of {file} has changed, override?")
+                                _state = click.confirm(f"Content of {file} changed. Override?")
 
                             if _state:
                                 click.echo(f"Push {_real_file}")
@@ -313,8 +309,6 @@ def run(ctx: click.Context, path: str):
         import importlib
         logging.getLogger().setLevel(logging.INFO)
         module = importlib.import_module(path.removesuffix(".py"))
-        print(module)
-        print(module.__file__)
         await module.main()
 
     asyncio.new_event_loop().run_until_complete(main())
