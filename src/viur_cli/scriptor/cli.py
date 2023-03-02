@@ -261,9 +261,9 @@ def push(ctx: click.Context, force: bool):
 
                     args = {
                         "name": last,
-                        "parentrepo": root_node_entry["key"],
-                        "parententry": parent_entry["key"],
-                        "rootNode": False,
+                        #"parentrepo": root_node_entry["key"],
+                        #"parententry": parent_entry["key"],
+                        "node": parent_entry["key"],
                         "path": file,
                         "plugin": False
                     }
