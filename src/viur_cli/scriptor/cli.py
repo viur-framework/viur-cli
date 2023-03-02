@@ -163,9 +163,8 @@ def pull(ctx: click.Context, force: bool):
                         create_file()
                     else:
                         with open(_path, "r") as f:
-                            online_content = entry["script"].replace("\r", "").encode("utf-8")
-                            file_content = f.read().replace("\r", "").encode("utf-8")
-                            if hashlib.sha256(online_content).digest() != hashlib.sha256(file_content).digest():
+                            if hashlib.sha256(entry["script"].encode()).digest() \
+                                    != hashlib.sha256(f.read().encode()).digest():
                                 if click.confirm(f"There is a difference with {entry['path']}. Override?"):
                                     os.remove(_path)
                                     create_file()
@@ -195,7 +194,7 @@ def push(ctx: click.Context, force: bool):
     async def main():
         await tree.structure("node")
 
-        working_dir = Config().get("WORKING_DIR")
+        working_dir = Config().get("working_dir")
         _files = glob.glob(f"{working_dir}/**/*", recursive=True)
 
         for file in _files:
@@ -220,10 +219,11 @@ def push(ctx: click.Context, force: bool):
             try:
                 entry = await anext(tree.list(_type, {"path": file}))
                 if _type == "leaf":
-                    online_content = entry["script"].replace("\r", "").encode("utf-8")
                     with open(_real_file, "r") as f:
-                        file_content = f.read().replace("\r", "").encode("utf-8")
-                        if hashlib.sha256(online_content).digest() != hashlib.sha256(file_content).digest():
+                        file_content = f.read()
+
+                        if hashlib.sha256(entry["script"].encode("utf-8")).digest() \
+                                != hashlib.sha256(file_content.encode("utf-8")).digest():
                             _state = force
                             if not _state:
                                 _state = click.confirm(f"Content of {file} changed. Override?")
