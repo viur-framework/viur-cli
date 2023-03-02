@@ -308,10 +308,10 @@ def run(ctx: click.Context, path: str):
         import logging
         import importlib
         logging.getLogger().setLevel(logging.INFO)
-        module = importlib.import_module(path.removesuffix(".py"))
+
+        # fixme: there should be a better method than this below
+        module = importlib.import_module(path.replace("/", ".").removesuffix(".py"))
+
         await module.main()
 
     asyncio.new_event_loop().run_until_complete(main())
-
-
-
