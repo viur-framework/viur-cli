@@ -68,7 +68,7 @@ def script():
 @click.option('--working_dir', default=None, help='Set the working directory where scripts are stored to')
 def configure(url: str, username: str, working_dir: str):
     """
-    Manage configuration settings
+    Manage configuration settings.
     """
     conf = Config()
 
@@ -85,7 +85,7 @@ def configure(url: str, username: str, working_dir: str):
 @script.command()
 def setup():
     """
-    Setup user session with a given username and password
+    Setup user session with a given username and password.
     """
     config = Config()
     base_url = config.get("base_url")
@@ -294,7 +294,7 @@ def push(ctx: click.Context, force: bool):
 @click.pass_context
 def run(ctx: click.Context, path: str):
     """
-    Locally run a scriptor script located in the working_dir
+    Locally run a script located in the working_dir.
     """
     check_session(ctx)
     Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
