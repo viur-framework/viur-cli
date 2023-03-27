@@ -4,7 +4,7 @@
     <a href="https://pypi.org/project/viur-cli/">
         <img alt="Badge showing current PyPI version" title="PyPI" src="https://img.shields.io/pypi/v/viur-cli">
     </a>
-    <a href="https://opensource.org/licenses/MIT">
+    <a href="LICENSE">
         <img src="https://img.shields.io/pypi/l/viur-cli" alt="Badge displaying the license" title="License badge">
     </a>
     <br>
