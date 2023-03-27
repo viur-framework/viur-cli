@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [0.7.8] - 2023-03-27
+- chore: updated app_server to 0.9.3
+- chore: updated click to 8.1.3
 
 ## [0.7.7] - 2023-02-17
 - fix: broken `viur vi` command
