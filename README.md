@@ -4,8 +4,8 @@
     <a href="https://pypi.org/project/viur-cli/">
         <img alt="Badge showing current PyPI version" title="PyPI" src="https://img.shields.io/pypi/v/viur-cli">
     </a>
-    <a href="https://opensource.org/licenses/MIT">
-        <img src="https://img.shields.io/pypi/l/viur-cli" alt="Badge displaying the license" title="License badge">
+    <a href="LICENSE">
+        <img src="https://img.shields.io/github/license/viur-framework/viur-cli" alt="Badge displaying the license" title="License badge">
     </a>
     <br>
     Command-line interface for <a href="https://www.viur.dev">ViUR framework</a> project maintenance.
