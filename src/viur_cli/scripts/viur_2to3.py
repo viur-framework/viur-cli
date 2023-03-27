@@ -7,19 +7,25 @@ import os, argparse, difflib
 
 # Naive lookup table. Could be done better later...
 lookup = {
-    "onItemAdded": "onAdded",
-    "onItemEdited": "onEdited",
-    "onItemDeleted": "onDeleted",
+    "BasicApplication": "SkelModule",
     "addItemSuccess": "addSuccess",
+    "callDeferred": "CallDeferred",
     "editItemSuccess": "editSuccess",
     "from server import": "from viur.core import",
     "from server.bones import": "from viur.core.bones import",
     "getEmtpyValueFunc": "getEmptyValueFunc",
-    "utils.projectID": "conf[\"viur.instance.project_id\"]",
-    "utils.isLocalDevelopmentServer": "conf[\"viur.instance.is_dev_server\"]",
-    "projectID": "conf[\"viur.instance.project_id\"]",
     "isLocalDevelopmentServer": "conf[\"viur.instance.is_dev_server\"]",
-    "callDeferred": "CallDeferred",
+    "onItemAdded": "onAdded",
+    "onItemDeleted": "onDeleted",
+    "onItemEdited": "onEdited",
+    "projectID": "conf[\"viur.instance.project_id\"]",
+    "utils.currentLanguage": "current.language",
+    "utils.currentRequest": "current.request",
+    "utils.currentRequestData": "current.request_data",
+    "utils.currentSession": "current.session",
+    "utils.getCurrentUser": "current.user.get",
+    "utils.isLocalDevelopmentServer": "conf[\"viur.instance.is_dev_server\"]",
+    "utils.projectID": "conf[\"viur.instance.project_id\"]",
 }
 
 bones = [
