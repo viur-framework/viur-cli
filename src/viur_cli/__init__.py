@@ -7,3 +7,4 @@ from .npm import *
 from .release import *
 from .setup import *
 from .version import *
+from .scriptor import script
