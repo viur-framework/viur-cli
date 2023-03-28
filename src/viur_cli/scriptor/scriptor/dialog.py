@@ -31,6 +31,7 @@ async def wait():
     else:
         await asyncio.sleep(250)
 
+
 async def alert(text: str):
     """
     Provide a message and stop program execution until accepted.
@@ -82,7 +83,7 @@ async def input(text: str, *, title: str = "Input", type: str = "input", use_tim
 
         if type == "date":
             js.console.error(tmp)
-            return datetime.datetime.fromtimestamp(math.floor(tmp/1000.0))
+            return datetime.datetime.fromtimestamp(math.floor(tmp / 1000.0))
 
         return tmp
     else:
@@ -94,7 +95,6 @@ async def input(text: str, *, title: str = "Input", type: str = "input", use_tim
                     return datetime.date.fromisoformat(date_text)
                 except ValueError:
                     click.echo("Incorrect data format, should be YYYY-MM-DD")
-
 
                 return None
 
@@ -126,6 +126,7 @@ async def input(text: str, *, title: str = "Input", type: str = "input", use_tim
                     except:
                         return None
                 return None
+
             while True:
                 ret = check_number(ret)
                 if ret is None:
@@ -138,21 +139,26 @@ async def input(text: str, *, title: str = "Input", type: str = "input", use_tim
         else:
             return ret
 
+
 async def input_date(*args, **kwargs):
     kwargs |= {"type": "date"}
     return await input(*args, **kwargs)
+
 
 async def input_number(*args, **kwargs):
     kwargs |= {"type": "number"}
     return await input(*args, **kwargs)
 
+
 async def input_string(*args, **kwargs):
     kwargs |= {"type": "string"}
     return await input(*args, **kwargs)
 
+
 async def input_text(*args, **kwargs):
     kwargs |= {"type": "text"}
     return await input(*args, **kwargs)
+
 
 input.date = input_date
 input.number = input_number
@@ -205,6 +211,3 @@ async def select(text: str, choices: tuple[str] | list[str] | dict[str, str], *,
             click.echo(f"Invalid input entered. Allowed values: {options}")
 
     return ret
-
-
-
