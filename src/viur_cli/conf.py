@@ -7,7 +7,7 @@ import os
 import json
 from .utils import *
 
-DEFAULT_PYODIDE_VERSION = "v0.19.1"
+DEFAULT_PYODIDE_VERSION = "0.19.1"
 
 projectConfig = None
 projectConfigFilePath = "project.json"
@@ -204,10 +204,21 @@ def update_config(path=None):
     assert projectConfig, "load_config() must be called first!"
 
     if "format" not in projectConfig["default"]:
-        projectConfig["default"]["format"] = "1.0.0"
+        projectConfig["default"]["format"] = "1.0.1"
 
     if "pyodide" not in projectConfig["default"]:
         projectConfig["default"]["pyodide"] = DEFAULT_PYODIDE_VERSION
 
     # conf updates must increase format version
     write_config(projectConfig, path)
+
+    if projectConfig["default"]["pyodide"].startswith("v"):
+        projectConfig["default"]["pyodide"] = projectConfig["default"]["pyodide"][1:] #remove v prefix
+
+    if projectConfig["default"]["vi"].startswith("v"):
+        projectConfig["default"]["vi"] = projectConfig["default"]["vi"][1:]  # remove v prefix
+
+    if projectConfig["default"]["format"] == "1.0.0":
+        projectConfig["default"]["format"] = "1.0.1"
+
+

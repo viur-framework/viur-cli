@@ -43,7 +43,7 @@ def vi(version, next_):
             except:
                 echo_error("Error while fetching version info")
         else:
-            projectConfig["default"]["vi"] = f'v{version}'
+            projectConfig["default"]["vi"] = f'{version}'
             write_config(projectConfig)
 
     get_version_info(version)
@@ -94,7 +94,7 @@ def downloadnextvi():
             except:
                 echo_error("Error while fetching version info")
         else:
-            projectConfig["default"]["vi"] = f'v{version}'
+            projectConfig["default"]["vi"] = f'{version}'
             write_config(projectConfig)
 
     get_version_info(version)
@@ -148,7 +148,7 @@ def scriptor(version):
             except:
                 echo_error("Error while fetching version info")
         else:
-            projectConfig["default"]["scriptor"] = f'v{version}'
+            projectConfig["default"]["scriptor"] = f'{version}'
             write_config(projectConfig)
 
     get_version_info(version)
