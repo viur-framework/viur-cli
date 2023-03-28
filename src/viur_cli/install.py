@@ -128,7 +128,7 @@ def downloadnextvi():
 @click.argument("version", default="latest")
 def scriptor(version):
     """
-    Install scriptor IDE from official release.
+    Install scriptor IDE.
     """
     projectConfig = get_config()
     dist_folder = projectConfig["default"]["distribution_folder"]
