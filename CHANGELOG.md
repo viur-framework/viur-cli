@@ -4,7 +4,7 @@ This file documents any relevant changes.
 
 ## [1.0.0] 2023-03-29
 - feat: added `viur install` subcommand to install scriptor and vi
-- fix: removed viur vi command use `viur install vi` instead
+- fix: `viur vi` command is deprecated use `viur install vi` instead
 - feat: added `viur script` command to use scriptor scripts
 - fix: 2-to-3 script viur 3.3.4 updates
 - fix: unified version schema
@@ -12,6 +12,7 @@ This file documents any relevant changes.
 - fix: removed `viur release` command
 - feat: apps are now listed in a builds object in the project.json
 - feat: 2 app kinds flare and npm are supported
+- feat: added `viur project scanNpm` to add existing npm apps
 
 ## [0.7.8] - 2023-03-27
 - chore: updated app_server to 0.9.3

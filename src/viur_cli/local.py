@@ -1,5 +1,6 @@
 import click, os, shutil, subprocess
-from . import cli, echo_error, get_config
+from . import cli, echo_error, get_config, utils
+from .install import vi as vi_install
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -114,3 +115,14 @@ def env():
         click.echo(f"{valid_icon} {versionString}")
     else:
         click.echo(f"{failed_icon} gcloud")
+
+@cli.command()
+@click.argument("version", default="latest")
+@click.option('--next', '-n', 'next_',  is_flag=True, default=False)
+def vi(version, next_):
+    """DEPRECATED please use viur install vi"""
+    utils.echo_info("DEPRECATED please use: viur install vi")
+    if next_:
+        os.system(f'viur install vi --next')
+    else:
+        os.system(f'viur install vi')

@@ -6,9 +6,7 @@ from . import cli, echo_error, utils, conf
 
 @cli.group()
 def build():
-    """
-    Build VIUR project
-    """
+    """Build VIUR project"""
 
 @build.command(context_settings={"ignore_unknown_options": True})
 @click.argument("name", default='develop')

@@ -38,6 +38,7 @@ def project(action):
 @cli.command()
 @click.argument("action", type=click.Choice(['ssl']))
 def fix(action):
+    """ssl fix for macos"""
     if action =="ssl":
         os.system("chmod +x scripts/macos_certificate_fix.command && ./scripts/macos_certificate_fix.command")
         click.echo()
