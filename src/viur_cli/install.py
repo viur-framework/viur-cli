@@ -5,17 +5,14 @@ from urllib.request import urlretrieve
 
 @cli.group()
 def install():
-    """
-    Install VIUR features
-    """
+    """Install VIUR features"""
 
 @install.command()
 @click.argument("version", default="latest")
 @click.option('--next', '-n', 'next_',  is_flag=True, default=False)
 def vi(version, next_):
-    """
-    Install VI administration interface.
-    """
+    """Install VI administration interface."""
+
     if next_:
         downloadnextvi()
         return 0
@@ -127,9 +124,7 @@ def downloadnextvi():
 @install.command()
 @click.argument("version", default="latest")
 def scriptor(version):
-    """
-    Install scriptor IDE.
-    """
+    """Install scriptor IDE."""
     projectConfig = get_config()
     dist_folder = projectConfig["default"]["distribution_folder"]
 

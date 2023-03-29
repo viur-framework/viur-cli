@@ -7,4 +7,5 @@ from .npm import *
 from .build import *
 from .setup import *
 from .version import *
-from .scriptor import script
+from .scriptor import scriptor
+from .script import *
