@@ -2,7 +2,7 @@
 
 This file documents any relevant changes.
 
-## [1.0.0] 2023-03-29
+## [1.0.0rc1] 2023-03-29
 - feat: added `viur install` subcommand to install scriptor and vi
 - fix: `viur vi` command is deprecated use `viur install vi` instead
 - feat: added `viur scriptor` command to use scriptor scripts
