@@ -6,6 +6,7 @@ import click
 import os
 import json
 from .utils import *
+from pathlib import Path
 
 DEFAULT_PYODIDE_VERSION = "0.19.1"
 
@@ -35,7 +36,7 @@ def create_new_config(ctx, path=None):
             "format":"1.0.0",
             "distribution_folder": deployFolder,
             "sources_folder": sourcesFolder,
-            "flare": {},
+            "builds": {},
             "vi": "submodule",
             "core": "submodule",
             "pyodide": click.prompt('pyodide', default=DEFAULT_PYODIDE_VERSION)
@@ -56,8 +57,9 @@ def create_new_config(ctx, path=None):
     else:
         if os.path.exists("./sources/vi"):
             echo_info("Found vi application. Added to projet.json.")
-            _projectconf["default"]["flare"].update({
+            _projectconf["default"]["builds"].update({
                 'vi': {
+                    "kind": "flare",
                     "source": './sources/vi/vi',
                     "target": './deploy/vi'
                 }
@@ -67,8 +69,9 @@ def create_new_config(ctx, path=None):
                            show_default=True):
             os.system(
                 f'git submodule add https://github.com/viur-framework/viur-vi sources/vi && git submodule update --init --recursive')
-            _projectconf["default"]["flare"].update({
+            _projectconf["default"]["builds"].update({
                 'vi': {
+                    "kind": "flare",
                     "source": './sources/vi/vi',
                     "target": './deploy/vi'
                 }
@@ -164,11 +167,12 @@ def add_to_flare_config(projectconf):
     if "default" not in projectconf:
         raise click.ClickException(click.style("default entry is missing", fg="red"))
 
-    if not "flare" in projectconf["default"]:
-        projectconf["default"].update({"flare": {}})
+    if not "builds" in projectconf["default"]:
+        projectconf["default"].update({"builds": {}})
 
-    projectconf["default"]["flare"].update({
+    projectconf["default"]["builds"].update({
         click.prompt('name'): {
+            "kind": "flare",
             "source": click.prompt('source'),
             "target": click.prompt('target')
         }
@@ -181,7 +185,7 @@ def remove_from_flare_config(flareAppName):
     """remove a flare app from project.json"""
     global projectConfig
     try:
-        del projectConfig["default"]["flare"][flareAppName]
+        del projectConfig["default"]["builds"][flareAppName]
         write_config(projectConfig)
     except:
         raise click.ClickException(click.style(f"{flareAppName} not found", fg="red"))
@@ -199,9 +203,57 @@ def fetch_core_version():
             projectConfig["default"]["core"] = "submodule"
             write_config(projectConfig)
 
+def add_npm_apps():
+    global projectConfig
+    if "default" not in projectConfig:
+        raise click.ClickException(click.style("default entry is missing", fg="red"))
+
+    sourceFolder = projectConfig["default"]["sources_folder"]
+
+    for path in Path(sourceFolder).rglob('package.json'):
+        if "/node_modules/" not in str(path):
+            sourcepath = str(path).replace(sourceFolder[2:],"").replace("package.json","")
+
+            if "/vi/vi/" in sourcepath or "/examples/" in sourcepath or "/example/" in sourcepath:
+                continue
+
+            if sourcepath == "/vi/vi-base/":
+                if click.confirm(f"Do you want to add the vue vi to your apps?"):
+                    projectConfig["default"]["builds"].update({
+                        "vvi": {
+                            "kind": "npm",
+                            "source": sourcepath[:-1],
+                            "command": "build"
+                        }
+                    })
+
+            elif click.confirm(f"Do you want to add {sourcepath} to your apps?"):
+                if not "builds" in projectConfig["default"]:
+                    projectConfig["default"].update({"builds": {}})
+
+                pathparts = sourcepath.strip("/").split("/")
+                if len(pathparts) == 1:
+                    defaultname = sourcepath.strip("/").split("/")[0].replace("viur-", "")
+                elif len(pathparts) > 1:
+                    defaultname = sourcepath.strip("/").split("/")[0].replace("viur-", "")+"_"+sourcepath.strip("/").split("/")[-1].replace("viur-", "")
+                else:
+                    defaultname = None
+
+
+                projectConfig["default"]["builds"].update({
+                    click.prompt('name', default=defaultname): {
+                        "kind": "npm",
+                        "source": sourcepath[:-1],
+                        "command": click.prompt('command', default="build")
+                    }
+                })
+    return projectConfig
+
 
 def update_config(path=None):
     assert projectConfig, "load_config() must be called first!"
+
+    assert projectConfig["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0"], "Invalid formatversion, you have to fix it manually"
 
     if "format" not in projectConfig["default"]:
         projectConfig["default"]["format"] = "1.0.1"
@@ -209,8 +261,7 @@ def update_config(path=None):
     if "pyodide" not in projectConfig["default"]:
         projectConfig["default"]["pyodide"] = DEFAULT_PYODIDE_VERSION
 
-    # conf updates must increase format version
-    write_config(projectConfig, path)
+    ##################### Version 1.0.1
 
     if projectConfig["default"]["pyodide"].startswith("v"):
         projectConfig["default"]["pyodide"] = projectConfig["default"]["pyodide"][1:] #remove v prefix
@@ -220,5 +271,25 @@ def update_config(path=None):
 
     if projectConfig["default"]["format"] == "1.0.0":
         projectConfig["default"]["format"] = "1.0.1"
+
+    ##################### Version 1.1.0
+
+    if "flare" in projectConfig["default"]:
+        builds = projectConfig["default"]["flare"].copy()
+        for k,v in builds.items():
+            builds[k]["kind"] = "flare"
+
+        projectConfig["default"]["builds"] = builds
+        del projectConfig["default"]["flare"]
+
+    if projectConfig["default"]["format"] == "1.0.1":
+        projectConfig["default"]["format"] = "1.1.0"
+        echo_info("viur-cli tries to find npm applications")
+        add_npm_apps()
+
+    # conf updates must increase format version
+    write_config(projectConfig, path)
+
+
 
 

@@ -17,7 +17,7 @@ def cli(ctx):
 
 
 @cli.command()
-@click.argument("action", type=click.Choice(['add', 'remove', 'list', 'addFlare']))
+@click.argument("action", type=click.Choice(['add', 'remove', 'list', 'addFlare', 'scanNpm']))
 def project(action):
     """manage project.json and generate if missing"""
     projectConfig = get_config()
@@ -25,6 +25,9 @@ def project(action):
         add_to_config()
     elif action == "addFlare":
         _projectconf = add_to_flare_config(projectConfig)
+        write_config(_projectconf)
+    elif action == "scanNpm":
+        _projectconf = add_npm_apps()
         write_config(_projectconf)
     elif action == "remove":
         remove_from_config()

@@ -4,7 +4,7 @@ from .flare import *
 from .install import *
 from .local import *
 from .npm import *
-from .release import *
+from .build import *
 from .setup import *
 from .version import *
 from .scriptor import script
