@@ -97,11 +97,11 @@ The GUI version is called scriptor and can be accessed via a webinterface, but v
 $ viur script {configure|pull|push|run|setup}
 ```
 Commands:
-  configure  Manage configuration settings.
-  pull       Pull contents from server to working_dir.
-  push       Push contents of working_dir to server.
-  run        Locally run a script located in the working_dir.
-  setup      Setup user session with a given username and...
+- configure  Manage configuration settings.
+- pull       Pull contents from server to working_dir.
+- push       Push contents of working_dir to server.
+- run        Locally run a script located in the working_dir.
+- setup      Setup user session with a given username and...
 
 
 ## Packaged tools
@@ -112,10 +112,10 @@ In order to use the packaged tools, you can run:
 $ viur tool {2to3|flare|pyodide|ssl-fix}
 ```
 Scripts:
-  2to3     viur porting script
-  flare    flare build script
-  pyodide  run the get_pyodide command
-  ssl-fix  ssl fix for MacOS
+- 2to3     viur porting script
+- flare    flare build script
+- pyodide  run the get_pyodide command
+- ssl-fix  ssl fix for MacOS
 
 for example the 2to3 script helps porting viur2 project to viur3, it can be used to automatically rename some things that are deprecated 
 in viur3 as well, so you can use it whenever a new core version is released for viur3 projects as well:
