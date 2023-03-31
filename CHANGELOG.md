@@ -2,6 +2,11 @@
 
 This file documents any relevant changes.
 
+
+## [1.0.0-rc2] 2023-03-31
+- fix: renamed `viur script` to `viur tool`
+- fix: renamed `viur scriptor` to `viur script`
+
 ## [1.0.0-rc1] 2023-03-29
 - feat: added `viur install` subcommand to install scriptor and vi
 - fix: `viur vi` command is deprecated use `viur install vi` instead

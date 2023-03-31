@@ -56,13 +56,13 @@ viur.request.build_url = staticmethod(build_url)
 
 
 @cli.group()
-def scriptor():
+def script():
     """
     Manage and run scriptor scripts locally on the console
     """
 
 
-@scriptor.command()
+@script.command()
 @click.option('--url', default=None, help='Set the url')
 @click.option('--username', default=None, help='Set the username')
 @click.option('--working_dir', default=None, help='Set the working directory where scripts are stored to')
@@ -82,7 +82,7 @@ def configure(url: str, username: str, working_dir: str):
         conf["working_dir"] = working_dir.replace("\\", "/")
 
 
-@scriptor.command()
+@script.command()
 def setup():
     """
     Setup user session with a given username and password.
@@ -127,7 +127,7 @@ def check_session(ctx: click.Context):
         ctx.invoke(setup)
         ctx.close()
 
-@scriptor.command()
+@script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
 @click.pass_context
 def pull(ctx: click.Context, force: bool):
@@ -177,7 +177,7 @@ def pull(ctx: click.Context, force: bool):
     asyncio.new_event_loop().run_until_complete(main())
 
 
-@scriptor.command()
+@script.command()
 @click.option('--force', '-f', is_flag=True, default=False,
               help='Force push files from the local working directory onto the server')
 @click.pass_context
@@ -289,7 +289,7 @@ def push(ctx: click.Context, force: bool):
     asyncio.new_event_loop().run_until_complete(main())
 
 
-@scriptor.command()
+@script.command()
 @click.argument('path', required=True)
 @click.pass_context
 def run(ctx: click.Context, path: str):
