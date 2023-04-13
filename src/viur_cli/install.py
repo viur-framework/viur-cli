@@ -10,7 +10,8 @@ def install():
 @install.command()
 @click.argument("version", default="latest")
 @click.option('--next', '-n', 'next_',  is_flag=True, default=False)
-def vi(version, next_):
+@click.option('--target', '-t',  default="vi")
+def vi(version, target, next_):
     """Install VI administration interface."""
 
     if next_:
@@ -22,7 +23,8 @@ def vi(version, next_):
     distFolder = projectConfig["default"]["distribution_folder"]
 
     viRepo = "https://github.com/viur-framework/viur-vi"
-    viPath = os.path.join(distFolder, "vi")
+    viPath = os.path.join(distFolder, target)
+
     tempZipFile = "./vi.zip"
 
     if version == "latest":
@@ -35,7 +37,7 @@ def vi(version, next_):
         if version == "latest":
             try:
                 resp = json.loads(urllib.request.urlopen(url).read().decode("utf-8"))
-                projectConfig["default"]["vi"] = resp[0]["name"]
+                projectConfig["default"]["vi"] = resp[0]["name"][1:]
                 write_config(projectConfig)
             except:
                 echo_error("Error while fetching version info")
