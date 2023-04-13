@@ -2,6 +2,10 @@
 
 This file documents any relevant changes.
 
+## [1.0.0] 2023-04.13
+- feat: added `viur build app [NAME]` command which build a specific app
+- feat: new app type `script`
+- feat: `viur install vi` can now have an optional --target parameter 
 
 ## [1.0.0-rc2] 2023-03-31
 - fix: renamed `viur script` to `viur tool`

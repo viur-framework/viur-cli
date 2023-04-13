@@ -77,6 +77,11 @@ $ viur build release
 build all flare and npm apps and produce a release that can be deployed
 
 ```sh
+$ viur build app [appname]
+```
+build a specific app
+
+```sh
 $ viur env
 ```
 check the environment you are in right now, show versions of viur-cli, viur-core and vi etc.
