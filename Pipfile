@@ -9,6 +9,7 @@ twine = "*"
 requests = "*"
 
 [dev-packages]
+viur-cli = {editable = true, path = "."}
 
 [requires]
 python_version = "3.9"
