@@ -98,13 +98,13 @@ def setup():
 
         password: str = click.prompt("Enter the password", hide_input=True)
 
-        response = session.post(base_url + "/vi/user/auth_userpassword/login", data={
+        response = session.post(base_url + "/json/user/auth_userpassword/login", data={
             "skey": skey.json(),
             "name": username,
             "password": password
         })
 
-        if response.text != "FAILURE":
+        if response.json() != "FAILURE":
             config["cookies"] = session.cookies.get_dict()
             click.echo("Setup done")
         else:
@@ -165,7 +165,7 @@ def pull(ctx: click.Context, force: bool):
                         with open(_path, "r") as f:
                             if hashlib.sha256(entry["script"].encode()).digest() \
                                     != hashlib.sha256(f.read().encode()).digest():
-                                if click.confirm(f"There is a difference with {entry['path']}. Override?"):
+                                if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
                                     os.remove(_path)
                                     create_file()
 
@@ -226,7 +226,7 @@ def push(ctx: click.Context, force: bool):
                                 != hashlib.sha256(file_content.encode("utf-8")).digest():
                             _state = force
                             if not _state:
-                                _state = click.confirm(f"Content of {file} changed. Override?")
+                                _state = click.confirm(f"Content of {file} changed. Overwrite?")
 
                             if _state:
                                 click.echo(f"Push {_real_file}")
