@@ -2,6 +2,9 @@
 
 This file documents any relevant changes.
 
+## [1.0.2] 2023-04-17
+-fix: update project.json to format 1.1.1
+
 ## [1.0.1] 2023-04-17
 - fix: renamed app kind from `script` to `exec`
 - fix: scriptor cli 

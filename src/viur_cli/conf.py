@@ -295,7 +295,7 @@ def update_config(path=None):
         for k, v in builds.items():
             if builds[k]["kind"] == "script":
                 builds[k]["kind"] = "exec"
-
+        projectConfig["default"]["builds"] = builds
     # conf updates must increase format version
     write_config(projectConfig, path)
 
