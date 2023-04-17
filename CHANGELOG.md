@@ -2,7 +2,11 @@
 
 This file documents any relevant changes.
 
-## [1.0.0] 2023-04.13
+## [1.0.1] 2023-04-17
+- fix: renamed app kind from `script` to `exec`
+- fix: scriptor cli 
+
+## [1.0.0] 2023-04-13
 - feat: added `viur build app [NAME]` command which build a specific app
 - feat: new app type `script`
 - feat: `viur install vi` can now have an optional --target parameter 

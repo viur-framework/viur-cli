@@ -65,7 +65,7 @@ def release(name, additional_args):
                 utils.echo_info(f"- Building {name}")
                 os.system(f'cd {cfg["sources_folder"]}{builds_cfg[name]["source"]} && npm install && npm run {builds_cfg[name]["command"]}')
         # build all scripts
-        if script_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "script"]:
+        if script_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "exec"]:
             for name in script_apps:
                 utils.echo_info(f"- Building {name}")
                 os.system(builds_cfg[name]["command"])
@@ -120,7 +120,7 @@ def app(appname, additional_args):
         utils.echo_info(f"- Building NPM: {appname}")
         os.system(
             f'cd {cfg["sources_folder"]}{builds_cfg["source"]} && npm install && npm run {builds_cfg["command"]}')
-    elif builds_cfg["kind"] == "script":
+    elif builds_cfg["kind"] == "exec":
         utils.echo_info(f"- Building Script: {appname}")
         os.system(builds_cfg["command"])
 

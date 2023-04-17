@@ -287,6 +287,15 @@ def update_config(path=None):
         echo_info("viur-cli tries to find npm applications")
         add_npm_apps()
 
+    ##################### Version 1.1.1
+
+    if projectConfig["default"]["format"] == "1.1.0":
+        projectConfig["default"]["format"] = "1.1.1"
+        builds = projectConfig["default"]["builds"].copy()
+        for k, v in builds.items():
+            if builds[k]["kind"] == "script":
+                builds[k]["kind"] = "exec"
+
     # conf updates must increase format version
     write_config(projectConfig, path)
 
