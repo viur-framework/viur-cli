@@ -253,7 +253,7 @@ def add_npm_apps():
 def update_config(path=None):
     assert projectConfig, "load_config() must be called first!"
 
-    assert projectConfig["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0"], "Invalid formatversion, you have to fix it manually"
+    assert projectConfig["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], "Invalid formatversion, you have to fix it manually"
 
     if "format" not in projectConfig["default"]:
         projectConfig["default"]["format"] = "1.0.1"
@@ -296,6 +296,7 @@ def update_config(path=None):
             if builds[k]["kind"] == "script":
                 builds[k]["kind"] = "exec"
         projectConfig["default"]["builds"] = builds
+
     # conf updates must increase format version
     write_config(projectConfig, path)
 

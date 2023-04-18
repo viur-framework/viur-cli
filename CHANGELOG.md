@@ -2,6 +2,9 @@
 
 This file documents any relevant changes.
 
+## [1.0.3] 2023-04-18
+-fix: allow format 1.1.1
+
 ## [1.0.2] 2023-04-17
 -fix: update project.json to format 1.1.1
 
