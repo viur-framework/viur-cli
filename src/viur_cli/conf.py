@@ -291,7 +291,7 @@ def update_config(path=None):
 
     if projectConfig["default"]["format"] == "1.1.0":
         projectConfig["default"]["format"] = "1.1.1"
-        builds = projectConfig["default"]["builds"].copy()
+        builds = projectConfig["default"].get("builds", {}).copy()
         for k, v in builds.items():
             if builds[k]["kind"] == "script":
                 builds[k]["kind"] = "exec"
