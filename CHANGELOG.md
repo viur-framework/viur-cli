@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.4] 2023-05-04
+- chore: update app_server to 0.9.4
+- fix: error wenn updating old project.json formats
 
 ## [1.0.3] 2023-04-18
 -fix: allow format 1.1.1
