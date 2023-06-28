@@ -49,6 +49,11 @@ $ viur run [target]
 run the appserver and start your app locally. You may specify a target projectID.
 
 ```sh
+$ viur check {--dev}
+```
+Runs a security check for the python environment and for each npm project registered under builds.
+
+```sh
 $ viur deploy {app|index} [target]
 ```
 you can deploy the app or the index.yaml to a google cloud project target of your choice, though the target is optional.

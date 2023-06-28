@@ -1,6 +1,11 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.5] 2023-06-28
+- chore: updated python-minifier to support python 3.11
+- feat: added `viur check [--dev]` to do a pipenv check and npm audit. 
+- feat: before deployment the cli runs the check command
+
 ## [1.0.4] 2023-05-04
 - chore: update app_server to 0.9.4
 - fix: error wenn updating old project.json formats

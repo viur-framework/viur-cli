@@ -1,4 +1,4 @@
-import click, os, shutil, subprocess
+import click, os, shutil, subprocess, json
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
@@ -126,3 +126,50 @@ def vi(version, next_):
         os.system(f'viur install vi --next')
     else:
         os.system(f'viur install vi')
+
+@cli.command()
+@click.option('--dev', '-d', is_flag=True, default=False)
+def check(dev):
+    """do security checks"""
+    if do_checks(dev):
+        utils.echo_info("\U00002714 No vulnerabilities found.")
+
+def do_checks(dev=True):
+
+    all_checks_passed=True
+    result = subprocess.check_output(['pipenv', 'check','--output', 'minimal']).decode("utf-8")
+    if "0 vulnerabilities found." in result:
+        pass
+    else:
+        os.system("pipenv check")
+        all_checks_passed=False
+
+    if dev:
+        result = subprocess.check_output(['pipenv', 'check','--output', 'minimal', "--categories", "develop"]).decode("utf-8")
+        if "0 vulnerabilities found." in result:
+            pass
+        else:
+            os.system("pipenv check --categories develop")
+            all_checks_passed=False
+
+
+    projectConfig = get_config()
+    cfg = projectConfig["default"].copy()
+    if builds_cfg := cfg.get("builds"):
+        if npm_apps := [k for k,v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
+            for name in npm_apps:
+                if dev:
+                    result = subprocess.check_output(['npm', 'audit','--prefix',cfg["sources_folder"]+builds_cfg[name]["source"]]).decode("utf-8")
+                else:
+                    result = subprocess.check_output(['npm', 'audit','--omit','dev', '--prefix',cfg["sources_folder"]+builds_cfg[name]["source"]]).decode("utf-8")
+                if "found 0 vulnerabilities" in result:
+                    pass
+                else:
+                    utils.echo_info(f"checking {name}...")
+                    os.system(f'cd {cfg["sources_folder"]}{builds_cfg[name]["source"]} && npm audit')
+                    all_checks_passed=False
+
+    if all_checks_passed:
+        return True
+
+    return False
