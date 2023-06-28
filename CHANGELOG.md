@@ -1,6 +1,10 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.6] 2023-06-28
+- fix: viur check:  dont kill the command on error 
+- chore: added requests as dependency
+
 ## [1.0.5] 2023-06-28
 - chore: updated python-minifier to support python 3.11
 - feat: added `viur check [--dev]` to do a pipenv check and npm audit. 

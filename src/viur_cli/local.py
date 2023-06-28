@@ -137,7 +137,7 @@ def check(dev):
 def do_checks(dev=True):
 
     all_checks_passed=True
-    result = subprocess.check_output(['pipenv', 'check','--output', 'minimal']).decode("utf-8")
+    result = subprocess.check_output(['pipenv', 'check','--output', 'minimal','--continue-on-error']).decode("utf-8")
     if "0 vulnerabilities found." in result:
         pass
     else:
@@ -145,7 +145,7 @@ def do_checks(dev=True):
         all_checks_passed=False
 
     if dev:
-        result = subprocess.check_output(['pipenv', 'check','--output', 'minimal', "--categories", "develop"]).decode("utf-8")
+        result = subprocess.check_output(['pipenv', 'check','--output', 'minimal', "--categories", "develop",'--continue-on-error']).decode("utf-8")
         if "0 vulnerabilities found." in result:
             pass
         else:
