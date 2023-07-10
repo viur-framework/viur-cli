@@ -1,4 +1,10 @@
-import click, sys, typing, datetime, getpass
+import os, click, sys, typing, datetime, getpass
+
+
+def system(cmd):
+    """Performs an os.system() call with the given command, but throws an echo_fatal on error and stops viur-cli."""
+    if os.system(cmd) != 0:
+        echo_fatal(f"Failed to execute {cmd!r}")
 
 
 def echo_error(msg):

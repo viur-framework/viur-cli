@@ -1,44 +1,27 @@
+"""
+Performs build steps configured within the project, or creates any necessary steps for a project deployment build.
+"""
+
 import click, os, zipfile, shutil, urllib, json
-from . import cli, get_config, echo_error, write_config
 from urllib.request import urlretrieve
-from . import cli, echo_error, utils, conf
+from . import cli, conf, utils, get_config, write_config
 
 
-@cli.group()
-def build():
-    """Build VIUR project"""
+def _build(cfg, name, build_cfg, additional_args):
+    """Internal function to perform steps required for a given build configuration.
 
-@build.command(context_settings={"ignore_unknown_options": True})
-@click.argument("name", default='develop')
-@click.argument("additional_args", nargs=-1)
-def release(name, additional_args):
-    """create a release build"""
+    :param cfg: The project configuration (default, or project-specific)
+    :param name: Name of the app to build.
+    :param build_cfg: The build-cfg for the specified app.
+    :param additional_args: List of additional arguments.
+    """
 
-    utils.echo_info("building started...")
-    projectConfig = conf.get_config()
-
-    if not os.popen("pyenv versions").read():
-        echo_error(f"pyenv not found!")
-        return
-
-    if name not in projectConfig:
-        echo_error(f"{name} is not a valid config name.")
-        return
-
-    cfg = projectConfig["default"].copy()
-    cfg.update(projectConfig[name])
-
-
-    if builds_cfg := cfg.get("builds"):
-
-        # build all flare apps
-        if flare_apps := [k for k,v in builds_cfg.items() if builds_cfg[k]["kind"] == "flare"]:
-            # we have atlease 1 flare app
-            # Ensure for local pyodide.
-            pyodide_version = cfg.get("pyodide", conf.DEFAULT_PYODIDE_VERSION)
-            utils.echo_info(f"- Ensuring Pyodide {pyodide_version} local install")
-
-            os.system(f'get-pyodide -t {cfg["distribution_folder"]}/pyodide -v v{pyodide_version}')
+    match build_cfg["kind"]:
+        case "flare":
+            # Ensure for local pyodide, if configured!
+            if pyodide_version := cfg.get("pyodide"):
+                utils.echo_info(f"- Ensuring Pyodide {pyodide_version} local install")
+                utils.system(f'get-pyodide -t {cfg["distribution_folder"]}/pyodide -v v{pyodide_version}')
 
             if "debug" in additional_args:
                 flare_build_type = "debug"
@@ -47,81 +30,76 @@ def release(name, additional_args):
                 flare_build_type = "release"
                 flare_build_env = "pyenv exec"
 
-                #enforce python 3.9.5
+                # enforce python 3.9.5
+                # FIXME: This is highly obsolete...
                 if "3.9.5" not in os.popen("pyenv versions").read():
-                    os.system(f'pyenv install 3.9.5')
-                os.system("pyenv local 3.9.5")
+                    utils.system(f'pyenv install 3.9.5')
+                utils.system("pyenv local 3.9.5")
 
-            for name in flare_apps:
-                utils.echo_info(f"- Building {flare_build_type} {name}")
-                os.system(f'{flare_build_env} viur flare {flare_build_type} {name}')
+            utils.echo_info(f"- Building Flare: {flare_build_type} {name}")
+            utils.system(f'{flare_build_env} viur flare {flare_build_type} {name}')
 
             if flare_build_type == "release":
-                os.system("pyenv local system")
+                utils.system("pyenv local system")
 
-        # build all npm apps
-        if npm_apps := [k for k,v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
-            for name in npm_apps:
-                utils.echo_info(f"- Building {name}")
-                os.system(f'cd {cfg["sources_folder"]}{builds_cfg[name]["source"]} && npm install && npm run {builds_cfg[name]["command"]}')
-        # build all scripts
-        if script_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "exec"]:
-            for name in script_apps:
-                utils.echo_info(f"- Building {name}")
-                os.system(builds_cfg[name]["command"])
+        case "npm":
+            utils.echo_info(f"- Building npm {name}")
+            utils.system(
+                " && ".join(
+                    (
+                        f'cd {os.path.join(cfg["sources_folder"], build_cfg["source"])}',
+                        "npm install",
+                        f'npm run {build_cfg["command"]}'
+                    )
+                )
+            )
+
+        case "exec":
+            utils.echo_info(f"- Building {name}")
+            utils.system(build_cfg["command"])
+
+        case other:
+            utils.echo_fatal(f"Unknown build kind {other!r}")
+
+
+@cli.group()
+def build():
+    """Build VIUR project or specific apps."""
+
+@build.command(context_settings={"ignore_unknown_options": True})
+@click.argument("name", default='develop')
+@click.argument("additional_args", nargs=-1)
+def release(name, additional_args):
+    """Build of all relevant apps to deploy this project."""
+
+    projectConfig = conf.get_config()
+
+    if name not in projectConfig:
+        utils.echo_fatal(f"{name} is not a valid config name.")
+
+    cfg = projectConfig["default"].copy()
+    cfg.update(projectConfig[name])
+
+    utils.echo_info("building started...")
+
+    for build_name, build_cfg in cfg.get("builds", {}).items():
+        _build(cfg, build_name, build_cfg, additional_args)
+
     utils.echo_info("building finished!")
 
 @build.command(context_settings={"ignore_unknown_options": True})
 @click.argument("appname", default="")
 @click.argument("additional_args", nargs=-1)
 def app(appname, additional_args):
-    """create a release build"""
-    valid_apps = conf.get_config()["default"]["builds"].keys()
-    if not appname or appname not in valid_apps:
-        echo_error("appname musst be one of these options")
-        echo_error(", ".join(valid_apps))
-        return
+    """Build specific app"""
 
-    utils.echo_info("building started...")
     projectConfig = conf.get_config()
-
-    if not os.popen("pyenv versions").read():
-        echo_error(f"pyenv not found!")
-        return
 
     cfg = projectConfig["default"].copy()
 
-    builds_cfg = cfg.get("builds").get(appname)
+    if not (build_cfg := cfg.get("builds").get(appname)):
+        utils.echo_fatal(f"""{appname=} must be one of these options: {", ".join(cfg["builds"].keys())}""")
 
-    if builds_cfg["kind"] == "flare":
-        pyodide_version = cfg.get("pyodide", conf.DEFAULT_PYODIDE_VERSION)
-        utils.echo_info(f"- Ensuring Pyodide {pyodide_version} local install")
-
-        os.system(f'get-pyodide -t {cfg["distribution_folder"]}/pyodide -v v{pyodide_version}')
-
-        if "debug" in additional_args:
-            flare_build_type = "debug"
-            flare_build_env = ""
-        else:
-            flare_build_type = "release"
-            flare_build_env = "pyenv exec"
-
-            # enforce python 3.9.5
-            if "3.9.5" not in os.popen("pyenv versions").read():
-                os.system(f'pyenv install 3.9.5')
-            os.system("pyenv local 3.9.5")
-
-        utils.echo_info(f"- Building Flare: {flare_build_type} {appname}")
-        os.system(f'{flare_build_env} viur flare {flare_build_type} {appname}')
-
-        if flare_build_type == "release":
-            os.system("pyenv local system")
-    elif builds_cfg["kind"] == "npm":
-        utils.echo_info(f"- Building NPM: {appname}")
-        os.system(
-            f'cd {cfg["sources_folder"]}{builds_cfg["source"]} && npm install && npm run {builds_cfg["command"]}')
-    elif builds_cfg["kind"] == "exec":
-        utils.echo_info(f"- Building Script: {appname}")
-        os.system(builds_cfg["command"])
-
+    utils.echo_info("building started...")
+    _build(cfg, appname, build_cfg, additional_args)
     utils.echo_info("building finished!")
