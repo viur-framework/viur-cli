@@ -26,6 +26,7 @@ lookup = {
     "utils.getCurrentUser": "current.user.get",
     "utils.isLocalDevelopmentServer": "conf[\"viur.instance.is_dev_server\"]",
     "utils.projectID": "conf[\"viur.instance.project_id\"]",
+    "clearUpdateTag=True": "update_relations=False",
 }
 
 bones = [
