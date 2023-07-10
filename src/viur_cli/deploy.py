@@ -18,6 +18,12 @@ def deploy(action, name, additional_args):
     conf.update(projectConfig[name])
 
     if action == "app":
+        from . import do_checks
+        if not do_checks(dev=False):
+            if not click.confirm(f"The checks were not successful, do you want to continue?"):
+                return
+        else:
+            echo_info("\U00002714 No vulnerabilities found.")
         version = replace_vars(
             conf["version"],
             {k: v for k, v in conf.items() if k not in ["version"]}

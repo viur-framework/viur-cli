@@ -4,6 +4,8 @@ from .conf import *
 from .version import __version__
 
 
+
+
 @click.group(invoke_without_command=True, no_args_is_help=True)
 @click.version_option(__version__)
 @click.pass_context
@@ -15,7 +17,7 @@ def cli(ctx):
 
 
 @cli.command()
-@click.argument("action", type=click.Choice(['add', 'remove', 'list', 'addFlare']))
+@click.argument("action", type=click.Choice(['add', 'remove', 'list', 'addFlare', 'scanNpm']))
 def project(action):
     """manage project.json and generate if missing"""
     projectConfig = get_config()
@@ -24,16 +26,10 @@ def project(action):
     elif action == "addFlare":
         _projectconf = add_to_flare_config(projectConfig)
         write_config(_projectconf)
+    elif action == "scanNpm":
+        _projectconf = add_npm_apps()
+        write_config(_projectconf)
     elif action == "remove":
         remove_from_config()
     elif action == "list":
         click.echo(click.style(json.dumps(projectConfig, indent=4, sort_keys=True), fg="cyan"))
-
-
-@cli.command()
-@click.argument("action", type=click.Choice(['ssl']))
-def fix(action):
-    if action =="ssl":
-        os.system("chmod +x scripts/macos_certificate_fix.command && ./scripts/macos_certificate_fix.command")
-        click.echo()
-

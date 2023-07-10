@@ -19,16 +19,20 @@ def flare(action, name, additional_args):
         additional_args = ["-w"]
 
     if not name:
-        if len(projectConfig["default"]["flare"]) == 0:
+        if len(projectConfig["default"]["builds"]) == 0:
             echo_error(f"No flare app configured")
         else:
-            name = list(projectConfig["default"]["flare"].keys())[0]
+            flare_apps = [k for k,v in projectConfig["default"]["builds"].items() if v["kind"] == "flare"]
+            if not flare_apps:
+                echo_error(f"No flare app configured")
 
-    elif name not in projectConfig["default"]["flare"]:
+            name = flare_apps[0]
+
+    elif name not in projectConfig["default"]["builds"] or projectConfig["default"]["builds"][name]["kind"]!="flare":
         echo_error(f"{name} is not a valid flare app name.")
         return
 
     conf = projectConfig["default"].copy()
 
     os.system(
-        f'flare -n={name} -s={conf["flare"][name]["source"]} -t={conf["flare"][name]["target"]} {" ".join(additional_args)}')
+        f'flare -n={name} -s={conf["builds"][name]["source"]} -t={conf["builds"][name]["target"]} {" ".join(additional_args)}')

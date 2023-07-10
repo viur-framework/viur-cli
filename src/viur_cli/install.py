@@ -3,10 +3,16 @@ from . import cli, get_config, echo_error, write_config
 from urllib.request import urlretrieve
 
 
-@cli.command(context_settings={"ignore_unknown_options": True})
+@cli.group()
+def install():
+    """Install VIUR features"""
+
+@install.command()
 @click.argument("version", default="latest")
 @click.option('--next', '-n', 'next_',  is_flag=True, default=False)
-def vi(version, next_):
+@click.option('--target', '-t',  default="vi")
+def vi(version, target, next_):
+    """Install VI administration interface."""
 
     if next_:
         downloadnextvi()
@@ -17,7 +23,8 @@ def vi(version, next_):
     distFolder = projectConfig["default"]["distribution_folder"]
 
     viRepo = "https://github.com/viur-framework/viur-vi"
-    viPath = os.path.join(distFolder, "vi")
+    viPath = os.path.join(distFolder, target)
+
     tempZipFile = "./vi.zip"
 
     if version == "latest":
@@ -30,12 +37,12 @@ def vi(version, next_):
         if version == "latest":
             try:
                 resp = json.loads(urllib.request.urlopen(url).read().decode("utf-8"))
-                projectConfig["default"]["vi"] = resp[0]["name"]
+                projectConfig["default"]["vi"] = resp[0]["name"][1:]
                 write_config(projectConfig)
             except:
                 echo_error("Error while fetching version info")
         else:
-            projectConfig["default"]["vi"] = f'v{version}'
+            projectConfig["default"]["vi"] = f'{version}'
             write_config(projectConfig)
 
     get_version_info(version)
@@ -86,7 +93,7 @@ def downloadnextvi():
             except:
                 echo_error("Error while fetching version info")
         else:
-            projectConfig["default"]["vi"] = f'v{version}'
+            projectConfig["default"]["vi"] = f'{version}'
             write_config(projectConfig)
 
     get_version_info(version)
@@ -114,3 +121,50 @@ def downloadnextvi():
             elif element == 4:
                 os.remove(tempZipFile)
                 bar.label = "updated successful"
+
+
+@install.command()
+@click.argument("version", default="latest")
+def scriptor(version):
+    """Install scriptor IDE."""
+    projectConfig = get_config()
+    dist_folder = projectConfig["default"]["distribution_folder"]
+
+    scriptor_repo = "https://github.com/viur-framework/viur-scriptor"
+    scriptor_path = os.path.join(dist_folder, "scriptor")
+    tmp_zip_file = "./scriptor.zip"
+    scriptor_base_url = f"{scriptor_repo}/releases/latest/download/source.zip"
+
+    def get_version_info(version):
+        url = "https://api.github.com/repos/viur-framework/viur-scriptor/releases"
+        if version == "latest":
+            try:
+                resp = json.loads(urllib.request.urlopen(url).read().decode("utf-8"))
+                projectConfig["default"]["scriptor"] = resp[0]["name"]
+                write_config(projectConfig)
+            except:
+                echo_error("Error while fetching version info")
+        else:
+            projectConfig["default"]["scriptor"] = f'{version}'
+            write_config(projectConfig)
+
+    get_version_info(version)
+
+    def step_label(step):
+        if step == 1:
+            return f"downloading scriptor..."
+        elif step == 2:
+            return f"extracting scriptor..."
+        elif step == 3:
+            return f"success!"
+
+    with click.progressbar([1, 2, 3], label="updating scriptor...", item_show_func=step_label) as bar:
+        for element in bar:
+            match element:
+                case 1:
+                    urlretrieve(scriptor_base_url, tmp_zip_file)
+                case 2:
+                    zipfile.ZipFile(tmp_zip_file).extractall()
+                case 3:
+                    os.remove(tmp_zip_file)
+                    bar.label = "updated successful"

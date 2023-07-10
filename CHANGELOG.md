@@ -1,6 +1,51 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.6] 2023-06-28
+- fix: viur check:  dont kill the command on error 
+- chore: added requests as dependency
+
+## [1.0.5] 2023-06-28
+- chore: updated python-minifier to support python 3.11
+- feat: added `viur check [--dev]` to do a pipenv check and npm audit. 
+- feat: before deployment the cli runs the check command
+
+## [1.0.4] 2023-05-04
+- chore: update app_server to 0.9.4
+- fix: error wenn updating old project.json formats
+
+## [1.0.3] 2023-04-18
+-fix: allow format 1.1.1
+
+## [1.0.2] 2023-04-17
+-fix: update project.json to format 1.1.1
+
+## [1.0.1] 2023-04-17
+- fix: renamed app kind from `script` to `exec`
+- fix: scriptor cli 
+
+## [1.0.0] 2023-04-13
+- feat: added `viur build app [NAME]` command which build a specific app
+- feat: new app type `script`
+- feat: `viur install vi` can now have an optional --target parameter 
+
+## [1.0.0-rc2] 2023-03-31
+- fix: renamed `viur script` to `viur tool`
+- fix: renamed `viur scriptor` to `viur script`
+
+## [1.0.0-rc1] 2023-03-29
+- feat: added `viur install` subcommand to install scriptor and vi
+- fix: `viur vi` command is deprecated use `viur install vi` instead
+- feat: added `viur scriptor` command to use scriptor scripts
+- fix: 2-to-3 script viur 3.3.4 updates
+- fix: unified version schema
+- feat: added `viur build release` command which build all flare and npm apps
+- fix: removed `viur release` command
+- feat: apps are now listed in a builds object in the project.json
+- feat: 2 app kinds flare and npm are supported
+- feat: added `viur project scanNpm` to add existing npm apps
+- feat: added `viur script` call different viur related scripts like 2to3, flare or get_pyodide
+
 ## [0.7.8] - 2023-03-27
 - chore: updated app_server to 0.9.3
 - chore: updated click to 8.1.3
