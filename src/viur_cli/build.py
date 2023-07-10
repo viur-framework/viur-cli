@@ -15,6 +15,7 @@ def _build(cfg, name, build_cfg, additional_args):
     :param build_cfg: The build-cfg for the specified app.
     :param additional_args: List of additional arguments.
     """
+    utils.echo_info(f"""- {build_cfg["kind"]} {name}""")
 
     match build_cfg["kind"]:
         case "flare":
@@ -43,7 +44,6 @@ def _build(cfg, name, build_cfg, additional_args):
                 utils.system("pyenv local system")
 
         case "npm":
-            utils.echo_info(f"- Building npm {name}")
             utils.system(
                 " && ".join(
                     (
@@ -55,7 +55,6 @@ def _build(cfg, name, build_cfg, additional_args):
             )
 
         case "exec":
-            utils.echo_info(f"- Building {name}")
             utils.system(build_cfg["command"])
 
         case other:
@@ -91,7 +90,7 @@ def release(name, additional_args):
 @click.argument("appname", default="")
 @click.argument("additional_args", nargs=-1)
 def app(appname, additional_args):
-    """Build specific app"""
+    """Build specific app."""
 
     projectConfig = conf.get_config()
 
