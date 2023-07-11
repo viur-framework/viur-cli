@@ -2,9 +2,8 @@
 Performs build steps configured within the project, or creates any necessary steps for a project deployment build.
 """
 
-import click, os, zipfile, shutil, urllib, json
-from urllib.request import urlretrieve
-from . import cli, conf, utils, get_config, write_config
+import click, os
+from . import cli, conf, utils
 
 
 def _build(cfg, name, build_cfg, additional_args):
@@ -75,14 +74,14 @@ def _clean(cfg, name, build_cfg):
             if target_dir := build_cfg.get("target"):
                 target_dir = os.path.join(cfg["distribution_folder"], target_dir)
                 utils.echo_info(f"  - dropping {target_dir}")
-                shutil.rmtree(target_dir)
+                utils.rmdir(target_dir)
 
             if build_cfg["kind"] == "npm":
                 # todo: Later, call "npm run clean" or a similar command when it exists
 
                 node_modules = os.path.join(cfg["sources_folder"], build_cfg["source"], "node_modules")
                 utils.echo_info(f"  - dropping {node_modules}")
-                shutil.rmtree(os.path.join(node_modules))
+                utils.rmdir(os.path.join(node_modules))
 
         case "exec":
             pass
