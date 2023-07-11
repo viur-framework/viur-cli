@@ -39,7 +39,6 @@ def create_new_config(ctx, path=None):
             "builds": {},
             "vi": "submodule",
             "core": "submodule",
-            "pyodide": click.prompt('pyodide', default=DEFAULT_PYODIDE_VERSION)
         },
 
         "develop": {
@@ -258,13 +257,10 @@ def update_config(path=None):
     if "format" not in projectConfig["default"]:
         projectConfig["default"]["format"] = "1.0.1"
 
-    if "pyodide" not in projectConfig["default"]:
-        projectConfig["default"]["pyodide"] = DEFAULT_PYODIDE_VERSION
-
     ##################### Version 1.0.1
 
-    if projectConfig["default"]["pyodide"].startswith("v"):
-        projectConfig["default"]["pyodide"] = projectConfig["default"]["pyodide"][1:] #remove v prefix
+    if (pyodide_version := projectConfig["default"].get("pyodide")) and pyodide_version.startswith("v"):
+        projectConfig["default"]["pyodide"] = pyodide_version[1:] #remove v prefix
 
     if projectConfig["default"]["vi"].startswith("v"):
         projectConfig["default"]["vi"] = projectConfig["default"]["vi"][1:]  # remove v prefix
