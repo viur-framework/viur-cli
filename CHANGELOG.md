@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.8] 2023-07-11
+- feat: added a clean command to remove build artifacts
+
 ## [1.0.7] 2023-07-11
 - feat: improved viur3to3 script for core 3.4
 - refactor: `viur build` now more generalized
