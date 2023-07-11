@@ -1,4 +1,4 @@
-import click, os, shutil, subprocess, json
+import click, os, shutil, subprocess
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
@@ -17,7 +17,7 @@ def run(name, additional_args):
     conf = projectConfig["default"].copy()
     conf.update(projectConfig[name])
 
-    os.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
+    utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
 
 @cli.command()
@@ -123,9 +123,9 @@ def vi(version, next_):
     """DEPRECATED please use viur install vi"""
     utils.echo_info("DEPRECATED please use: viur install vi")
     if next_:
-        os.system(f'viur install vi --next')
+        utils.system(f'viur install vi --next')
     else:
-        os.system(f'viur install vi')
+        utils.system(f'viur install vi')
 
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
@@ -135,41 +135,43 @@ def check(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
 def do_checks(dev=True):
+    all_checks_passed = True
 
-    all_checks_passed=True
-    result = subprocess.check_output(['pipenv', 'check','--output', 'minimal','--continue-on-error']).decode("utf-8")
-    if "0 vulnerabilities found." in result:
-        pass
-    else:
-        os.system("pipenv check")
-        all_checks_passed=False
+    # Check Pipenv vulnerabilities
+
+    result = subprocess.check_output("pipenv check --output minimal --continue-on-error".split())
+    if "0 vulnerabilities found." not in result.decode("utf-8"):
+        utils.system("pipenv check")
+        all_checks_passed = False
 
     if dev:
-        result = subprocess.check_output(['pipenv', 'check','--output', 'minimal', "--categories", "develop",'--continue-on-error']).decode("utf-8")
-        if "0 vulnerabilities found." in result:
-            pass
-        else:
-            os.system("pipenv check --categories develop")
-            all_checks_passed=False
+        result = subprocess.check_output(
+            "pipenv check --output minimal --categories develop --continue-on-error".split()
+        )
 
+        if "0 vulnerabilities found." not in result.decode("utf-8"):
+            utils.system("pipenv check --categories develop")
+            all_checks_passed = False
+
+    # Check npm vulnerabilities for all npm builds
 
     projectConfig = get_config()
     cfg = projectConfig["default"].copy()
     if builds_cfg := cfg.get("builds"):
         if npm_apps := [k for k,v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:
+                path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
+
                 if dev:
-                    result = subprocess.check_output(['npm', 'audit','--prefix',cfg["sources_folder"]+builds_cfg[name]["source"]]).decode("utf-8")
+                    result = subprocess.check_output(("npm", "audit", "--prefix", path))
                 else:
-                    result = subprocess.check_output(['npm', 'audit','--omit','dev', '--prefix',cfg["sources_folder"]+builds_cfg[name]["source"]]).decode("utf-8")
-                if "found 0 vulnerabilities" in result:
+                    result = subprocess.check_output(("npm", "audit", "--omit", "dev", "--prefix", path))
+
+                if "found 0 vulnerabilities" in result.decode("utf-8"):
                     pass
                 else:
                     utils.echo_info(f"checking {name}...")
-                    os.system(f'cd {cfg["sources_folder"]}{builds_cfg[name]["source"]} && npm audit')
-                    all_checks_passed=False
+                    utils.system(f'cd {path} && npm audit')
+                    all_checks_passed = False
 
-    if all_checks_passed:
-        return True
-
-    return False
+    return all_checks_passed
