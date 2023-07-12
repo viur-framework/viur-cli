@@ -1,4 +1,23 @@
-import os, click, sys, typing, datetime, getpass
+import os, shutil, click, sys, typing, datetime, getpass
+
+
+def rmdir(dir):
+    """Secure and error-prone recursive removal of entire folders.
+
+    Does only allow to remove folders inside the project folder, so that a misconfiguration, wanted or not,
+    cannot delete the entire home folder or similar.
+    """
+    # Verify the dir is part of the current folder
+    dir = os.path.abspath(dir)
+    wdir = os.getcwd()
+    if wdir != os.path.commonpath((wdir, dir)):
+        echo_fatal(f"Illegal path configuration, won't remove {dir!r}")
+
+    # Remove it
+    try:
+        shutil.rmtree(dir)
+    except FileNotFoundError:
+        pass
 
 
 def system(cmd):
