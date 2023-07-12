@@ -1,6 +1,10 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.9] 2023-07-12
+- refactor: local module
+- feat: added rmdir method to prevent removing beyond project dir
+
 ## [1.0.8] 2023-07-11
 - feat: added a clean command to remove build artifacts
 
