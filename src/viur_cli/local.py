@@ -141,7 +141,7 @@ def do_checks(dev=True):
 
     result = subprocess.check_output("pipenv check --output minimal --continue-on-error".split())
     if "0 vulnerabilities found." not in result.decode("utf-8"):
-        utils.system("pipenv check")
+        os.system("pipenv check")  # don't use utils.system() here!
         all_checks_passed = False
 
     if dev:
@@ -150,7 +150,7 @@ def do_checks(dev=True):
         )
 
         if "0 vulnerabilities found." not in result.decode("utf-8"):
-            utils.system("pipenv check --categories develop")
+            os.system("pipenv check --categories develop") # don't use utils.system() here!
             all_checks_passed = False
 
     # Check npm vulnerabilities for all npm builds
