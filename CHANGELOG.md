@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.10] 2023-07-18
+- fix: do_checks now works as expected
+
 ## [1.0.9] 2023-07-12
 - refactor: local module
 - feat: added rmdir method to prevent removing beyond project dir
