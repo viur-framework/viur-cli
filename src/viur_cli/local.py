@@ -1,4 +1,4 @@
-import click, os, shutil, subprocess
+import click, os, sys, shutil, subprocess
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
@@ -135,22 +135,30 @@ def check(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
 def do_checks(dev=True):
+    """
+    Runs several toolchain and ecosystem security checks for vulnerabilities, and reports these on demand.
+    """
     all_checks_passed = True
+
+    def show_output_if_not(args, check_str):
+        try:
+            result = subprocess.check_output(args, stderr=subprocess.STDOUT, encoding="utf-8")
+        except subprocess.CalledProcessError as err:
+            result = err.output.strip()
+
+        if check_str not in result:
+            print(result)
+            return True
+
+        return False
 
     # Check Pipenv vulnerabilities
 
-    result = subprocess.check_output("pipenv check --output minimal --continue-on-error".split())
-    if "0 vulnerabilities found." not in result.decode("utf-8"):
-        os.system("pipenv check")  # don't use utils.system() here!
+    if show_output_if_not("pipenv check --output minimal".split(), "0 vulnerabilities found"):
         all_checks_passed = False
 
     if dev:
-        result = subprocess.check_output(
-            "pipenv check --output minimal --categories develop --continue-on-error".split()
-        )
-
-        if "0 vulnerabilities found." not in result.decode("utf-8"):
-            os.system("pipenv check --categories develop") # don't use utils.system() here!
+        if show_output_if_not("pipenv check --output minimal --categories develop".split(), "0 vulnerabilities found"):
             all_checks_passed = False
 
     # Check npm vulnerabilities for all npm builds
@@ -163,15 +171,11 @@ def do_checks(dev=True):
                 path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
 
                 if dev:
-                    result = subprocess.check_output(("npm", "audit", "--prefix", path))
+                    args = ("npm", "audit", "--prefix", path)
                 else:
-                    result = subprocess.check_output(("npm", "audit", "--omit", "dev", "--prefix", path))
+                    args = ("npm", "audit", "--omit", "dev", "--prefix", path)
 
-                if "found 0 vulnerabilities" in result.decode("utf-8"):
-                    pass
-                else:
-                    utils.echo_info(f"checking {name}...")
-                    utils.system(f'cd {path} && npm audit')
+                if show_output_if_not(args, "found 0 vulnerabilities"):
                     all_checks_passed = False
 
     return all_checks_passed
