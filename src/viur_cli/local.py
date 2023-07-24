@@ -1,4 +1,4 @@
-import click, os, sys, shutil, subprocess
+import click, os, shutil, subprocess
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
