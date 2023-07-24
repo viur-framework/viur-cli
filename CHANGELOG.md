@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.11] 2023-07-24
+- fix: do_checks now works as expected
+
 ## [1.0.10] 2023-07-18
 - fix: do_checks now works as expected
 
