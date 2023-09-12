@@ -15,7 +15,8 @@ def vi(version, target, next_):
     """Install VI administration interface."""
 
     if next_:
-        downloadnextvi()
+        utils.echo_info("DEPRECATED please use: viur install admin")
+        downloadadmin()
         return 0
 
     """download latest vi or a specific version"""
@@ -71,17 +72,26 @@ def vi(version, target, next_):
                 os.remove(tempZipFile)
                 bar.label = "updated successful"
 
+@install.command()
+@click.argument("version", default="latest")
+def admin(version):
+    downloadadmin(version)
 
-def downloadnextvi():
+
+def downloadadmin(version="latest"):
     """download latest vi or a specific version"""
     projectConfig = get_config()
     distFolder = projectConfig["default"]["distribution_folder"]
 
-    viRepo = "https://github.com/viur-framework/viur-vuevi"
+    viRepo = "https://github.com/viur-framework/vi-admin"
     viPath = os.path.join(distFolder, "vi")
     tempZipFile = "./vi.zip"
     version = "latest"
-    vibaseUrl = f"{viRepo}/releases/latest/download/viur-vi.zip"
+
+    if version == "latest":
+        vibaseUrl = f"{viRepo}/releases/latest/download/viur-vi.zip"
+    else:
+        vibaseUrl = f"{viRepo}/releases/download/v{version}/viur-vi.zip"
 
     def get_version_info(version):
         url = "https://api.github.com/repos/viur-framework/viur-vuevi/releases"
@@ -108,7 +118,7 @@ def downloadnextvi():
         elif step == 4:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4], label="updating admin...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(vibaseUrl, tempZipFile)

@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.12] 2023-09-12
+- chore: use `viur install admin` to install the vi admin
+
 ## [1.0.11] 2023-07-24
 - fix: do_checks now works as expected
 
