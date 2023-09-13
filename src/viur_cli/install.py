@@ -86,7 +86,6 @@ def downloadadmin(version="latest"):
     viRepo = "https://github.com/viur-framework/vi-admin"
     viPath = os.path.join(distFolder, "vi")
     tempZipFile = "./vi.zip"
-    version = "latest"
 
     if version == "latest":
         vibaseUrl = f"{viRepo}/releases/latest/download/viur-vi.zip"
