@@ -2,7 +2,7 @@
 
 This file documents any relevant changes.
 
-## [1.0.12] 2023-09-14
+## [1.0.13] 2023-09-14
 - chore: use `viur install admin` to install the vi admin
 - chore: update app_server to 0.9.5
 
