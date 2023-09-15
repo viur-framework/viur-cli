@@ -116,16 +116,6 @@ def env():
     else:
         click.echo(f"{failed_icon} gcloud")
 
-@cli.command()
-@click.argument("version", default="latest")
-@click.option('--next', '-n', 'next_',  is_flag=True, default=False)
-def vi(version, next_):
-    """DEPRECATED please use viur install vi"""
-    utils.echo_info("DEPRECATED please use: viur install vi")
-    if next_:
-        utils.system(f'viur install vi --next')
-    else:
-        utils.system(f'viur install vi')
 
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)

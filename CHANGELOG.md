@@ -1,6 +1,8 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.14] 2023-09-15
+- chore: update app_server to 0.9.6
 
 ## [1.0.13] 2023-09-14
 - chore: use `viur install admin` to install the vi admin
