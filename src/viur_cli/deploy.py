@@ -130,11 +130,18 @@ def check_req(projects_requirements_path):
             ret.update({package.lower():requirement.options})
         return ret
 
-    core_requirements = os.path.join(site.getsitepackages()[0],"viur","requirements.txt")
+    sp = site.getsitepackages()[0]
+    core_requirements = None
+    for req in (
+        os.path.join(sp, "viur", "core", "requirements.txt"),
+        os.path.join(sp, "viur", "requirements.txt")
+    ):
+        if os.path.exists(req):
+            core_requirements = req
+            break
 
-    if not os.path.exists(core_requirements):
-        echo_info("could now find core package, please update the core to validate the requirements.txt")
-        return []
+    if not core_requirements:
+        echo_error("could now find core package, please update the core to validate the requirements.txt")
 
     core_requirements_obj = requirements_to_dict(parse_requirements(core_requirements, session=PipSession()))
 

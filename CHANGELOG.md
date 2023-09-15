@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.15] 2023-09-15
+- chore: support viur core 3.5.0
+
 ## [1.0.14] 2023-09-15
 - chore: update app_server to 0.9.6
 
