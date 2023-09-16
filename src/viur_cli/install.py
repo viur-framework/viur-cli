@@ -55,7 +55,7 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 
 @cli.group()
 def install():
-    """Install VIUR features"""
+    """Install ViUR features"""
 
 
 @install.command()
@@ -63,7 +63,7 @@ def install():
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
 @click.option("--target", "-t", default="vi")
 def vi(version, target, next_):
-    """Install vi — the legacy VIUR administration interface."""
+    """Install vi — the legacy ViUR administration interface."""
     if next_:
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
@@ -76,7 +76,7 @@ def vi(version, target, next_):
     vi_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi.zip")
 
-    def step_label(step):
+    def step_label(step: int) -> str:
         if step == 1:
             return f"downloading {version} vi..."
         elif step == 2:
@@ -105,7 +105,7 @@ def vi(version, target, next_):
 @click.argument("version", default="latest")
 @click.option("--target", "-t", default="vi")
 def admin(version, target):
-    """Install admin — the new VIUR administration interface."""
+    """Install admin — the new ViUR administration interface."""
     return downloadadmin(version, target)
 
 
@@ -119,7 +119,7 @@ def downloadadmin(version: str, target: str):
     admin_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi-admin.zip")
 
-    def step_label(step):
+    def step_label(step: int) -> str:
         if step == 1:
             return f"downloading admin..."
         elif step == 2:
