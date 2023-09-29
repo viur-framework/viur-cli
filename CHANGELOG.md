@@ -1,6 +1,10 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.0.16] 2023-09-29
+- feat: Add targets to all install softwares and ensure a specific version is correctly working
+- chore: refactored install.py
+
 ## [1.0.15] 2023-09-15
 - chore: support viur core 3.5.0
 
