@@ -51,11 +51,11 @@ def create_new_config(ctx, path=None):
                      default=True,
                      show_default=True):
         write_config(_projectconf, path)
-        from .vi import vi
+        from .install import vi
         ctx.invoke(vi)
     else:
         if os.path.exists("./sources/vi"):
-            echo_info("Found vi application. Added to projet.json.")
+            echo_info("Found vi application. Added to project.json.")
             _projectconf["default"]["builds"].update({
                 'vi': {
                     "kind": "flare",
