@@ -1,6 +1,5 @@
 from .cli import *
 from .deploy import *
-from .flare import *
 from .install import *
 from .local import *
 from .npm import *

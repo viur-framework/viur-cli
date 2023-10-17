@@ -30,12 +30,6 @@ def _build(cfg, name, build_cfg, additional_args):
                 flare_build_type = "release"
                 flare_build_env = "pyenv exec"
 
-                # enforce python 3.9.5
-                # FIXME: This is highly obsolete...
-                if "3.9.5" not in os.popen("pyenv versions").read():
-                    utils.system(f'pyenv install 3.9.5')
-                utils.system("pyenv local 3.9.5")
-
             utils.echo_info(f"- Building Flare: {flare_build_type} {name}")
             utils.system(f'{flare_build_env} viur flare {flare_build_type} {name}')
 
