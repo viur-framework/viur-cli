@@ -65,12 +65,6 @@ $ viur install {vi|scriptor}
 ```
 ask viur-cli to install either vi or the scriptor into your project
 
-
-```sh
-$ viur flare watch vi
-```
-this would watch the vi flare app for changes and automatically rebuild it in case of changes.
-
 ```sh
 $ viur build release
 ```
