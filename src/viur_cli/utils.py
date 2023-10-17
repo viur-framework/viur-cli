@@ -1,4 +1,10 @@
-import os, shutil, click, sys, typing, datetime, getpass
+import os
+import shutil
+import click
+import sys
+import typing
+import datetime
+import getpass
 
 
 def rmdir(dir):
@@ -81,3 +87,14 @@ def replace_vars(string: str, vars: typing.Optional[typing.Dict[str, str]] = Non
             string = string.replace(f"$({var})", str(content))
 
     return string
+
+
+def requirements_to_dict(requirements):
+    ret = {}
+    for requirement in requirements:
+        package, version = requirement.requirement.split(";")[0].split("==")
+        package = package.split("[")[0]
+
+        requirement.options.update({"version": version.strip()})
+        ret.update({package.lower(): requirement.options})
+    return ret
