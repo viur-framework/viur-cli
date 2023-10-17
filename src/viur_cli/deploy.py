@@ -52,10 +52,7 @@ def deploy(action, name, additional_args):
         if action == "index":
             try:
                 with open(yaml_file, "r") as source_file:
-                    try:
-                        data = yaml.safe_load(source_file)
-                    except ValueError as e:
-                        raise e
+                    data = yaml.safe_load(source_file)
 
                     if "indexes" not in data:
                         raise ValueError()
