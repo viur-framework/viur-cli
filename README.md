@@ -98,6 +98,11 @@ with this you can manage your project.json or generate a new one. You can add or
 list what has been added to the project.json, add a flare application with `addFlare` to be built when running `viur build release` 
 or walk through the projects sources with `scanNpm` and identify all npm applications to be added
 
+```sh
+$ viur update {requirements}
+```
+with this you can update your project specific requirements.txt file automatically
+
 ## Viur scripting interface
 
 There is a new core component that enables us to pull and push python scripts from/to a deployed application and run these in a sandbox or even locally.
