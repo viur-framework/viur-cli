@@ -31,7 +31,7 @@ def create_req(confirm_value=True):
     dist_folder = project_config["default"]["distribution_folder"]
     if project_config["default"]["core"] != "submodule":
 
-        if click.confirm(text="Do you want to regenerate the requirements.txt located in the {dist_folder}?",
+        if click.confirm(text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
                          default=confirm_value):
             os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
             file_object = open(f"{dist_folder}/requirements.txt", 'r')
