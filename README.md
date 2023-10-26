@@ -66,17 +66,6 @@ $ viur install {vi|scriptor}
 ask viur-cli to install either vi or the scriptor into your project
 
 ```sh
-$ viur flare {release|debug|watch} [appname]
-```
-if you have a flare component in your project you can build a `release`, start a `debug` helper or `watch` the flare app for code changes 
-which will automatically rebuild it when you save your changes.
-
-```sh
-$ viur flare watch vi
-```
-this would watch the vi flare app for changes and automatically rebuild it in case of changes.
-
-```sh
 $ viur build release
 ```
 build all flare and npm apps and produce a release that can be deployed
