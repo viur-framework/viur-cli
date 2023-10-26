@@ -2,7 +2,6 @@ from .cli import *
 from .deploy import *
 from .install import *
 from .local import *
-from .npm import *
 from .build import *
 from .setup import *
 from .version import *

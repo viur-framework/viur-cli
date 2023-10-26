@@ -26,9 +26,6 @@ def project(action):
     elif action == "addFlare":
         _projectconf = add_to_flare_config(projectConfig)
         write_config(_projectconf)
-    elif action == "scanNpm":
-        _projectconf = add_npm_apps()
-        write_config(_projectconf)
     elif action == "remove":
         remove_from_config()
     elif action == "list":
