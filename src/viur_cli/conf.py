@@ -202,52 +202,6 @@ def fetch_core_version():
             projectConfig["default"]["core"] = "submodule"
             write_config(projectConfig)
 
-def add_npm_apps():
-    global projectConfig
-    if "default" not in projectConfig:
-        raise click.ClickException(click.style("default entry is missing", fg="red"))
-
-    sourceFolder = projectConfig["default"]["sources_folder"]
-
-    for path in Path(sourceFolder).rglob('package.json'):
-        if "/node_modules/" not in str(path):
-            sourcepath = str(path).replace(sourceFolder[2:],"").replace("package.json","")
-
-            if "/vi/vi/" in sourcepath or "/examples/" in sourcepath or "/example/" in sourcepath:
-                continue
-
-            if sourcepath == "/vi/vi-base/":
-                if click.confirm(f"Do you want to add the vue vi to your apps?"):
-                    projectConfig["default"]["builds"].update({
-                        "vvi": {
-                            "kind": "npm",
-                            "source": sourcepath[:-1],
-                            "command": "build"
-                        }
-                    })
-
-            elif click.confirm(f"Do you want to add {sourcepath} to your apps?"):
-                if not "builds" in projectConfig["default"]:
-                    projectConfig["default"].update({"builds": {}})
-
-                pathparts = sourcepath.strip("/").split("/")
-                if len(pathparts) == 1:
-                    defaultname = sourcepath.strip("/").split("/")[0].replace("viur-", "")
-                elif len(pathparts) > 1:
-                    defaultname = sourcepath.strip("/").split("/")[0].replace("viur-", "")+"_"+sourcepath.strip("/").split("/")[-1].replace("viur-", "")
-                else:
-                    defaultname = None
-
-
-                projectConfig["default"]["builds"].update({
-                    click.prompt('name', default=defaultname): {
-                        "kind": "npm",
-                        "source": sourcepath[:-1],
-                        "command": click.prompt('command', default="build")
-                    }
-                })
-    return projectConfig
-
 
 def update_config(path=None):
     assert projectConfig, "load_config() must be called first!"
@@ -280,8 +234,6 @@ def update_config(path=None):
 
     if projectConfig["default"]["format"] == "1.0.1":
         projectConfig["default"]["format"] = "1.1.0"
-        echo_info("viur-cli tries to find npm applications")
-        add_npm_apps()
 
     ##################### Version 1.1.1
 

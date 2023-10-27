@@ -81,11 +81,11 @@ $ viur env
 check the environment you are in right now, show versions of viur-cli, viur-core and vi etc.
 
 ```sh
-$ viur project {add|remove|list|addFlare|scanNpm}
+$ viur project {add|remove|list|addFlare}
 ```
-with this you can manage your project.json or generate a new one. You can add or remove targets to/from the project.json, 
-list what has been added to the project.json, add a flare application with `addFlare` to be built when running `viur build release` 
-or walk through the projects sources with `scanNpm` and identify all npm applications to be added
+with this you can manage your project.json or generate a new one. You can add or remove targets to/from the 
+project.json, list what has been added to the project.json, add a flare application with `addFlare` 
+to be built when running `viur build release`.
 
 ```sh
 $ viur update {requirements}
