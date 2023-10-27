@@ -216,7 +216,28 @@ def app(appname, additional_args):
 @build.command
 @click.argument("target", default="")
 def clean(target):
-    """Clean-up build artefacts."""
+    """
+    Clean up build artifacts.
+
+    This command is used to clean up build artifacts and files generated during the build process for one or more
+    specific applications. It allows you to specify a target application or clean all applications in the project.
+
+    :param target: str, default: ""
+        The name of the target application to clean. If not provided, it will clean all applications defined in your
+        project's configuration.
+
+
+    The `clean` command performs the following actions:
+    - If a specific 'target' is provided, it cleans the build artifacts for that application.
+    - If 'target' is not provided, it cleans the build artifacts for all applications defined in your project's
+      configuration.
+
+    Note:
+    - When specifying a 'target,' ensure that it corresponds to a valid application defined in your project.
+    - Running the command without a 'target' will clean all applications.
+
+    :return: None
+    """
     projectConfig = conf.get_config()
     cfg = projectConfig["default"].copy()
 
