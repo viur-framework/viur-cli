@@ -7,7 +7,7 @@ from .utils import *
 
 DEFAULT_PYODIDE_VERSION = "0.19.1"
 
-pectConfig = None
+projectConfig = None
 projectConfigFilePath = "project.json"
 
 
