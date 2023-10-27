@@ -4,24 +4,6 @@ from .conf import *
 from .cli import cli
 from .utils import *
 
-
-@cli.command()
-def init():
-    """initialize project.json"""
-
-    projectConfig = get_config()
-    try:
-        f = open(projectConfigFilePath)
-        if click.confirm("project.json already exists, do you want to delete it and create a new project.json?"):
-            os.remove(projectConfigFilePath)
-            create_new_config()
-    except:
-
-        if not projectConfig:
-            if click.confirm("Do you want to create a new project.json file?"):
-                create_new_config()
-
-
 @cli.command()
 @click.argument("name")
 @click.pass_context
@@ -37,7 +19,6 @@ def create(ctx, name):
     project_json_path = f'./{name}/project.json'
 
     # collect project info
-    create_new_config(project_json_path)
     projectConfig = load_config(path=project_json_path)
     appname = projectConfig["develop"]['application_name']
 
