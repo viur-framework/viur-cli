@@ -11,7 +11,45 @@ from .update import create_req
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 def deploy(action, name, additional_args):
-    """deploy gcloud app or different yaml files"""
+    """
+    Deploy a Google Cloud application or different YAML files.
+
+    This command allows you to deploy various components of a Google Cloud application, such as the app itself, index.yaml
+    configurations, cron.yaml configurations, or queue.yaml configurations. The deployment action and the specific
+    project configuration to deploy are determined by the 'action' and 'name' parameters.
+    Please make sure to configure your global installation of the gcloud-cli accordingly.
+
+    :param action: str
+        The deployment action. It can be one of the following:
+        - 'app': Deploy the Google Cloud application.
+        - 'index': Deploy the index.yaml configuration.
+        - 'cron': Deploy the cron.yaml configuration.
+        - 'queue': Deploy the queue.yaml configuration.
+
+    :param name: str, default: 'develop'
+        The name of the project configuration to use for deployment. It should correspond to a valid project configuration.
+
+    :param additional_args: tuple
+        Additional arguments that can be passed to the deployment process.
+
+    Example Usage:
+    ```shell
+    viur deploy app my_config --version v2
+    viur deploy index my_config
+    viur deploy cron my_config
+    viur deploy queue my_config
+    ```
+
+    The `deploy` command deploys the specified components based on the 'action' and 'name' parameters. It includes checks
+    for successful deployments and offers a confirmation prompt for any failed checks.
+
+    Note:
+    - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
+    - The 'app' action includes vulnerability checks and a confirmation prompt if checks fail.
+    - The 'index' action sorts the index.yaml file by kind for cleaner organization.
+
+    :return: None
+    """
     projectConfig = get_config()
 
     if name not in projectConfig:
