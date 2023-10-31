@@ -16,7 +16,7 @@ def cli(ctx):
 
     Usage:
     ```
-    myproject-cli [OPTIONS] COMMAND [ARGS]...
+    viur [OPTIONS] COMMAND [ARGS]...
     ```
 
     Options:

@@ -1,4 +1,7 @@
-import click, os, shutil, subprocess
+import click
+import os
+import shutil
+import subprocess
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
@@ -25,7 +28,7 @@ def run(name, additional_args):
         viur run production
         ```
 
-        The 'run' command launches your ViUR application locally with the specified configuration and optional arguments.
+        The 'run' command launches your ViUR application locally specified configuration and optional arguments.
 
         :return: None
     """
@@ -54,7 +57,7 @@ def env():
        viur env
        ```
 
-       The 'env' command provides information about the versions of tools and dependencies, such as ViUR-CLI, app_server,
+       The 'env' command provides information about the versions tools and dependencies, such as ViUR-CLI, app_server,
        git, Python, npm, node, and more. It checks the availability of these tools and reports their versions.
 
        :return: None
@@ -181,6 +184,7 @@ def check(dev):
     if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
+
 def do_checks(dev=True):
     """
     Runs several toolchain and ecosystem security checks for vulnerabilities, and reports these on demand.
@@ -213,7 +217,7 @@ def do_checks(dev=True):
     projectConfig = get_config()
     cfg = projectConfig["default"].copy()
     if builds_cfg := cfg.get("builds"):
-        if npm_apps := [k for k,v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
+        if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:
                 path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
 

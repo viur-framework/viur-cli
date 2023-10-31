@@ -14,9 +14,10 @@ def deploy(action, name, additional_args):
     """
     Deploy a Google Cloud application or different YAML files.
 
-    This command allows you to deploy various components of a Google Cloud application, such as the app itself, index.yaml
-    configurations, cron.yaml configurations, or queue.yaml configurations. The deployment action and the specific
-    project configuration to deploy are determined by the 'action' and 'name' parameters.
+    This command allows you to deploy various components of a Google Cloud application, such as the app itself,
+    index.yaml configurations, cron.yaml configurations, or queue.yaml configurations.
+    The deployment action and the specific project configuration
+    to deploy are determined by the 'action' and 'name' parameters.
     Please make sure to configure your global installation of the gcloud-cli accordingly.
 
     :param action: str
@@ -27,7 +28,8 @@ def deploy(action, name, additional_args):
         - 'queue': Deploy the queue.yaml configuration.
 
     :param name: str, default: 'develop'
-        The name of the project configuration to use for deployment. It should correspond to a valid project configuration.
+        The name of the project configuration to use for deployment.
+        It should correspond to a valid project configuration.
 
     :param additional_args: tuple
         Additional arguments that can be passed to the deployment process.
@@ -40,8 +42,8 @@ def deploy(action, name, additional_args):
     viur deploy queue my_config
     ```
 
-    The `deploy` command deploys the specified components based on the 'action' and 'name' parameters. It includes checks
-    for successful deployments and offers a confirmation prompt for any failed checks.
+    The `deploy` command deploys the specified components based on the 'action' and 'name' parameters.
+    It includes checks for successful deployments and offers a confirmation prompt for any failed checks.
 
     Note:
     - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.

@@ -82,6 +82,7 @@ def install():
     :return: None
     """
 
+
 @install.command()
 @click.argument("version", default="latest")
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
@@ -95,7 +96,8 @@ def vi(version, target, next_):
         but it is deprecated in favor of the 'admin' subcommand.
 
         :param version: str, default: 'latest'
-            The version of the legacy ViUR administration interface to install. Use 'latest' for the latest available version.
+            The version of the legacy ViUR administration interface to install.
+            Use 'latest' for the latest available version.
 
         :param target: str, default: 'vi'
             The target folder where the ViUR administration interface will be installed.
@@ -105,11 +107,12 @@ def vi(version, target, next_):
 
         Example Usage:
         ```shell
-        myproject-cli install vi --version v2.0.0 --target my-admin
-        myproject-cli install vi --version latest
+        viur install vi --version v2.0.0 --target my-admin
+        viur install vi --version latest
         ```
 
-        The 'vi' subcommand downloads and installs the specified or latest version of the legacy ViUR administration interface.
+        The 'vi' subcommand downloads and installs the specified
+        or latest version of the legacy ViUR administration interface.
         It updates the configuration with the installed version.
 
         :return: None
@@ -178,7 +181,8 @@ def downloadadmin(version: str, target: str):
     viur install admin --version latest
     ```
 
-    The 'admin' subcommand downloads and installs the specified or latest version of the new ViUR administration interface.
+    The 'admin' subcommand downloads and installs the specified or latest version of the new
+    ViUR administration interface.
     It updates the configuration with the installed version.
 
     :return: None

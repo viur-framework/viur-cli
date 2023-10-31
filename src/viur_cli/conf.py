@@ -15,8 +15,9 @@ def load_config(path=None):
     """
         Load project.json and write to the global projectConfig.
 
-        This function is responsible for loading the project.json configuration file and populating the global projectConfig
-        variable. It handles error checks, such as missing or invalid JSON configuration files, and updates the project
+        This function is responsible for loading the project.json configuration file and populating the global
+        projectConfig variable.
+        It handles error checks, such as missing or invalid JSON configuration files, and updates the project
         configuration.
 
         :param path: str, optional
@@ -61,7 +62,8 @@ def write_config(conf, path=None):
     """
     Write the current projectConfig dictionary to project.json.
 
-    This function is used to write the current project configuration, provided as a dictionary, to the project.json file.
+    This function is used to write the current project configuration, provided as a dictionary,
+    to the project.json file.
 
     :param conf: dict
         The project configuration to be written to the project.json file.
@@ -100,8 +102,8 @@ def add_to_config():
     """
         Add a new configuration to project.json.
 
-        This function allows the addition of a new configuration to the project.json file. It prompts for the configuration name,
-        application name, and version.
+        This function allows the addition of a new configuration to the project.json file.
+        It prompts for the configuration name, application name, and version.
 
         :return: None
     """
@@ -169,8 +171,8 @@ def remove_from_flare_config(flareAppName):
     """
     Remove a Flare app configuration from project.json.
 
-    This function allows the removal of an existing Flare app configuration from the project.json file. It prompts for the
-    Flare app name to remove.
+    This function allows the removal of an existing Flare app configuration from the project.json file.
+    It prompts for the Flare app name to remove.
 
     :param flareAppName: str
         The name of the Flare app to remove from the project configuration.
@@ -220,15 +222,16 @@ def update_config(path=None):
     """
     assert projectConfig, "load_config() must be called first!"
 
-    assert projectConfig["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], "Invalid formatversion, you have to fix it manually"
+    assert projectConfig["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], \
+        "Invalid formatversion, you have to fix it manually"
 
     if "format" not in projectConfig["default"]:
         projectConfig["default"]["format"] = "1.0.1"
 
-    ##################### Version 1.0.1
+    # Version 1.0.1
 
     if (pyodide_version := projectConfig["default"].get("pyodide")) and pyodide_version.startswith("v"):
-        projectConfig["default"]["pyodide"] = pyodide_version[1:] #remove v prefix
+        projectConfig["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
 
     if projectConfig["default"]["vi"].startswith("v"):
         projectConfig["default"]["vi"] = projectConfig["default"]["vi"][1:]  # remove v prefix
@@ -236,11 +239,11 @@ def update_config(path=None):
     if projectConfig["default"]["format"] == "1.0.0":
         projectConfig["default"]["format"] = "1.0.1"
 
-    ##################### Version 1.1.0
+    # Version 1.1.0
 
     if "flare" in projectConfig["default"]:
         builds = projectConfig["default"]["flare"].copy()
-        for k,v in builds.items():
+        for k, v in builds.items():
             builds[k]["kind"] = "flare"
 
         projectConfig["default"]["builds"] = builds
@@ -249,7 +252,7 @@ def update_config(path=None):
     if projectConfig["default"]["format"] == "1.0.1":
         projectConfig["default"]["format"] = "1.1.0"
 
-    ##################### Version 1.1.1
+    # Version 1.1.1
 
     if projectConfig["default"]["format"] == "1.1.0":
         projectConfig["default"]["format"] = "1.1.1"
@@ -261,7 +264,3 @@ def update_config(path=None):
 
     # conf updates must increase format version
     write_config(projectConfig, path)
-
-
-
-

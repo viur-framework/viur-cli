@@ -23,7 +23,7 @@ def tool():
     - 'pyodide': Run the get_pyodide command.
     - 'ssl_fix': SSL certificate fix for macOS.
 
-    Use 'myproject-cli tool <command> -h' for command-specific help.
+    Use 'viur tool <command> -h' for command-specific help.
 
     Example Usage:
     ```
@@ -32,6 +32,7 @@ def tool():
 
     :return: None
     """
+
 
 @tool.command(name="2to3")
 @click.argument("path")
