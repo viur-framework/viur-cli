@@ -4,7 +4,7 @@ from .conf import *
 from .version import __version__
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True)
+@click.group(invoke_without_command=True, no_args_is_help=True,context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__)
 @click.pass_context
 def cli(ctx):
