@@ -8,7 +8,32 @@ from .utils import *
 @click.argument("name")
 @click.pass_context
 def create(ctx, name):
-    """create a new ViUR project"""
+    """
+    Create a new ViUR project.
+
+    The 'create' command allows you to create a new ViUR project by cloning the ViUR base project and configuring it.
+    You can specify the name of the new project as the 'name' argument.
+
+    :param name: str
+        The name of the new ViUR project.
+
+    Example Usage:
+    ```shell
+    viur create my_new_project
+    ```
+
+    The 'create' command performs the following steps:
+    1. Clones the ViUR base project from the official GitHub repository.
+    2. Configures the new project by running 'clean-base.py'.
+    3. Optionally configures the project as a new gcloud project (if confirmed).
+
+    Note:
+    - This command initializes the new ViUR project based on the ViUR base project.
+    - Make sure to provide a unique project name to avoid conflicts with existing folders.
+
+
+    :return: None
+    """
     if os.path.exists(f'./{name}'):
         echo_error(f'"{name}" Folder exists. Please use a different name or remove this folder ./{name}')
         return
