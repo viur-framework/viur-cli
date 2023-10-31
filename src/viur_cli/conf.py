@@ -2,85 +2,13 @@
 Everything related to maintaining the project.json configuration file for a viur project.
 """
 
-import click
-import os
 import json
 from .utils import *
-from pathlib import Path
 
 DEFAULT_PYODIDE_VERSION = "0.19.1"
 
 projectConfig = None
 projectConfigFilePath = "project.json"
-
-
-# functions
-@click.pass_context
-def create_new_config(ctx, path=None):
-    """create new config with project.json default template"""
-
-    if path and os.path.exists(os.path.join(os.path.dirname(path), "deploy")):
-        deployFolder = "./deploy"
-    else:
-        deployFolder = click.prompt('distribution folder', default="./deploy")
-
-    if path and os.path.exists(os.path.join(os.path.dirname(path), "sources")):
-        sourcesFolder = "./sources"
-    else:
-        sourcesFolder = click.prompt('distribution folder', default="./sources")
-
-
-
-    _projectconf = {
-        "default": {
-            "format":"1.0.0",
-            "distribution_folder": deployFolder,
-            "sources_folder": sourcesFolder,
-            "builds": {},
-            "vi": "submodule",
-            "core": "submodule",
-        },
-
-        "develop": {
-            "application_name": click.prompt('application name'),
-            "version": click.prompt('develop version name')
-        }
-    }
-
-    if click.confirm("Do you want to use a prebuild Vi? (default)",
-                     default=True,
-                     show_default=True):
-        write_config(_projectconf, path)
-        from .install import vi
-        ctx.invoke(vi)
-    else:
-        if os.path.exists("./sources/vi"):
-            echo_info("Found vi application. Added to project.json.")
-            _projectconf["default"]["builds"].update({
-                'vi': {
-                    "kind": "flare",
-                    "source": './sources/vi/vi',
-                    "target": './deploy/vi'
-                }
-            })
-        elif click.confirm("Do you want to add vi as submodule(default)",
-                           default=True,
-                           show_default=True):
-            os.system(
-                f'git submodule add https://github.com/viur-framework/viur-vi sources/vi && git submodule update --init --recursive')
-            _projectconf["default"]["builds"].update({
-                'vi': {
-                    "kind": "flare",
-                    "source": './sources/vi/vi',
-                    "target": './deploy/vi'
-                }
-            })
-            _projectconf["default"]["vi"] = f'submodule'
-
-    if click.confirm("Do you want to add additional flare application?"):
-        _projectconf = add_to_flare_config(_projectconf)
-
-    write_config(_projectconf, path)
 
 
 def load_config(path=None):
@@ -166,7 +94,7 @@ def add_to_flare_config(projectconf):
     if "default" not in projectconf:
         raise click.ClickException(click.style("default entry is missing", fg="red"))
 
-    if not "builds" in projectconf["default"]:
+    if "builds" not in projectconf["default"]:
         projectconf["default"].update({"builds": {}})
 
     projectconf["default"]["builds"].update({
