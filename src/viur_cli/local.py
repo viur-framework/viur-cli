@@ -119,10 +119,15 @@ def env():
 
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
-def check(dev):
+@click.argument("action", type=click.Choice(['npm']))
+@click.option('--autofix', '-a', is_flag=True, default=False)
+def check(dev, action, autofix):
     """do security checks"""
     if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
+
+    if action == "npm":
+        checknpm(autofix)
 
 def do_checks(dev=True):
     """
@@ -152,14 +157,13 @@ def do_checks(dev=True):
             all_checks_passed = False
 
     # Check npm vulnerabilities for all npm builds
-
     projectConfig = get_config()
     cfg = projectConfig["default"].copy()
+    print(cfg.get("builds"))
     if builds_cfg := cfg.get("builds"):
-        if npm_apps := [k for k,v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
+        if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:
                 path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
-
                 if dev:
                     args = ("npm", "audit", "--prefix", path)
                 else:
@@ -168,4 +172,35 @@ def do_checks(dev=True):
                 if show_output_if_not(args, "found 0 vulnerabilities"):
                     all_checks_passed = False
 
+    ############################### Change to your actual folder path
+
     return all_checks_passed
+
+# viur check npm --autofix
+
+def checknpm(autofix):
+    sources_folder = './sources'
+    try:
+        result = subprocess.check_output(
+            ['npm', 'audit'], stderr=subprocess.STDOUT, cwd=sources_folder, encoding='utf-8')
+
+        if "found 0 vulnerabilities" not in result:
+            click.echo(result)
+        elif:
+            if autofix:
+                confirm = click.prompt('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n)',
+                                       default='Y').strip().lower()
+                if confirm == 'y':
+                    subprocess.run(['npm', 'audit', 'fix'], cwd=sources_folder)
+                else:
+                    click.echo(
+                        'Automatic fix not confirmed. To fix vulnerabilities, '
+                        'run "npm audit fix" in the ./sources folder.')
+            else:
+                click.echo('To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
+        else:
+            click.echo('No vulnerabilities found.')
+
+    except subprocess.CalledProcessError as err:
+        click.echo(err.output.strip())
+
