@@ -119,15 +119,17 @@ def env():
 
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
-@click.argument("action", type=click.Choice(['npm']))
+@click.argument("action", type=click.Choice(['npm', 'all']))
 @click.option('--autofix', '-a', is_flag=True, default=False)
 def check(dev, action, autofix):
     """do security checks"""
-    if do_checks(dev):
+    if dev:
+        do_checks()
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
     if action == "npm":
-        checknpm(autofix)
+        npm_audit_with_prompt()
+        #checknpm(autofix)
 
 def do_checks(dev=True):
     """
@@ -183,24 +185,57 @@ def checknpm(autofix):
     try:
         result = subprocess.check_output(
             ['npm', 'audit'], stderr=subprocess.STDOUT, cwd=sources_folder, encoding='utf-8')
+        print(result)
+        if "found 0 vulnerabilities" not in result and autofix:
 
-        if "found 0 vulnerabilities" not in result:
             click.echo(result)
-        elif:
-            if autofix:
-                confirm = click.prompt('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n)',
-                                       default='Y').strip().lower()
-                if confirm == 'y':
-                    subprocess.run(['npm', 'audit', 'fix'], cwd=sources_folder)
-                else:
-                    click.echo(
-                        'Automatic fix not confirmed. To fix vulnerabilities, '
-                        'run "npm audit fix" in the ./sources folder.')
+            confirm = click.prompt('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n)',
+                                   default='Y').strip().lower()
+            if confirm == 'y':
+                subprocess.run(['npm', 'audit', 'fix'], cwd=sources_folder)
             else:
-                click.echo('To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
+                click.echo(
+                    'Automatic fix not confirmed. To fix vulnerabilities, '
+                    'run "npm audit fix" in the ./sources folder.')
+
+        click.echo('No vulnerabilities found.')
+        click.echo('To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
+
+    except:
+        print("An error occured")
+
+def npm_audit_with_prompt():
+    sources_folder = './sources'
+
+    try:
+        # Run "npm audit" command and capture the output
+        result = subprocess.run(
+            ['npm', 'audit'],
+            stderr=subprocess.STDOUT,
+            cwd=sources_folder,
+            encoding='utf-8',
+            stdout=subprocess.PIPE
+        )
+
+        # Print the "npm audit" output
+
+        print(result.stdout)
+        print("THIS WAS RESULT.STDOUT")
+
+        if "found 0 vulnerabilities" not in result.stdout:
+            confirm = input('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n): ').strip().lower()
+            if confirm == 'y' or confirm == 'Y':
+                # Run "npm audit fix" if the user confirms
+                fix_result = subprocess.run(
+                    ['npm', 'audit', 'fix'], cwd=sources_folder, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                print(fix_result.stdout)
+            else:
+                print('Automatic fix not confirmed. To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
+
         else:
-            click.echo('No vulnerabilities found.')
+            print('No vulnerabilities found.')
 
-    except subprocess.CalledProcessError as err:
-        click.echo(err.output.strip())
-
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
