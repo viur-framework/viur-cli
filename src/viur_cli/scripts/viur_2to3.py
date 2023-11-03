@@ -32,6 +32,7 @@ lookup = {
     "forcePost": "force_post",  # 800
     "forceSSL": "force_ssl",  # 800
     "internalExposed": "internal_exposed",  # 800
+    "sameSite": "same_site",
 }
 
 bones = [
