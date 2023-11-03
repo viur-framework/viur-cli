@@ -35,7 +35,6 @@ lookup = {
     "Session.sameSite": "Session.same_site",
     "Session.useSessionCookie": "Session.use_session_cookie",
     "Session.cookieName": "Session.cookie_name",
-
 }
 
 bones = [
