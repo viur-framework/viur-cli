@@ -1,7 +1,9 @@
 import json
+import click
+import os
+import shutil
+import subprocess
 from pprint import pprint
-
-import click, os, shutil, subprocess
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
@@ -10,7 +12,28 @@ from .install import vi as vi_install
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 def run(name, additional_args):
-    """start your application locally"""
+    """
+        Start your application locally.
+
+        The 'run' command allows you to start your ViUR application locally. You can specify the configuration to use
+        and provide additional arguments to the 'app_server' command.
+
+        :param name: str, default: 'develop'
+            The name of the configuration to use. The 'develop' configuration is the default.
+
+        :param additional_args: List[str]
+            Additional arguments to pass to the 'app_server' command when running the application.
+
+        Example Usage:
+        ```shell
+        viur run develop --port 8080
+        viur run production
+        ```
+
+        The 'run' command launches your ViUR application locally specified configuration and optional arguments.
+
+        :return: None
+    """
     projectConfig = get_config()
 
     if name not in projectConfig:
@@ -25,7 +48,23 @@ def run(name, additional_args):
 
 @cli.command()
 def env():
-    """check local Environment"""
+    """
+       Check the local environment for ViUR development.
+
+       The 'env' command checks the local environment for ViUR development and reports the status of various tools
+       and dependencies. It helps you ensure that your development environment is correctly set up.
+
+       Usage:
+       ```shell
+       viur env
+       ```
+
+       The 'env' command provides information about the versions tools and dependencies, such as ViUR-CLI, app_server,
+       git, Python, npm, node, and more. It checks the availability of these tools and reports their versions.
+
+       :return: None
+    """
+
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
@@ -122,12 +161,29 @@ def env():
 
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
-@click.argument("action", type=click.Choice(['npm', 'all']))
 @click.option('--autofix', '-a', is_flag=True, default=False)
+@click.argument("action", type=click.Choice(['npm', 'all']))
 def check(dev, action, autofix):
-    """do security checks"""
-    if dev:
-        do_checks()
+    """
+    Perform security checks for vulnerabilities.
+
+    The 'check' command performs security checks for vulnerabilities within your project.
+    It checks for vulnerabilities in the Pipenv and npm dependencies of your project.
+    You can choose to include development dependencies by using the '--dev' option.
+
+    Args:
+        dev (bool): Perform checks on development dependencies if set to 'True'.
+        autofix (bool): Automatically fix npm vulnerabilities if set to 'True'.
+        action (str): Specify the action to perform ('npm' or 'all').
+
+    The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
+
+    Usage:
+    ```shell
+       viur check --dev npm --autofix
+    ```
+    """
+    if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
     if action == "npm":
@@ -157,13 +213,13 @@ def do_checks(dev=True):
         all_checks_passed = False
 
     if dev:
-        if show_output_if_not("pipenv check --output minimal --categories develop".split(), "0 vulnerabilities found"):
+        if show_output_if_not("pipenv check --output minimal --categories develop".split(),
+                              "0 vulnerabilities found"):
             all_checks_passed = False
 
     # Check npm vulnerabilities for all npm builds
     projectConfig = get_config()
     cfg = projectConfig["default"].copy()
-    print(cfg.get("builds"))
     if builds_cfg := cfg.get("builds"):
         if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:
@@ -176,12 +232,23 @@ def do_checks(dev=True):
                 if show_output_if_not(args, "found 0 vulnerabilities"):
                     all_checks_passed = False
 
-    ############################### Change to your actual folder path
-
     return all_checks_passed
 
 
 def checknpm(autofix):
+    """
+    Check for npm vulnerabilities in the project and optionally fix them.
+
+    This function runs the "npm audit" command to check for vulnerabilities in the project's dependencies. If any
+    vulnerabilities are found, the function prompts the user to view the details and optionally run "npm audit fix
+    --force" to automatically fix the vulnerabilities.
+
+    Args:
+        autofix (bool): A boolean indicating whether to automatically fix vulnerabilities.
+
+    Raises:
+        subprocess.CalledProcessError: If an error occurs while running the "npm audit" or "npm audit fix" commands.
+    """
     sources_folder = './sources'
 
     try:
@@ -240,7 +307,10 @@ def checknpm(autofix):
                 except Exception as e:
                     print(f'{e}')
             else:
-                print('Automatic fix not confirmed. To fix vulnerabilities, run "npm audit fix --force" in the ./sources folder.')
+                print(
+                    'Automatic fix not confirmed. To fix vulnerabilities, '
+                    'run "npm audit fix --force" in the ./sources folder.'
+                )
         else:
             print('No vulnerabilities found.')
 

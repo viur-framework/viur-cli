@@ -55,7 +55,32 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 
 @cli.group()
 def install():
-    """Install ViUR features"""
+    """
+    Manage the installation of ViUR features.
+
+    The 'install' command group provides various subcommands for managing the installation of ViUR features, including
+    the ViUR administration interfaces and the scriptor IDE. You can choose to install specific versions or use the
+    latest available versions.
+
+    Example Usage:
+    ```shell
+    viur install vi --version v2.0.0
+    viur install admin
+    viur install scriptor --version latest
+    ```
+
+    Available subcommands:
+    - 'vi': Install the legacy ViUR administration interface.
+    - 'admin': Install the new ViUR administration interface.
+    - 'scriptor': Install the scriptor IDE.
+
+    Note:
+    - When using the 'admin' subcommand, the new administration interface will be installed.
+    - The 'scriptor' subcommand installs the scriptor IDE.
+    - Ensure that you have a valid project configuration before using these subcommands.
+
+    :return: None
+    """
 
 
 @install.command()
@@ -63,7 +88,34 @@ def install():
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
 @click.option("--target", "-t", default="vi")
 def vi(version, target, next_):
-    """Install vi — the legacy ViUR administration interface."""
+    """Install the legacy ViUR administration interface.
+
+    This subcommand allows you to install the legacy ViUR administration interface. You can specify a version to
+    install, or use the latest available version. It includes a 'next' option for compatibility,
+    but it is deprecated in favor of the 'admin' subcommand.
+
+    :param version: str, default: 'latest'
+        The version of the legacy ViUR administration interface to install.
+        Use 'latest' for the latest available version.
+
+    :param target: str, default: 'vi'
+        The target folder where the ViUR administration interface will be installed.
+
+    :param next_: bool, default: False
+        A deprecated option, please use the 'admin' subcommand for the new administration interface.
+
+    Example Usage:
+    ```shell
+    viur install vi --version v2.0.0 --target my-admin
+    viur install vi --version latest
+    ```
+
+    The 'vi' subcommand downloads and installs the specified
+    or latest version of the legacy ViUR administration interface.
+    It updates the configuration with the installed version.
+
+    :return: None
+    """
     if next_:
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
@@ -110,7 +162,30 @@ def admin(version, target):
 
 
 def downloadadmin(version: str, target: str):
-    """download latest vi-admin or a specific version"""
+    """
+    Install the new ViUR administration interface.
+
+    This subcommand allows you to install the new ViUR administration interface. You can specify a version to install,
+    or use the latest available version.
+
+    :param version: str, default: 'latest'
+        The version of the new ViUR administration interface to install. Use 'latest' for the latest available version.
+
+    :param target: str, default: 'vi'
+        The target folder where the new ViUR administration interface will be installed.
+
+    Example Usage:
+    ```shell
+    viur install admin --version v2.0.0 --target my-admin
+    viur install admin --version latest
+    ```
+
+    The 'admin' subcommand downloads and installs the specified or latest version of the new
+    ViUR administration interface.
+    It updates the configuration with the installed version.
+
+    :return: None
+    """
     projectConfig = get_config()
     dist_folder = projectConfig["default"]["distribution_folder"]
 
@@ -148,7 +223,28 @@ def downloadadmin(version: str, target: str):
 @click.argument("version", default="latest")
 @click.option("--target", "-t", default="scriptor")
 def scriptor(version, target):
-    """Install scriptor IDE."""
+    """
+    Install the scriptor IDE.
+
+    This subcommand allows you to install the scriptor IDE. You can specify a version to install, or use the latest
+    available version.
+
+    :param version: str, default: 'latest'
+        The version of the scriptor IDE to install. Use 'latest' for the latest available version.
+
+    :param target: str, default: 'scriptor'
+        The target folder where the scriptor IDE will be installed.
+
+    Example Usage:
+    ```shell
+    viur install scriptor --version v1.2.0 --target my-scriptor
+    viur install scriptor --version latest
+    ```
+
+    The 'scriptor' subcommand downloads and installs the specified or latest version of the scriptor IDE.
+
+    :return: None
+    """
     projectConfig = get_config()
     dist_folder = projectConfig["default"]["distribution_folder"]
 

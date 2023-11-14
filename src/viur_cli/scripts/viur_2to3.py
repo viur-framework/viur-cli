@@ -32,6 +32,9 @@ lookup = {
     "forcePost": "force_post",  # 800
     "forceSSL": "force_ssl",  # 800
     "internalExposed": "internal_exposed",  # 800
+    "Session.sameSite": "Session.same_site",
+    "Session.useSessionCookie": "Session.use_session_cookie",
+    "Session.cookieName": "Session.cookie_name",
 }
 
 bones = [
