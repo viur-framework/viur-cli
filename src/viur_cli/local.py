@@ -131,8 +131,7 @@ def check(dev, action, autofix):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
     if action == "npm":
-        npm_audit_with_prompt()
-        #checknpm(autofix)
+        checknpm(autofix)
 
 def do_checks(dev=True):
     """
@@ -181,32 +180,8 @@ def do_checks(dev=True):
 
     return all_checks_passed
 
-############viur check npm --autofix
-# def checknpm(autofix):
-#     sources_folder = './sources'
-#     try:
-#         result = subprocess.check_output(
-#             ['npm', 'audit'], stderr=subprocess.STDOUT, cwd=sources_folder, encoding='utf-8')
-#         print(result)
-#         if "found 0 vulnerabilities" not in result and autofix:
-#
-#             click.echo(result)
-#             confirm = click.prompt('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n)',
-#                                    default='Y').strip().lower()
-#             if confirm == 'y':
-#                 subprocess.run(['npm', 'audit', 'fix'], cwd=sources_folder)
-#             else:
-#                 click.echo(
-#                     'Automatic fix not confirmed. To fix vulnerabilities, '
-#                     'run "npm audit fix" in the ./sources folder.')
-#
-#         click.echo('No vulnerabilities found.')
-#         click.echo('To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
-#
-#     except:
-#         print("An error occured")
 
-def npm_audit_with_prompt():
+def checknpm(autofix):
     sources_folder = './sources'
 
     try:
@@ -221,17 +196,18 @@ def npm_audit_with_prompt():
         vulnerabilities = json.loads(result.stdout)["metadata"]["vulnerabilities"]["total"]
 
         if vulnerabilities >= 0:
-            print(f"Npm found {vulnerabilities} Vulnerabilities \n ")
-            print(f'{json.loads(result.stdout)["metadata"]["vulnerabilities"]}')
 
-            show_vulnerabilities = input("Do you want a list of the found Vulnerabilities? (y/N)").strip().lower()
+            if not autofix:
+                print(f"Npm found {vulnerabilities} Vulnerabilities \n ")
+                print(f'{json.loads(result.stdout)["metadata"]["vulnerabilities"]}')
+                show_vulnerabilities = input("Do you want a list of the found Vulnerabilities? (y/N)").strip().lower()
 
-            if show_vulnerabilities == "y":
-                pprint(json.loads(result.stdout)["vulnerabilities"])
+                if show_vulnerabilities == "y":
+                    pprint(json.loads(result.stdout)["vulnerabilities"])
 
-            confirm = input('Do you want to run "npm audit fix --force" automatically? (Y/n):').strip().lower()
+                confirm = input('Do you want to run "npm audit fix --force" automatically? (Y/n):').strip().lower()
 
-            if confirm == 'y' or confirm == "":
+            if autofix or confirm == 'y' or confirm == "":
 
                 try:
                     fix = subprocess.run(
