@@ -1,3 +1,6 @@
+import json
+from pprint import pprint
+
 import click, os, shutil, subprocess
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
@@ -178,31 +181,30 @@ def do_checks(dev=True):
 
     return all_checks_passed
 
-# viur check npm --autofix
-
-def checknpm(autofix):
-    sources_folder = './sources'
-    try:
-        result = subprocess.check_output(
-            ['npm', 'audit'], stderr=subprocess.STDOUT, cwd=sources_folder, encoding='utf-8')
-        print(result)
-        if "found 0 vulnerabilities" not in result and autofix:
-
-            click.echo(result)
-            confirm = click.prompt('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n)',
-                                   default='Y').strip().lower()
-            if confirm == 'y':
-                subprocess.run(['npm', 'audit', 'fix'], cwd=sources_folder)
-            else:
-                click.echo(
-                    'Automatic fix not confirmed. To fix vulnerabilities, '
-                    'run "npm audit fix" in the ./sources folder.')
-
-        click.echo('No vulnerabilities found.')
-        click.echo('To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
-
-    except:
-        print("An error occured")
+############viur check npm --autofix
+# def checknpm(autofix):
+#     sources_folder = './sources'
+#     try:
+#         result = subprocess.check_output(
+#             ['npm', 'audit'], stderr=subprocess.STDOUT, cwd=sources_folder, encoding='utf-8')
+#         print(result)
+#         if "found 0 vulnerabilities" not in result and autofix:
+#
+#             click.echo(result)
+#             confirm = click.prompt('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n)',
+#                                    default='Y').strip().lower()
+#             if confirm == 'y':
+#                 subprocess.run(['npm', 'audit', 'fix'], cwd=sources_folder)
+#             else:
+#                 click.echo(
+#                     'Automatic fix not confirmed. To fix vulnerabilities, '
+#                     'run "npm audit fix" in the ./sources folder.')
+#
+#         click.echo('No vulnerabilities found.')
+#         click.echo('To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
+#
+#     except:
+#         print("An error occured")
 
 def npm_audit_with_prompt():
     sources_folder = './sources'
@@ -210,32 +212,54 @@ def npm_audit_with_prompt():
     try:
         # Run "npm audit" command and capture the output
         result = subprocess.run(
-            ['npm', 'audit'],
-            stderr=subprocess.STDOUT,
+            ['npm', 'audit', '--json'],
+            capture_output=True,
             cwd=sources_folder,
-            encoding='utf-8',
-            stdout=subprocess.PIPE
+            encoding='utf-8'
         )
 
-        # Print the "npm audit" output
+        vulnerabilities = json.loads(result.stdout)["metadata"]["vulnerabilities"]["total"]
 
-        print(result.stdout)
-        print("THIS WAS RESULT.STDOUT")
+        if vulnerabilities >= 0:
+            print(f"Npm found {vulnerabilities} Vulnerabilities \n ")
+            print(f'{json.loads(result.stdout)["metadata"]["vulnerabilities"]}')
 
-        if "found 0 vulnerabilities" not in result.stdout:
-            confirm = input('Vulnerabilities found. Run "npm audit fix" automatically? (Y/n): ').strip().lower()
-            if confirm == 'y' or confirm == 'Y':
-                # Run "npm audit fix" if the user confirms
-                fix_result = subprocess.run(
-                    ['npm', 'audit', 'fix'], cwd=sources_folder, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                print(fix_result.stdout)
+            show_vulnerabilities = input("Do you want a list of the found Vulnerabilities? (y/N)").strip().lower()
+
+            if show_vulnerabilities == "y":
+                pprint(json.loads(result.stdout)["vulnerabilities"])
+
+            confirm = input('Do you want to run "npm audit fix --force" automatically? (Y/n):').strip().lower()
+
+            if confirm == 'y' or confirm == "":
+
+                try:
+                    fix = subprocess.run(
+                        ["npm", "audit", "fix", "--force",  "--json"],
+                        capture_output=True,
+                        cwd=sources_folder,
+                        encoding="utf-8",
+                    )
+
+                    fix_output = json.loads(fix.stdout)
+
+                    print(
+                        f"npm added {fix_output['added']} packages, "
+                        f"audited {fix_output['audited']} packages, "
+                        f"changed {fix_output['changed']} packages "
+                        f"and removed {fix_output['removed']} packages"
+                    )
+
+                    show_all_fix = input('Do you want the whole report of the npm fixes?(y/N)').lower().strip()
+                    if show_all_fix == "y":
+                        pprint(fix_output)
+
+                except Exception as e:
+                    print(f"{e}")
             else:
-                print('Automatic fix not confirmed. To fix vulnerabilities, run "npm audit fix" in the ./sources folder.')
-
+                print('Automatic fix not confirmed. To fix vulnerabilities, run "npm audit fix --force" in the ./sources folder.')
         else:
             print('No vulnerabilities found.')
 
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
