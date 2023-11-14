@@ -61,39 +61,38 @@ def _build(cfg, name, build_cfg, additional_args):
 
 
 def _clean(cfg, name, build_cfg):
+    """Perform steps required to clean a given build configuration.
+
+    This internal function is responsible for cleaning the artifacts and files generated during the build process
+    for a specified application. It supports two types of cleaning methods:
+        - npm: For cleaning Node.js applications built with npm package manager.
+        - exec: For executing custom clean commands specified in the build configuration.
+
+    :param cfg: dict
+        The project configuration, which can be either the default configuration or a
+        project-specific configuration.
+
+    :param name: str
+        The name of the application to clean.
+
+    :param build_cfg: dict
+        The build configuration for the specified application. This configuration includes the "kind" (build type),
+        "target" (target folder to clean), "source" (source folder or path), "clean" (custom clean command).
+
+    :raises Exception:
+        Raises an exception if an unknown build "kind" is encountered in the build configuration.
+
+    The `_clean` function performs the following steps based on the build "kind":
+    - For "npm" builds, it deletes the specified target folder, and if available, it executes a custom "clean"
+    command.
+    - For "exec" builds, it executes the custom clean command provided in the build configuration.
+
+    Note:
+    - Ensure that the necessary clean configurations are defined in the build configuration.
+    - The function provides informative messages during the cleaning process.
+
+    :return: None
     """
-        Perform steps required to clean a given build configuration.
-
-        This internal function is responsible for cleaning the artifacts and files generated during the build process
-        for a specified application. It supports two types of cleaning methods:
-            - npm: For cleaning Node.js applications built with npm package manager.
-            - exec: For executing custom clean commands specified in the build configuration.
-
-        :param cfg: dict
-            The project configuration, which can be either the default configuration or a
-            project-specific configuration.
-
-        :param name: str
-            The name of the application to clean.
-
-        :param build_cfg: dict
-            The build configuration for the specified application. This configuration includes the "kind" (build type),
-            "target" (target folder to clean), "source" (source folder or path), "clean" (custom clean command).
-
-        :raises Exception:
-            Raises an exception if an unknown build "kind" is encountered in the build configuration.
-
-        The `_clean` function performs the following steps based on the build "kind":
-        - For "npm" builds, it deletes the specified target folder, and if available, it executes a custom "clean"
-        command.
-        - For "exec" builds, it executes the custom clean command provided in the build configuration.
-
-        Note:
-        - Ensure that the necessary clean configurations are defined in the build configuration.
-        - The function provides informative messages during the cleaning process.
-
-        :return: None
-        """
 
     utils.echo_info(f"""- cleaning {build_cfg["kind"]} {name}""")
 
