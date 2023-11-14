@@ -193,21 +193,28 @@ def checknpm(autofix):
             encoding='utf-8'
         )
 
-        vulnerabilities = json.loads(result.stdout)["metadata"]["vulnerabilities"]["total"]
+        vulnerabilities = json.loads(result.stdout)["metadata"]["vulnerabilities"]
 
-        if vulnerabilities >= 0:
+        if vulnerabilities["total"] >= 0:
 
             if not autofix:
-                print(f"Npm found {vulnerabilities} Vulnerabilities \n ")
-                print(f'{json.loads(result.stdout)["metadata"]["vulnerabilities"]}')
-                show_vulnerabilities = input("Do you want a list of the found Vulnerabilities? (y/N)").strip().lower()
+                print(
+                    f'Npm found {vulnerabilities["total"]} Vulnerabilities \n'
+                    f'info: {vulnerabilities["info"]}\n'
+                    f'low: {vulnerabilities["low"]}\n'
+                    f'moderate: {vulnerabilities["moderate"]}\n'
+                    f'high: {vulnerabilities["high"]}\n'
+                    f'critical: {vulnerabilities["critical"]}\n'
+                    f'total: {vulnerabilities["total"]}\n'
+                )
+                show_vulnerabilities = input('Do you want a list of the found Vulnerabilities? (y/N)').strip().lower()
 
-                if show_vulnerabilities == "y":
+                if show_vulnerabilities == 'y':
                     pprint(json.loads(result.stdout)["vulnerabilities"])
 
                 confirm = input('Do you want to run "npm audit fix --force" automatically? (Y/n):').strip().lower()
 
-            if autofix or confirm == 'y' or confirm == "":
+            if autofix or confirm == 'y' or confirm == '':
 
                 try:
                     fix = subprocess.run(
@@ -220,22 +227,22 @@ def checknpm(autofix):
                     fix_output = json.loads(fix.stdout)
 
                     print(
-                        f"npm added {fix_output['added']} packages, "
-                        f"audited {fix_output['audited']} packages, "
-                        f"changed {fix_output['changed']} packages "
-                        f"and removed {fix_output['removed']} packages"
+                        f'npm added {fix_output["added"]} packages,\n '
+                        f'audited {fix_output["audited"]} packages,\n '
+                        f'changed {fix_output["changed"]} packages\n '
+                        f'and removed {fix_output["removed"]} packages\n'
                     )
 
                     show_all_fix = input('Do you want the whole report of the npm fixes?(y/N)').lower().strip()
-                    if show_all_fix == "y":
+                    if show_all_fix == 'y':
                         pprint(fix_output)
 
                 except Exception as e:
-                    print(f"{e}")
+                    print(f'{e}')
             else:
                 print('Automatic fix not confirmed. To fix vulnerabilities, run "npm audit fix --force" in the ./sources folder.')
         else:
             print('No vulnerabilities found.')
 
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f'An unexpected error occurred: {e}')
