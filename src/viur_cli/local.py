@@ -1,4 +1,7 @@
-import click, os, shutil, subprocess
+import click
+import os
+import shutil
+import subprocess
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
@@ -7,7 +10,28 @@ from .install import vi as vi_install
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 def run(name, additional_args):
-    """start your application locally"""
+    """
+        Start your application locally.
+
+        The 'run' command allows you to start your ViUR application locally. You can specify the configuration to use
+        and provide additional arguments to the 'app_server' command.
+
+        :param name: str, default: 'develop'
+            The name of the configuration to use. The 'develop' configuration is the default.
+
+        :param additional_args: List[str]
+            Additional arguments to pass to the 'app_server' command when running the application.
+
+        Example Usage:
+        ```shell
+        viur run develop --port 8080
+        viur run production
+        ```
+
+        The 'run' command launches your ViUR application locally specified configuration and optional arguments.
+
+        :return: None
+    """
     projectConfig = get_config()
 
     if name not in projectConfig:
@@ -22,7 +46,23 @@ def run(name, additional_args):
 
 @cli.command()
 def env():
-    """check local Environment"""
+    """
+       Check the local environment for ViUR development.
+
+       The 'env' command checks the local environment for ViUR development and reports the status of various tools
+       and dependencies. It helps you ensure that your development environment is correctly set up.
+
+       Usage:
+       ```shell
+       viur env
+       ```
+
+       The 'env' command provides information about the versions tools and dependencies, such as ViUR-CLI, app_server,
+       git, Python, npm, node, and more. It checks the availability of these tools and reports their versions.
+
+       :return: None
+    """
+
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
@@ -120,9 +160,29 @@ def env():
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
 def check(dev):
-    """do security checks"""
+    """Perform security checks for vulnerabilities.
+
+    The 'check' command performs security checks for vulnerabilities within your project.
+    It checks for vulnerabilities in the Pipenv and npm dependencies of your project.
+    You can choose to include development dependencies by using the
+    '--dev' option.
+
+    :param dev: bool, default: False
+        Perform checks on development dependencies if set to 'True'.
+
+    Example Usage:
+    ```shell
+    viur check --dev
+    ```
+
+    The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
+
+    :return: None
+    """
+
     if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
+
 
 def do_checks(dev=True):
     """
@@ -156,7 +216,7 @@ def do_checks(dev=True):
     projectConfig = get_config()
     cfg = projectConfig["default"].copy()
     if builds_cfg := cfg.get("builds"):
-        if npm_apps := [k for k,v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
+        if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:
                 path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
 

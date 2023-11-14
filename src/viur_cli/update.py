@@ -10,7 +10,28 @@ from . import cli, echo_error, get_config, echo_info, utils
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 def update(action, name, additional_args):
-    """update project specific files and dependencies"""
+    """
+    Update project-specific files and dependencies.
+
+    This command allows you to update project-specific files and dependencies for a specified project configuration.
+    Currently, it supports the 'requirements' action, which is used to update the requirements.
+
+    :param action: str
+        The action to perform. Currently, only 'requirements' is supported for updating requirements or dependencies.
+    :param name: str, default: 'develop'
+        The name of the project configuration to update. It should correspond to a valid project configuration.
+    :param additional_args: tuple
+        Additional arguments that can be passed to the update process.
+
+    The `update` command performs the specified 'action' to update project-specific files or dependencies. It ensures
+    that the specified project configuration exists.
+
+    Note:
+    - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
+    - Additional arguments can be used to customize the update process if supported by the action.
+
+    :return: None
+    """
     project_config = get_config()
 
     if name not in project_config:
@@ -23,9 +44,20 @@ def update(action, name, additional_args):
 
 def create_req(confirm_value=True):
     """
-    load projects pipenv and build a requirements.txt
+    Load project's pipenv and build a requirements.txt.
 
-    cores requirements.txt cant be validated currently, because of the core does not provide a feature for that
+    This function generates a requirements.txt file based on the project's pipenv environment. It offers the option
+    to confirm the regeneration of the requirements.txt file.
+
+    :param confirm_value: bool, default: True
+        If True, confirms the regeneration of requirements.txt.
+
+    Note:
+    - The function handles requirements.txt generation and checking.
+    - It prompts for confirmation to regenerate the requirements.txt file.
+    - If errors are detected, it provides an option to continue or exit the script.
+
+    :return: None
     """
     project_config = get_config()
     dist_folder = project_config["default"]["distribution_folder"]
@@ -53,6 +85,18 @@ def create_req(confirm_value=True):
 
 
 def check_req(projects_requirements_path):
+    """
+    Check project's requirements against core requirements.
+
+    This function checks the project's requirements to validate package versions and hashes.
+    It identifies and reports errors if there are discrepancies.
+
+    :param projects_requirements_path: str
+        The path to the project's requirements.txt file.
+
+    :return: list
+        A list of error messages, if any, indicating package version and hash discrepancies.
+    """
     import site
     from pip._internal.req import parse_requirements
     from pip._internal.network.session import PipSession
