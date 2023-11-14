@@ -88,35 +88,34 @@ def install():
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
 @click.option("--target", "-t", default="vi")
 def vi(version, target, next_):
+    """Install the legacy ViUR administration interface.
+
+    This subcommand allows you to install the legacy ViUR administration interface. You can specify a version to
+    install, or use the latest available version. It includes a 'next' option for compatibility,
+    but it is deprecated in favor of the 'admin' subcommand.
+
+    :param version: str, default: 'latest'
+        The version of the legacy ViUR administration interface to install.
+        Use 'latest' for the latest available version.
+
+    :param target: str, default: 'vi'
+        The target folder where the ViUR administration interface will be installed.
+
+    :param next_: bool, default: False
+        A deprecated option, please use the 'admin' subcommand for the new administration interface.
+
+    Example Usage:
+    ```shell
+    viur install vi --version v2.0.0 --target my-admin
+    viur install vi --version latest
+    ```
+
+    The 'vi' subcommand downloads and installs the specified
+    or latest version of the legacy ViUR administration interface.
+    It updates the configuration with the installed version.
+
+    :return: None
     """
-        Install the legacy ViUR administration interface.
-
-        This subcommand allows you to install the legacy ViUR administration interface. You can specify a version to
-        install, or use the latest available version. It includes a 'next' option for compatibility,
-        but it is deprecated in favor of the 'admin' subcommand.
-
-        :param version: str, default: 'latest'
-            The version of the legacy ViUR administration interface to install.
-            Use 'latest' for the latest available version.
-
-        :param target: str, default: 'vi'
-            The target folder where the ViUR administration interface will be installed.
-
-        :param next_: bool, default: False
-            A deprecated option, please use the 'admin' subcommand for the new administration interface.
-
-        Example Usage:
-        ```shell
-        viur install vi --version v2.0.0 --target my-admin
-        viur install vi --version latest
-        ```
-
-        The 'vi' subcommand downloads and installs the specified
-        or latest version of the legacy ViUR administration interface.
-        It updates the configuration with the installed version.
-
-        :return: None
-        """
     if next_:
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
