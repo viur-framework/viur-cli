@@ -1,10 +1,7 @@
-from pprint import pprint
-
 import click
 import os
 import string
 import yaml
-import sys
 import subprocess
 from . import cli, echo_error, get_config, echo_info, replace_vars
 from .update import create_req
@@ -173,8 +170,7 @@ def enable_gcp_backup():
             print('Error creating bucket.')
 
     except Exception as e:
-        print(f'An Error Occured:\n {e}')
-        print('Please make sure you have the correct Google Cloud Access rights')
+        print(f'An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights')
 
     # Helper Variables for IAM
     iam_roles = ["roles/storage.admin", "roles/datastore.importExportAdmin"]
@@ -184,12 +180,12 @@ def enable_gcp_backup():
         iam_roles_command = (f'gcloud projects add-iam-policy-binding {project_id} --member '
                              f'serviceAccount:{service_worker_mail} --role {r}')
         try:
-            roles_result = subprocess.run(iam_roles_command, capture_output=True, shell=True)
+            subprocess.run(iam_roles_command, capture_output=True, shell=True)
 
         except Exception as e:
             print(f'An Error Occured during Roles {e}\n '
                   f'Please make sure you have the correct Google Cloud Access rights'
-            )
+                  )
             return
 
     print('Success! It may take a while until you can use Gcloud Backups')
