@@ -89,7 +89,6 @@ def deploy(action, name, additional_args):
         yaml_file = f'{conf["distribution_folder"]}/{action}.yaml'
 
         # Sort index.yaml by kind name, making it more clean to view.
-        # Sort index.yaml by kind name, making it more clean to view.
         if action == "index":
 
             check_index_duplicates(yaml_file)
