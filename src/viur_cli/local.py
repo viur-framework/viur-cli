@@ -160,25 +160,24 @@ def env():
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
 def check(dev):
-    """
-        Perform security checks for vulnerabilities.
+    """Perform security checks for vulnerabilities.
 
-        The 'check' command performs security checks for vulnerabilities within your project.
-        It checks for vulnerabilities in the Pipenv and npm dependencies of your project.
-        You can choose to include development dependencies by using the
-        '--dev' option.
+    The 'check' command performs security checks for vulnerabilities within your project.
+    It checks for vulnerabilities in the Pipenv and npm dependencies of your project.
+    You can choose to include development dependencies by using the
+    '--dev' option.
 
-        :param dev: bool, default: False
-            Perform checks on development dependencies if set to 'True'.
+    :param dev: bool, default: False
+        Perform checks on development dependencies if set to 'True'.
 
-        Example Usage:
-        ```shell
-        viur check --dev
-        ```
+    Example Usage:
+    ```shell
+    viur check --dev
+    ```
 
-        The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
+    The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
 
-        :return: None
+    :return: None
     """
 
     if do_checks(dev):
