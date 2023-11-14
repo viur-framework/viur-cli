@@ -89,13 +89,14 @@ def deploy(action, name, additional_args):
         yaml_file = f'{conf["distribution_folder"]}/{action}.yaml'
 
         # Sort index.yaml by kind name, making it more clean to view.
+        # Sort index.yaml by kind name, making it more clean to view.
         if action == "index":
+
+            check_index_duplicates(yaml_file)
+
             try:
                 with open(yaml_file, "r") as source_file:
                     data = yaml.safe_load(source_file)
-
-                    if "indexes" not in data:
-                        raise ValueError()
 
                     indexes = sorted(
                         data["indexes"],
@@ -124,3 +125,53 @@ def deploy(action, name, additional_args):
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file}')
+
+def check_index_duplicates(file_path):
+    with open(file_path, 'r') as file:
+        yaml_data = yaml.safe_load(file)
+
+    if "indexes" not in yaml_data:
+        raise ValueError()
+
+    seen = set()
+    duplicates = set()
+
+    for entry in yaml_data.get('indexes', []):
+        kind = entry.get('kind')
+        properties = tuple(sorted(prop['name'] for prop in entry.get('properties', [])))
+
+        if (kind, properties) in seen:
+            duplicates.add((kind, properties))
+        else:
+            seen.add((kind, properties))
+
+    if duplicates:
+        print("Duplicate(s) found in index.yaml ")
+
+        delete_input = input("Do you want to delete index.yaml duplicates? (Y/n)").lower().strip()
+
+        if delete_input == 'y' or delete_input == '':
+            remove_duplicates(file_path, duplicates)
+
+
+def remove_duplicates(file_path, duplicates):
+    with open(file_path, 'r') as file:
+        yaml_data = yaml.safe_load(file)
+
+    indexes = yaml_data.get('indexes', [])
+
+    for entry in indexes:
+        kind = entry.get('kind')
+        properties = tuple(sorted(prop['name'] for prop in entry.get('properties', [])))
+
+        if (kind, properties) in duplicates:
+            duplicates.remove((kind, properties))
+        else:
+            duplicates.add((kind, properties))
+
+    yaml_data['indexes'] = [
+        {'kind': kind, 'properties': [{'name': prop} for prop in properties]} for kind, properties in duplicates
+    ]
+
+    with open(file_path, 'w') as file:
+        yaml.dump(yaml_data, file, default_flow_style=False)
