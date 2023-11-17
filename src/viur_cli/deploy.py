@@ -145,12 +145,8 @@ def check_index_duplicates(file_path):
             seen.add((kind, properties))
 
     if duplicates:
-        print("Duplicate(s) found in index.yaml ")
-
-        delete_input = input("Do you want to delete index.yaml duplicates? (Y/n)").lower().strip()
-
-        if delete_input == 'y' or delete_input == '':
-            remove_duplicates(file_path, duplicates)
+        echo_info("Duplicate(s) found in index.yaml and will be automatically deleted ")
+        remove_duplicates(file_path, duplicates)
 
 
 def remove_duplicates(file_path, duplicates):
