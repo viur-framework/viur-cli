@@ -268,7 +268,7 @@ def scriptor(version, target):
                     urlretrieve(download_url, tmp_zip_file)
                 case 2:
                     with zipfile.ZipFile(tmp_zip_file) as zip_f:
-                        zip_f.extractall(scriptor_path)
+                        zip_f.extractall()
                 case 3:
                     tmp_zip_file.unlink()
                     bar.label = "updated successful"
