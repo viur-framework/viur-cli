@@ -1,7 +1,11 @@
+import re
+import subprocess
+
 import click
 import os
 from .conf import *
 from .version import __version__
+from .version import MINIMAL_PIPENV
 
 
 @click.group(invoke_without_command=True, no_args_is_help=True,context_settings={"help_option_names": ["-h", "--help"]})
@@ -32,6 +36,23 @@ def cli(ctx):
 
     :return: None
     """
+
+    # Get the systems pipenv Version Number
+    foobar = subprocess.check_output(['pipenv', '--version']).decode("utf-8")
+    version_pattern = r'\b(\d+\.\d+\.\d+)\b'
+    match = re.search(version_pattern, foobar)
+    sys_version = match.group(1).split(".")
+    min_version = MINIMAL_PIPENV.split(".")
+
+    for sys, min in zip(sys_version, min_version):
+        if int(sys) < int(min):
+            echo_warning(
+                f"Your pipenv Version does not match the minimal required pipenv version. \n"
+                f"This mismatch may cause Errors, please consider to update your Systems pipenv version \n"
+                f"Your Version: {sys_version}\n"
+                f"Recommended Version: {min_version}"
+            )
+            break
 
     if ctx.invoked_subcommand not in ["init", "create"]:
         load_config()
@@ -76,5 +97,6 @@ def project(action):
         write_config(_projectconf)
     elif action == "remove":
         remove_from_config()
-    elif action == "list":
         click.echo(click.style(json.dumps(projectConfig, indent=4, sort_keys=True), fg="cyan"))
+    elif action == "list":
+        pass
