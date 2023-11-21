@@ -36,6 +36,9 @@ def echo_error(msg):
     """colored cli feedback"""
     click.echo(click.style("ERROR: " + msg, fg="red"))
 
+def echo_warning(msg):
+    """colored cli feedback"""
+    click.echo(click.style("WARNING: " + msg, fg=(255, 231, 0)))
 
 def echo_fatal(msg):
     echo_error(msg)
