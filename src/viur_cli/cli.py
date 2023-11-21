@@ -1,11 +1,9 @@
 import re
 import subprocess
-
-import click
-import os
 from .conf import *
 from .version import __version__
 from .version import MINIMAL_PIPENV
+import semver
 
 
 @click.group(invoke_without_command=True, no_args_is_help=True,context_settings={"help_option_names": ["-h", "--help"]})
@@ -41,18 +39,16 @@ def cli(ctx):
     foobar = subprocess.check_output(['pipenv', '--version']).decode("utf-8")
     version_pattern = r'\b(\d+\.\d+\.\d+)\b'
     match = re.search(version_pattern, foobar)
-    sys_version = match.group(1).split(".")
-    min_version = MINIMAL_PIPENV.split(".")
+    sys_pipenv = match.group(1)
 
-    for sys, min in zip(sys_version, min_version):
-        if int(sys) < int(min):
-            echo_warning(
-                f"Your pipenv Version does not match the minimal required pipenv version. \n"
-                f"This mismatch may cause Errors, please consider to update your Systems pipenv version \n"
-                f"Your Version: {sys_version}\n"
-                f"Recommended Version: {min_version}"
-            )
-            break
+    # sys kleiner min
+    if semver.compare(sys_pipenv, MINIMAL_PIPENV) < 0:
+        echo_warning(
+            f"Your pipenv Version does not match the minimal required pipenv version. \n"
+            f"This mismatch may cause Errors, please consider to update your Systems pipenv version \n"
+            f"Your Version: {sys_pipenv}\n"
+            f"Recommended Version: {MINIMAL_PIPENV}"
+        )
 
     if ctx.invoked_subcommand not in ["init", "create"]:
         load_config()

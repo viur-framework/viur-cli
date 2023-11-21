@@ -7,6 +7,7 @@ name = "pypi"
 build = "*"
 twine = "*"
 requests = "*"
+semver = "*"
 
 [dev-packages]
 viur-cli = {file = ".", editable = true}
