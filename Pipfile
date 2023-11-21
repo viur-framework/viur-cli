@@ -7,9 +7,6 @@ name = "pypi"
 build = "*"
 twine = "*"
 
-[dev-packages]
-viur-cli = {file = ".", editable = true}
-
 [requires]
 python_version = "3"
 

@@ -6,7 +6,9 @@ from .version import MINIMAL_PIPENV
 import semver
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True,context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(invoke_without_command=True,
+             no_args_is_help=True,
+             context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__)
 @click.pass_context
 def cli(ctx):
@@ -44,7 +46,7 @@ def cli(ctx):
     # sys kleiner min
     if semver.compare(sys_pipenv, MINIMAL_PIPENV) < 0:
         echo_warning(
-            f"Your pipenv Version does not match the minimal required pipenv version. \n"
+            f"Your pipenv Version does not match the recommended pipenv version. \n"
             f"This mismatch may cause Errors, please consider to update your Systems pipenv version \n"
             f"Your Version: {sys_pipenv}\n"
             f"Recommended Version: {MINIMAL_PIPENV}"
@@ -85,14 +87,14 @@ def project(action):
 
     :return: None
     """
-    projectConfig = get_config()
+    project_config = get_config()
     if action == "add":
         add_to_config()
     elif action == "addFlare":
-        _projectconf = add_to_flare_config(projectConfig)
+        _projectconf = add_to_flare_config(project_config)
         write_config(_projectconf)
     elif action == "remove":
         remove_from_config()
-        click.echo(click.style(json.dumps(projectConfig, indent=4, sort_keys=True), fg="cyan"))
+        click.echo(click.style(json.dumps(project_config, indent=4, sort_keys=True), fg="cyan"))
     elif action == "list":
         pass
