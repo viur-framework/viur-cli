@@ -1,6 +1,6 @@
-import click
 import os
 import string
+import click
 import yaml
 import subprocess
 from . import cli, echo_error, get_config, echo_info, replace_vars
@@ -96,12 +96,25 @@ def deploy(action, name, additional_args):
                     data = yaml.safe_load(source_file)
 
                     if "indexes" not in data:
-                        raise ValueError()
+                        raise ValueError("indexes section missing in index.yaml")
 
                     indexes = sorted(
                         data["indexes"],
                         key=lambda k: k["kind"] if isinstance(k, dict) and "kind" in k else k
                     )
+
+                    # Remove duplicate entries with the help of dict,
+                    # where keys can only occur once.
+                    # The keys are a hashable representation of an entry.
+                    indexes = {
+                        (
+                            entry.get("kind"),
+                            tuple(tuple(prop.items())
+                                  for prop in entry.get("properties", []))
+                        ): entry
+                        for entry in indexes
+                    }
+                    indexes = list(indexes.values())
 
                     # Only update index.yaml when something has changed
                     if data["indexes"] != indexes:
@@ -114,7 +127,7 @@ def deploy(action, name, additional_args):
                                 yaml.dump(data).replace("- kind: ", "\n- kind: ")
                             )
 
-                        echo_info(f"{yaml_file} has been sorted by kind")
+                        echo_info(f"{yaml_file} has been sorted by kind and duplicates have been removed")
 
             except FileNotFoundError:
                 echo_error(f"{yaml_file} not found")
