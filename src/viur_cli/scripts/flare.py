@@ -3,7 +3,8 @@
 flare application packager and build tool
 """
 
-import os, shutil, json, argparse, pathlib, fnmatch, watchgod, python_minifier, compileall, tempfile
+import os, shutil, json, argparse, pathlib, fnmatch, watchgod, compileall, tempfile
+#python_minifier,
 
 ignore_patterns = [
     "flare/assets/*",
@@ -44,7 +45,8 @@ def minifyPy(target):
                     code = f.read()
                     f.seek(0)
                     f.truncate()
-                    f.write(python_minifier.minify(code, remove_literal_statements=True))
+                    f.write(code)
+                    #f.write(python_minifier.minify(code, remove_literal_statements=True))
 
 def compilePy(target):
     """Compiles py files to pyc and removes all py files at the end."""
