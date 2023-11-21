@@ -61,6 +61,12 @@ By default this would be the projectID you gave when initializing the project, b
 if you would like to have an additional system for testing for example.
 
 ```sh
+$ viur enable {backup}
+```
+create a backup bucket and enable the gcloud service worker account to access it.
+
+
+```sh
 $ viur install {vi|scriptor}
 ```
 ask viur-cli to install either vi or the scriptor into your project

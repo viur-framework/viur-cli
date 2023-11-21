@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 build = "*"
 twine = "*"
-requests = "*"
 
 [requires]
 python_version = "3"
