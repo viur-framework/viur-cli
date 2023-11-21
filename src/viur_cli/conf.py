@@ -136,57 +136,6 @@ def remove_from_config():
     except:
         raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
-
-def add_to_flare_config(projectconf):
-    """
-    Add a new Flare app configuration to project.json.
-
-    This function is used to add a new Flare app configuration to the project.json file. It prompts for the app name,
-    source, and target.
-
-    :param projectconf: dict
-        The project configuration where the Flare app configuration will be added.
-
-    :return: dict
-        The updated project configuration with the new Flare app configuration.
-    """
-    if "default" not in projectconf:
-        raise click.ClickException(click.style("default entry is missing", fg="red"))
-
-    if "builds" not in projectconf["default"]:
-        projectconf["default"].update({"builds": {}})
-
-    projectconf["default"]["builds"].update({
-        click.prompt('name'): {
-            "kind": "flare",
-            "source": click.prompt('source'),
-            "target": click.prompt('target')
-        }
-    })
-
-    return projectconf
-
-
-def remove_from_flare_config(flareAppName):
-    """
-    Remove a Flare app configuration from project.json.
-
-    This function allows the removal of an existing Flare app configuration from the project.json file.
-    It prompts for the Flare app name to remove.
-
-    :param flareAppName: str
-        The name of the Flare app to remove from the project configuration.
-
-    :return: None
-    """
-    global projectConfig
-    try:
-        del projectConfig["default"]["builds"][flareAppName]
-        write_config(projectConfig)
-    except:
-        raise click.ClickException(click.style(f"{flareAppName} not found", fg="red"))
-
-
 def fetch_core_version():
     """
     Fetch the version of the 'viur-core' package.
@@ -238,19 +187,6 @@ def update_config(path=None):
 
     if projectConfig["default"]["format"] == "1.0.0":
         projectConfig["default"]["format"] = "1.0.1"
-
-    # Version 1.1.0
-
-    if "flare" in projectConfig["default"]:
-        builds = projectConfig["default"]["flare"].copy()
-        for k, v in builds.items():
-            builds[k]["kind"] = "flare"
-
-        projectConfig["default"]["builds"] = builds
-        del projectConfig["default"]["flare"]
-
-    if projectConfig["default"]["format"] == "1.0.1":
-        projectConfig["default"]["format"] = "1.1.0"
 
     # Version 1.1.1
 

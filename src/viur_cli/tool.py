@@ -10,7 +10,7 @@ def tool():
     Run different ViUR-related scripts.
 
     The 'tool' group allows you to execute various ViUR-related scripts that help with tasks such as project porting,
-    Flare builds, Pyodide installation, and SSL certificate fixes.
+    Pyodide installation, and SSL certificate fixes.
 
     Usage:
     ```
@@ -19,7 +19,6 @@ def tool():
 
     Available Commands:
     - '2to3': ViUR porting script.
-    - 'flare': Flare build script.
     - 'pyodide': Run the get_pyodide command.
     - 'ssl_fix': SSL certificate fix for macOS.
 
@@ -65,52 +64,6 @@ def two_to_three(path, *args, **kwargs):
             command += f" --{option}"
 
     os.system(command)
-
-
-@tool.command()
-@click.option('--source', '-s')
-@click.option('--target', '-t')
-@click.option('--name', '-n')
-@click.option('--minify', '-m', is_flag=True, default=False)
-@click.option('--compile', '-c', is_flag=True, default=False)
-@click.option('--zip', '-z', is_flag=True, default=False)
-@click.option('--watch', '-w', is_flag=True, default=False)
-def flare(*args, **kwargs):
-    """
-    Flare build script.
-
-    The 'flare' command allows you to run the Flare build script, which compiles ViUR Flare applications.
-
-    :param source: str, optional
-        The source directory for Flare applications.
-    :param target: str, optional
-        The target directory for compiled Flare applications.
-    :param name: str, optional
-        The name of the Flare application.
-    :param minify: bool, optional
-        Minify the compiled JavaScript and CSS (default: False).
-    :param compile: bool, optional
-        Compile Flare applications (default: False).
-    :param zip: bool, optional
-        Create a ZIP archive of the compiled Flare application (default: False).
-    :param watch: bool, optional
-        Watch for changes and recompile (default: False).
-
-    Example Usage:
-    ```
-    viur tool flare --source /source/path --target /target/path --name myapp --minify --compile
-    ```
-
-    :return: None
-    """
-    command = "flare"
-    for option, value in kwargs.items():
-        if value and isinstance(value, bool):
-            command += f" --{option}"
-        elif value:
-            command += f" --{option} {value}"
-    os.system(command)
-
 
 @tool.command()
 @click.option('--version', '-v')

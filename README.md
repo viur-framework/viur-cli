@@ -74,7 +74,7 @@ ask viur-cli to install either vi or the scriptor into your project
 ```sh
 $ viur build release
 ```
-build all flare and npm apps and produce a release that can be deployed
+build all npm apps and produce a release that can be deployed
 
 ```sh
 $ viur build app [appname]
@@ -87,11 +87,10 @@ $ viur env
 check the environment you are in right now, show versions of viur-cli, viur-core and vi etc.
 
 ```sh
-$ viur project {add|remove|list|addFlare}
+$ viur project {add|remove|list}
 ```
 with this you can manage your project.json or generate a new one. You can add or remove targets to/from the 
-project.json, list what has been added to the project.json, add a flare application with `addFlare` 
-to be built when running `viur build release`.
+project.json, list what has been added to the project.json, to be built when running `viur build release`.
 
 ```sh
 $ viur update {requirements}
@@ -119,11 +118,10 @@ Commands:
 In order to use the packaged tools, you can run:
 
 ```sh
-$ viur tool {2to3|flare|pyodide|ssl-fix}
+$ viur tool {2to3|pyodide|ssl-fix}
 ```
 Scripts:
 - `2to3`     viur porting script
-- `flare`    flare build script
 - `pyodide`  run the get_pyodide command
 - `ssl-fix`  ssl fix for MacOS
 

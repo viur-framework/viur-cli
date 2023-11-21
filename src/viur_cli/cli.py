@@ -58,7 +58,7 @@ def cli(ctx):
 
 
 @cli.command()
-@click.argument("action", type=click.Choice(['add', 'remove', 'list', 'addFlare', 'scanNpm']))
+@click.argument("action", type=click.Choice(['add', 'remove', 'list', 'scanNpm']))
 def project(action):
     """
     Manage project.json and generate if missing.
@@ -68,21 +68,19 @@ def project(action):
 
     :param action: str
         The action to perform on 'project.json' and project configuration. It can be one of the following:
-        - 'add': Add project information to 'project.json.'
-        - 'addFlare': Add project information to Flare configuration.
+        - 'add': Add project information to 'project.json.
         - 'remove': Remove project information from 'project.json.'
         - 'list': List project information.
 
     Example Usage:
     ```shell
     viur-cli project add
-    viur-cli project addFlare
     viur-cli project remove
     viur-cli project list
     ```
 
     Note:
-    - When using the 'add' or 'addFlare' actions, you can provide additional information as needed.
+    - When using the 'add' actions, you can provide additional information as needed.
     - The 'list' action displays project information in a formatted JSON format.
 
     :return: None
@@ -90,9 +88,6 @@ def project(action):
     project_config = get_config()
     if action == "add":
         add_to_config()
-    elif action == "addFlare":
-        _projectconf = add_to_flare_config(project_config)
-        write_config(_projectconf)
     elif action == "remove":
         remove_from_config()
         click.echo(click.style(json.dumps(project_config, indent=4, sort_keys=True), fg="cyan"))
