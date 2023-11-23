@@ -2,14 +2,12 @@
 
 This file documents any relevant changes.
 ## [1.1.0] 2023-11-23
-- fix:
-- chore: support Viur Core 3.5.6
 - chore: added more `viur2to3` replacements
-- chore: fixed Viur Scriptor subdirectory duplicates
-- chore: updated Pipenv config and setup
-- feat: Added code Documentation
-- feat: viur-cli can now remove `index.yaml` duplicate entries
-- refactor: moved requirements update to update class
+- fix: fixed `viur script` subdirectory duplicates
+- chore: updated Pipenv to work with Python <=3.12
+- feat: Added code documentation
+- feat: Remove `index.yaml` duplicate entries
+- refactor: added update command
 - refactor: some PEP8 Changes
 - [BREAKING]: Removed all flare scripts and functionality
 - [BREAKING]: Removed `scanNPM` function  
