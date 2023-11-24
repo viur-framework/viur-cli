@@ -1,6 +1,19 @@
 # Changelog
 
 This file documents any relevant changes.
+## [1.1.0] 2023-11-23
+- chore: added more `viur2to3` replacements
+- fix: fixed `viur script` subdirectory duplicates
+- chore: updated Pipenv to work with Python <=3.12
+- feat: Added code documentation
+- feat: Remove `index.yaml` duplicate entries
+- refactor: added update command
+- refactor: some PEP8 Changes
+- [BREAKING]: Removed all flare scripts and functionality
+- [BREAKING]: Removed `scanNPM` function  
+- [BREAKING]: Removed `viur init` 
+
+
 ## [1.0.16] 2023-09-29
 - feat: Add targets to all install softwares and ensure a specific version is correctly working
 - chore: refactored install.py

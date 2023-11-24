@@ -1,7 +1,8 @@
-import click
 import os
 import string
+import click
 import yaml
+import subprocess
 from . import cli, echo_error, get_config, echo_info, replace_vars
 from .update import create_req
 
@@ -95,12 +96,25 @@ def deploy(action, name, additional_args):
                     data = yaml.safe_load(source_file)
 
                     if "indexes" not in data:
-                        raise ValueError()
+                        raise ValueError("indexes section missing in index.yaml")
 
                     indexes = sorted(
                         data["indexes"],
                         key=lambda k: k["kind"] if isinstance(k, dict) and "kind" in k else k
                     )
+
+                    # Remove duplicate entries with the help of dict,
+                    # where keys can only occur once.
+                    # The keys are a hashable representation of an entry.
+                    indexes = {
+                        (
+                            entry.get("kind"),
+                            tuple(tuple(prop.items())
+                                  for prop in entry.get("properties", []))
+                        ): entry
+                        for entry in indexes
+                    }
+                    indexes = list(indexes.values())
 
                     # Only update index.yaml when something has changed
                     if data["indexes"] != indexes:
@@ -113,7 +127,7 @@ def deploy(action, name, additional_args):
                                 yaml.dump(data).replace("- kind: ", "\n- kind: ")
                             )
 
-                        echo_info(f"{yaml_file} has been sorted by kind")
+                        echo_info(f"{yaml_file} has been sorted by kind and duplicates have been removed")
 
             except FileNotFoundError:
                 echo_error(f"{yaml_file} not found")
@@ -124,3 +138,67 @@ def deploy(action, name, additional_args):
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file}')
+
+
+@cli.command(context_settings={"ignore_unknown_options": True})
+@click.argument("action", type=click.Choice(["backup"]))
+def enable(action):
+    """
+    Enable specific features for the project.
+
+    The 'enable' command allows enabling various features for the project. Currently, only the 'backup' action is
+    supported.
+
+    Args:
+        action (str): The action to perform. Currently, only 'backup' is supported.
+
+    Example:
+    ```bash
+    $ viur enable backup
+    ```
+
+    """
+    if action == "backup":
+        enable_gcp_backup()
+
+
+def enable_gcp_backup():
+    # Load the project Config
+    project_config = get_config()
+
+    # Create helper Variables
+    project_id = project_config["develop"]["application_name"]
+    bucket_name = f'backup-dot-{project_id}'
+    backup_bucket_command = f'gsutil mb -l EUROPE-WEST3 -p {project_id} gs://{bucket_name}'
+
+    # Create the Backup Bucket
+    try:
+        result = subprocess.run(
+            backup_bucket_command,
+            capture_output=True,
+            shell=True,
+        )
+        print(result)
+        if result.returncode != 0:
+            print('Error creating bucket.')
+
+    except Exception as e:
+        print(f'An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights')
+
+    # Helper Variables for IAM
+    iam_roles = ["roles/storage.admin", "roles/datastore.importExportAdmin"]
+    service_worker_mail = f'{project_id}@appspot.gserviceaccount.com'
+
+    for r in iam_roles:
+        iam_roles_command = (f'gcloud projects add-iam-policy-binding {project_id} --member '
+                             f'serviceAccount:{service_worker_mail} --role {r}')
+        try:
+            subprocess.run(iam_roles_command, capture_output=True, shell=True)
+
+        except Exception as e:
+            print(f'An Error Occured during Roles {e}\n '
+                  f'Please make sure you have the correct Google Cloud Access rights'
+                  )
+            return
+
+    print('Success! It may take a while until you can use Gcloud Backups')
