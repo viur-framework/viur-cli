@@ -32,14 +32,14 @@ def run(name, additional_args):
 
         :return: None
     """
-    projectConfig = get_config()
+    project_config = get_config()
 
-    if name not in projectConfig:
+    if name not in project_config:
         echo_error(f"{name} is not a valid config name.")
         return
 
-    conf = projectConfig["default"].copy()
-    conf.update(projectConfig[name])
+    conf = project_config["default"].copy()
+    conf.update(project_config[name])
 
     utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
@@ -66,14 +66,14 @@ def env():
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
-    projectConfig = get_config()
+    project_config = get_config()
 
     click.echo(f"Project Info:\n--------------------------------")
     try:
-        click.echo(f'Vi: {projectConfig["default"]["vi"]}')
-        click.echo(f'Core: {projectConfig["default"]["core"]}')
-        click.echo(f'Pyodide: {projectConfig["default"]["pyodide"]}')
-        click.echo(f'format: {projectConfig["default"]["format"]}')
+        click.echo(f'Vi: {project_config["default"]["vi"]}')
+        click.echo(f'Core: {project_config["default"]["core"]}')
+        click.echo(f'Pyodide: {project_config["default"]["pyodide"]}')
+        click.echo(f'format: {project_config["default"]["format"]}')
     except:
         echo_error("Error while collecting viur info")
     click.echo(f"\nCurrent Environment:\n--------------------------------")
@@ -213,8 +213,8 @@ def do_checks(dev=True):
 
     # Check npm vulnerabilities for all npm builds
 
-    projectConfig = get_config()
-    cfg = projectConfig["default"].copy()
+    project_config = get_config()
+    cfg = project_config["default"].copy()
     if builds_cfg := cfg.get("builds"):
         if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:

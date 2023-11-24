@@ -44,8 +44,8 @@ def create(ctx, name):
     project_json_path = f'./{name}/project.json'
 
     # collect project info
-    projectConfig = load_config(path=project_json_path)
-    appname = projectConfig["develop"]['application_name']
+    project_config = load_config(path=project_json_path)
+    appname = project_config["develop"]['application_name']
 
     # run clean-base
     os.system(f'cd ./{name} && python3 clean-base.py -A={appname}')

@@ -7,7 +7,7 @@ from .utils import *
 
 DEFAULT_PYODIDE_VERSION = "0.19.1"
 
-pectConfig = None
+project_config = None
 projectConfigFilePath = "project.json"
 
 
@@ -26,7 +26,7 @@ def load_config(path=None):
         :return: dict
             The project configuration loaded from the project.json file.
         """
-    global projectConfig
+    global project_config
 
     if not path:
         path = projectConfigFilePath
@@ -47,7 +47,7 @@ def load_config(path=None):
 
     try:
         f = open(path, "r")
-        projectConfig = json.loads(f.read())
+        project_config = json.loads(f.read())
     except FileNotFoundError:
         echo_fatal(f"Can't open {path} for reading")
 
@@ -55,7 +55,7 @@ def load_config(path=None):
         echo_fatal(f"The configuration in {path} contains invalid JSON: {str(e)}. Please verify right syntax.")
 
     update_config(path)
-    return projectConfig
+    return project_config
 
 
 def write_config(conf, path=None):
@@ -73,9 +73,9 @@ def write_config(conf, path=None):
 
     :return: None
     """
-    global projectConfig
+    global project_config
 
-    projectConfig = conf
+    project_config = conf
 
     if not path:
         path = projectConfigFilePath
@@ -94,8 +94,8 @@ def get_config():
         :return: dict
             The project configuration.
     """
-    global projectConfig
-    return projectConfig
+    global project_config
+    return project_config
 
 
 def add_to_config():
@@ -107,16 +107,16 @@ def add_to_config():
 
         :return: None
     """
-    global projectConfig
-    if not projectConfig:
+    global project_config
+    if not project_config:
         return
 
-    projectConfig.update({click.prompt('name'): {
+    project_config.update({click.prompt('name'): {
         "application_name": click.prompt('application name'),
         "version": click.prompt('develop version name')
     }})
 
-    write_config(projectConfig)
+    write_config(project_config)
 
 
 def remove_from_config():
@@ -128,11 +128,11 @@ def remove_from_config():
 
     :return: None
     """
-    global projectConfig
+    global project_config
     configname = click.prompt('name')
     try:
-        del projectConfig[configname]
-        write_config(projectConfig)
+        del project_config[configname]
+        write_config(project_config)
     except:
         raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
@@ -149,12 +149,12 @@ def fetch_core_version():
         result = os.popen('pip list --format=json').read()
         coreVersion = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
 
-        projectConfig["default"]["core"] = coreVersion
-        write_config(projectConfig)
+        project_config["default"]["core"] = coreVersion
+        write_config(project_config)
     except:
-        if projectConfig and projectConfig["default"]:
-            projectConfig["default"]["core"] = "submodule"
-            write_config(projectConfig)
+        if project_config and project_config["default"]:
+            project_config["default"]["core"] = "submodule"
+            write_config(project_config)
 
 
 def update_config(path=None):
@@ -169,34 +169,34 @@ def update_config(path=None):
 
     :return: None
     """
-    assert projectConfig, "load_config() must be called first!"
+    assert project_config, "load_config() must be called first!"
 
-    assert projectConfig["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], \
+    assert project_config["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], \
         "Invalid formatversion, you have to fix it manually"
 
-    if "format" not in projectConfig["default"]:
-        projectConfig["default"]["format"] = "1.0.1"
+    if "format" not in project_config["default"]:
+        project_config["default"]["format"] = "1.0.1"
 
     # Version 1.0.1
 
-    if (pyodide_version := projectConfig["default"].get("pyodide")) and pyodide_version.startswith("v"):
-        projectConfig["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
+    if (pyodide_version := project_config["default"].get("pyodide")) and pyodide_version.startswith("v"):
+        project_config["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
 
-    if projectConfig["default"]["vi"].startswith("v"):
-        projectConfig["default"]["vi"] = projectConfig["default"]["vi"][1:]  # remove v prefix
+    if project_config["default"]["vi"].startswith("v"):
+        project_config["default"]["vi"] = project_config["default"]["vi"][1:]  # remove v prefix
 
-    if projectConfig["default"]["format"] == "1.0.0":
-        projectConfig["default"]["format"] = "1.0.1"
+    if project_config["default"]["format"] == "1.0.0":
+        project_config["default"]["format"] = "1.0.1"
 
     # Version 1.1.1
 
-    if projectConfig["default"]["format"] == "1.1.0":
-        projectConfig["default"]["format"] = "1.1.1"
-        builds = projectConfig["default"].get("builds", {}).copy()
+    if project_config["default"]["format"] == "1.1.0":
+        project_config["default"]["format"] = "1.1.1"
+        builds = project_config["default"].get("builds", {}).copy()
         for k, v in builds.items():
             if builds[k]["kind"] == "script":
                 builds[k]["kind"] = "exec"
-        projectConfig["default"]["builds"] = builds
+        project_config["default"]["builds"] = builds
 
     # conf updates must increase format version
-    write_config(projectConfig, path)
+    write_config(project_config, path)

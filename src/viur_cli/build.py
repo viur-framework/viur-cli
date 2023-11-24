@@ -157,13 +157,13 @@ def release(name, additional_args):
     :return: None
     """
 
-    projectConfig = conf.get_config()
+    project_config = conf.get_config()
 
-    if name not in projectConfig:
+    if name not in project_config:
         utils.echo_fatal(f"{name} is not a valid config name.")
 
-    cfg = projectConfig["default"].copy()
-    cfg.update(projectConfig[name])
+    cfg = project_config["default"].copy()
+    cfg.update(project_config[name])
 
     utils.echo_info("building started...")
 
@@ -200,9 +200,9 @@ def app(appname, additional_args):
     :return: None
     """
 
-    projectConfig = conf.get_config()
+    project_config = conf.get_config()
 
-    cfg = projectConfig["default"].copy()
+    cfg = project_config["default"].copy()
 
     if not (build_cfg := cfg.get("builds").get(appname)):
         utils.echo_fatal(f"""{appname=} must be one of these options: {", ".join(cfg["builds"].keys())}""")
@@ -237,8 +237,8 @@ def clean(target):
 
     :return: None
     """
-    projectConfig = conf.get_config()
-    cfg = projectConfig["default"].copy()
+    project_config = conf.get_config()
+    cfg = project_config["default"].copy()
 
     builds = cfg.get("builds", {})
     if target:

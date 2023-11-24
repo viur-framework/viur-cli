@@ -120,8 +120,8 @@ def vi(version, target, next_):
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
 
-    projectConfig = get_config()
-    dist_folder = projectConfig["default"]["distribution_folder"]
+    project_config = get_config()
+    dist_folder = project_config["default"]["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
 
@@ -186,8 +186,8 @@ def downloadadmin(version: str, target: str):
 
     :return: None
     """
-    projectConfig = get_config()
-    dist_folder = projectConfig["default"]["distribution_folder"]
+    project_config = get_config()
+    dist_folder = project_config["default"]["distribution_folder"]
 
     real_version, download_url = get_version_info("admin", version)
 
@@ -245,8 +245,8 @@ def scriptor(version, target):
 
     :return: None
     """
-    projectConfig = get_config()
-    dist_folder = projectConfig["default"]["distribution_folder"]
+    project_config = get_config()
+    dist_folder = project_config["default"]["distribution_folder"]
 
     real_version, download_url = get_version_info("scriptor", version)
 

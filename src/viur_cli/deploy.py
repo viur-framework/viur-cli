@@ -53,14 +53,14 @@ def deploy(action, name, additional_args):
 
     :return: None
     """
-    projectConfig = get_config()
+    project_config = get_config()
 
-    if name not in projectConfig:
+    if name not in project_config:
         echo_error(f"{name} is not a valid config name.")
         return
 
-    conf = projectConfig["default"].copy()
-    conf.update(projectConfig[name])
+    conf = project_config["default"].copy()
+    conf.update(project_config[name])
 
     if action == "app":
         from . import do_checks
