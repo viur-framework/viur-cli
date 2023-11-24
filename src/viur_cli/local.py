@@ -4,6 +4,8 @@ import os
 import shutil
 import subprocess
 from pprint import pprint
+
+from viur_cli import echo_info, echo_positive
 from . import cli, echo_error, get_config, utils
 from .install import vi as vi_install
 
@@ -249,7 +251,8 @@ def checknpm(autofix):
     Raises:
         subprocess.CalledProcessError: If an error occurs while running the "npm audit" or "npm audit fix" commands.
     """
-    sources_folder = './sources'
+    project_config = get_config()
+    sources_folder = project_config["default"]["sources_folder"]
 
     try:
         # Run "npm audit" command and capture the output
@@ -260,7 +263,8 @@ def checknpm(autofix):
             encoding='utf-8'
         )
 
-        vulnerabilities = json.loads(result.stdout)["metadata"]["vulnerabilities"]
+        audit = json.loads(result.stdout)
+        vulnerabilities = audit["metadata"]["vulnerabilities"]
 
         if vulnerabilities["total"] >= 0:
 
@@ -277,7 +281,7 @@ def checknpm(autofix):
                 show_vulnerabilities = input('Do you want a list of the found Vulnerabilities? (y/N)').strip().lower()
 
                 if show_vulnerabilities == 'y':
-                    pprint(json.loads(result.stdout)["vulnerabilities"])
+                    pprint(audit["vulnerabilities"])
 
                 confirm = input('Do you want to run "npm audit fix --force" automatically? (Y/n):').strip().lower()
 
@@ -293,10 +297,10 @@ def checknpm(autofix):
 
                     fix_output = json.loads(fix.stdout)
 
-                    print(
-                        f'npm added {fix_output["added"]} packages,\n '
-                        f'audited {fix_output["audited"]} packages,\n '
-                        f'changed {fix_output["changed"]} packages\n '
+                    echo_info(
+                        f'npm added {fix_output["added"]} packages,\n'
+                        f'audited {fix_output["audited"]} packages,\n'
+                        f'changed {fix_output["changed"]} packages\n'
                         f'and removed {fix_output["removed"]} packages\n'
                     )
 
@@ -305,14 +309,14 @@ def checknpm(autofix):
                         pprint(fix_output)
 
                 except Exception as e:
-                    print(f'{e}')
+                    echo_error(f'{e}')
             else:
-                print(
+                echo_info(
                     'Automatic fix not confirmed. To fix vulnerabilities, '
                     'run "npm audit fix --force" in the ./sources folder.'
                 )
         else:
-            print('No vulnerabilities found.')
+            echo_positive('No vulnerabilities found.')
 
     except Exception as e:
-        print(f'An unexpected error occurred: {e}')
+        echo_error(f'An unexpected error occurred: {e}')
