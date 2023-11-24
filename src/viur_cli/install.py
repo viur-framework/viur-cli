@@ -1,12 +1,10 @@
 import os
 import shutil
 import zipfile
-from pathlib import Path
-from urllib.request import urlretrieve
-
 import click
 import requests
-
+from pathlib import Path
+from urllib.request import urlretrieve
 from . import cli, echo_error, echo_info, get_config, write_config
 
 REPOS = {
@@ -82,6 +80,10 @@ def install():
     :return: None
     """
 
+#todo: Add argument to just delete [vi|admin|scriptor]
+def delete():
+    #delete either the vi entry in the project json, or the admin entry.
+    pass
 
 @install.command()
 @click.argument("version", default="latest")
@@ -135,10 +137,14 @@ def vi(version, target, next_):
             return f"remove old vi..."
         elif step == 3:
             return f"extracting new vi..."
+
         elif step == 4:
+            return f"changing deleting old vi/admin"
+
+        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4, 5], label="updating vi...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -149,6 +155,9 @@ def vi(version, target, next_):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
             elif element == 4:
+                delete()
+
+            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
