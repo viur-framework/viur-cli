@@ -1,6 +1,8 @@
 import os
 import shutil
 import zipfile
+from pprint import pprint
+
 import click
 import requests
 from pathlib import Path
@@ -80,16 +82,22 @@ def install():
     :return: None
     """
 
-#todo: Add argument to just delete [vi|admin|scriptor]
-def delete():
-    #delete either the vi entry in the project json, or the admin entry.
-    pass
+#FixMe: !!!!
+@cli.group()
+@click.argument("key", default="vi")
+@click.option("--environment", "-e", default="default")
+def delete(key, environment):
+    project_config = get_config()
+    project_config[environment].pop(key, None)
+    write_config(project_config)
+
 
 @install.command()
 @click.argument("version", default="latest")
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
 @click.option("--target", "-t", default="vi")
-def vi(version, target, next_):
+@click.option("--environment", "-e", default="default")
+def vi(version, target, next_, environment):
     """Install the legacy ViUR administration interface.
 
     This subcommand allows you to install the legacy ViUR administration interface. You can specify a version to
@@ -137,11 +145,7 @@ def vi(version, target, next_):
             return f"remove old vi..."
         elif step == 3:
             return f"extracting new vi..."
-
         elif step == 4:
-            return f"changing deleting old vi/admin"
-
-        elif step == 5:
             return f"success!"
 
     with click.progressbar([1, 2, 3, 4, 5], label="updating vi...", item_show_func=step_label) as bar:
@@ -154,8 +158,9 @@ def vi(version, target, next_):
             elif element == 3:
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
+            ############################################################################################################
             elif element == 4:
-                delete()
+                delete('admin',environment)
 
             elif element == 5:
                 tmp_zip_file.unlink()
@@ -211,9 +216,11 @@ def downloadadmin(version: str, target: str):
         elif step == 3:
             return f"extracting new admin..."
         elif step == 4:
+            return f"delete previous vi installation"
+        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4], label="updating admin...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4, 5 ], label="updating admin...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -223,7 +230,11 @@ def downloadadmin(version: str, target: str):
             elif element == 3:
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(admin_path)
+            ##########################################################ä##################################################
             elif element == 4:
+                pass
+
+            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
