@@ -49,7 +49,7 @@ $ viur run [target]
 run the appserver and start your app locally. You may specify a target projectID.
 
 ```sh
-$ viur check {--dev}
+$ viur check {npm|--dev|--autofix}
 ```
 Runs a security check for the python environment and for each npm project registered under builds.
 
