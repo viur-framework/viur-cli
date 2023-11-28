@@ -171,11 +171,11 @@ def update_config(path=None):
     """
     assert project_config, "load_config() must be called first!"
 
-    assert project_config["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], \
+    assert project_config["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], \
         "Invalid formatversion, you have to fix it manually"
 
     if "format" not in project_config["default"]:
-        project_config["default"]["format"] = "1.0.1"
+        project_config["format"] = "1.0.1"
 
     # Version 1.0.1
 
@@ -185,13 +185,13 @@ def update_config(path=None):
     if project_config["default"]["vi"].startswith("v"):
         project_config["default"]["vi"] = project_config["default"]["vi"][1:]  # remove v prefix
 
-    if project_config["default"]["format"] == "1.0.0":
-        project_config["default"]["format"] = "1.0.1"
+    if project_config["format"] == "1.0.0":
+        project_config["format"] = "1.0.1"
 
     # Version 1.1.1
 
-    if project_config["default"]["format"] == "1.1.0":
-        project_config["default"]["format"] = "1.1.1"
+    if project_config["format"] == "1.1.0":
+        project_config["format"] = "1.1.1"
         builds = project_config["default"].get("builds", {}).copy()
         for k, v in builds.items():
             if builds[k]["kind"] == "script":
