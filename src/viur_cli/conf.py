@@ -209,8 +209,7 @@ def update_config(path=None):
                     project_config["default"]["builds"][entry] = {
                         "command": f"viur install {entry}",
                         "kind": "exec",
-                        # Regex to just delete the first occurence of "v"
-                        "version": re.sub(r"v", "", project_config["default"][entry])
+                        "version": project_config["default"][entry].lstrip("v")
                     }
                     del project_config["default"][entry]
 
