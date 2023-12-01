@@ -162,6 +162,20 @@ def fetch_core_version():
             write_config(project_config)
 
 
+def verions_to_builds(versionlist):
+    echo_error("U Called me1")
+    pprint(project_config)
+    for entry in versionlist:
+        if entry in project_config["default"]:
+            if project_config["default"][entry]:
+                project_config["default"]["builds"][entry] = {
+                    "command": f"viur install {entry}",
+                    "kind": "exec",
+                    "version": project_config["default"][entry].lstrip("v")
+                }
+                del project_config["default"][entry]
+
+
 def update_config(path=None):
     """
     Update the project configuration.
@@ -201,17 +215,6 @@ def update_config(path=None):
 
     # Version 1.2.0
     versionlist = ["admin", "scriptor", "vi"]
-
-    def verions_to_builds(versionlist):
-        for entry in versionlist:
-            if entry in project_config["default"]:
-                if project_config["default"][entry]:
-                    project_config["default"]["builds"][entry] = {
-                        "command": f"viur install {entry}",
-                        "kind": "exec",
-                        "version": project_config["default"][entry].lstrip("v")
-                    }
-                    del project_config["default"][entry]
 
     verions_to_builds(versionlist)
 
