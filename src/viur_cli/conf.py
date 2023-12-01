@@ -3,6 +3,10 @@ Everything related to maintaining the project.json configuration file for a viur
 """
 
 import json
+from pprint import pprint
+import click
+import re
+
 from .utils import *
 
 DEFAULT_PYODIDE_VERSION = "0.19.1"
@@ -25,7 +29,8 @@ def load_config(path=None):
 
         :return: dict
             The project configuration loaded from the project.json file.
-        """
+    """
+
     global project_config
 
     if not path:
@@ -171,19 +176,15 @@ def update_config(path=None):
     """
     assert project_config, "load_config() must be called first!"
 
-    assert project_config["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], \
+    assert project_config["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0"], \
         "Invalid formatversion, you have to fix it manually"
 
-    if "format" not in project_config["default"]:
+    if "format" not in project_config:
         project_config["format"] = "1.0.1"
 
     # Version 1.0.1
-
     if (pyodide_version := project_config["default"].get("pyodide")) and pyodide_version.startswith("v"):
         project_config["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
-
-    if project_config["default"]["vi"].startswith("v"):
-        project_config["default"]["vi"] = project_config["default"]["vi"][1:]  # remove v prefix
 
     if project_config["format"] == "1.0.0":
         project_config["format"] = "1.0.1"
@@ -197,6 +198,32 @@ def update_config(path=None):
             if builds[k]["kind"] == "script":
                 builds[k]["kind"] = "exec"
         project_config["default"]["builds"] = builds
+
+    # Version 1.2.0
+    versionlist = ["admin", "scriptor", "vi"]
+
+    def verions_to_builds(versionlist):
+        for entry in versionlist:
+            if entry in project_config["default"]:
+                if project_config["default"][entry]:
+                    project_config["default"]["builds"][entry] = {
+                        "command": f"viur install {entry}",
+                        "kind": "exec",
+                        # Regex to just delete the first occurence of "v"
+                        "version": re.sub(r"v", "", project_config["default"][entry])
+                    }
+                    del project_config["default"][entry]
+
+    verions_to_builds(versionlist)
+
+    if "admin" in project_config["default"]["builds"] and "vi" in project_config["default"]["builds"]:
+        echo_info(f"It seems like you have an Admin and a Vi Version in your project.json. \n"
+                  f"per default the VI version will be overwritten by the viur-admin \n"
+                  f"if you want to keep your vi press 'n'")
+        if click.confirm(text=f"Do you want to use admin?", default=True):
+            del project_config["default"]["builds"]["vi"]
+        else:
+            del project_config["default"]["builds"]["admin"]
 
     # conf updates must increase format version
     write_config(project_config, path)
