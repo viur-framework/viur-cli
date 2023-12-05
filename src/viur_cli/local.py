@@ -1,8 +1,11 @@
+from pprint import pprint
+
 import click
 import os
 import shutil
 import subprocess
-from . import cli, echo_error, get_config, utils
+from . import cli, echo_error, utils
+from . import config
 from .install import vi as vi_install
 
 
@@ -66,7 +69,8 @@ def env():
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
-    project_config = get_config()
+    project_config = config.ProjectConfig.get_instance()
+    pprint(project_config)
 
     click.echo(f"Project Info:\n--------------------------------")
     try:
