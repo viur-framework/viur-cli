@@ -3,7 +3,8 @@ import string
 import click
 import yaml
 import subprocess
-from . import cli, echo_error, get_config, echo_info, replace_vars
+from .conf import ProjectConfig
+from . import cli, echo_error, echo_info, replace_vars
 from .update import create_req
 
 

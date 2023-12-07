@@ -52,9 +52,7 @@ def cli(ctx):
             f"Recommended Version: {MINIMAL_PIPENV}"
         )
 
-    if ctx.invoked_subcommand not in ["init", "create"]:
-        load_config()
-    fetch_core_version()
+
 
 
 @cli.command()

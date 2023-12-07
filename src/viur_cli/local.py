@@ -4,13 +4,13 @@ import click
 import os
 import shutil
 import subprocess
+from .conf import config
 from . import cli, echo_error, utils
-from . import config
 from .install import vi as vi_install
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("name", default='develop')
+@click.argument("name", default='default')
 @click.argument("additional_args", nargs=-1)
 def run(name, additional_args):
     """
@@ -35,17 +35,10 @@ def run(name, additional_args):
 
         :return: None
     """
-    project_config = get_config()
 
-    if name not in project_config:
-        echo_error(f"{name} is not a valid config name.")
-        return
-
-    conf = project_config["default"].copy()
-    conf.update(project_config[name])
+    conf = config.get_profile(name)
 
     utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
-
 
 @cli.command()
 def env():
@@ -69,17 +62,16 @@ def env():
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
-    project_config = config.ProjectConfig.get_instance()
-    pprint(project_config)
 
     click.echo(f"Project Info:\n--------------------------------")
     try:
-        click.echo(f'Vi: {project_config["default"]["vi"]}')
-        click.echo(f'Core: {project_config["default"]["core"]}')
-        click.echo(f'Pyodide: {project_config["default"]["pyodide"]}')
-        click.echo(f'format: {project_config["format"]}')
-    except:
+        click.echo(f'format: {config["format"]}')
+        click.echo(f'Vi: {config["default"]["builds"]["vi"]["version"]}')
+        click.echo(f'Core: {config["default"]["core"]}')
+        click.echo(f'Admin: {config["default"][""}')
+    except Exception as e:
         echo_error("Error while collecting viur info")
+        echo_error(str(e))
     click.echo(f"\nCurrent Environment:\n--------------------------------")
 
     # viur-cli

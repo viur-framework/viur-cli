@@ -1,11 +1,15 @@
 import os
 import shutil
 import zipfile
+from pprint import pprint
+
 import click
 import requests
+from .conf import config
 from pathlib import Path
 from urllib.request import urlretrieve
-from . import cli, echo_error, echo_info, get_config, write_config, conf
+from . import cli, echo_error, echo_info
+
 
 REPOS = {
     "vi": ("viur-framework/viur-vi", "viur-vi.zip"),
@@ -37,9 +41,8 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
     else:
         # It's a validated and real existing version, save it to our config
         real_version: str = req.json()["name"]
-        project_config = get_config()
-        project_config["default"][software] = real_version.lstrip("v")
-        write_config(project_config)
+        config["default"][software] = real_version.lstrip("v")
+        config.save_config()
 
     if not real_version and version == "latest":
         download_url = f"https://github.com/{repo}/releases/latest/download/{download_name}"
@@ -80,11 +83,11 @@ def install():
     :return: None
     """
 
-#FixMe: !!!!
-#@cli.group()
-#@click.argument("key", default="vi")
-#@click.option("--environment", "-e", default="default")
-#def delete(key, environment):
+# FixMe: !!!!
+# @cli.group()
+# @click.argument("key", default="vi")
+# @click.option("--environment", "-e", default="default")
+# def delete(key, environment):
 #    project_config = get_config()
 #    project_config[environment].pop(key, None)
 #    write_config(project_config)
@@ -128,7 +131,7 @@ def vi(version, target, next_, environment):
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
 
-    project_config = get_config()
+    project_config = ProjectConfig.get_instance()
     dist_folder = project_config["default"]["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
@@ -198,8 +201,9 @@ def downloadadmin(version: str, target: str):
 
     :return: None
     """
-    project_config = get_config()
-    dist_folder = project_config["default"]["distribution_folder"]
+    project_config = ProjectConfig.get_instance()
+    pprint(project_config.config)
+    dist_folder = project_config.config["default"]["distribution_folder"]
 
     real_version, download_url = get_version_info("admin", version)
 
@@ -216,7 +220,7 @@ def downloadadmin(version: str, target: str):
         elif step == 4:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4, 5 ], label="updating admin...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4, 5], label="updating admin...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -257,7 +261,7 @@ def scriptor(version, target):
 
     :return: None
     """
-    project_config = get_config()
+    project_config = ProjectConfig.get_instance()
     dist_folder = project_config["default"]["distribution_folder"]
 
     real_version, download_url = get_version_info("scriptor", version)
