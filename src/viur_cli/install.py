@@ -42,7 +42,7 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
         # It's a validated and real existing version, save it to our config
         real_version: str = req.json()["name"]
         config["default"][software] = real_version.lstrip("v")
-        config.save_config()
+        config.save()
 
     if not real_version and version == "latest":
         download_url = f"https://github.com/{repo}/releases/latest/download/{download_name}"
@@ -83,16 +83,6 @@ def install():
     :return: None
     """
 
-# FixMe: !!!!
-# @cli.group()
-# @click.argument("key", default="vi")
-# @click.option("--environment", "-e", default="default")
-# def delete(key, environment):
-#    project_config = get_config()
-#    project_config[environment].pop(key, None)
-#    write_config(project_config)
-
-
 @install.command()
 @click.argument("version", default="latest")
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
@@ -131,8 +121,8 @@ def vi(version, target, next_, environment):
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
 
-    project_config = ProjectConfig.get_instance()
-    dist_folder = project_config["default"]["distribution_folder"]
+    conf = config.get_profile(environment)
+    dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
 
@@ -147,11 +137,9 @@ def vi(version, target, next_, environment):
         elif step == 3:
             return f"extracting new vi..."
         elif step == 4:
-            return f"rewriting project.json"
-        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4, 5], label="updating vi...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -162,8 +150,6 @@ def vi(version, target, next_, environment):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
             elif element == 4:
-                conf.verions_to_builds(target)
-            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
@@ -201,9 +187,8 @@ def downloadadmin(version: str, target: str):
 
     :return: None
     """
-    project_config = ProjectConfig.get_instance()
-    pprint(project_config.config)
-    dist_folder = project_config.config["default"]["distribution_folder"]
+    conf = config.get_profile("default")
+    dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("admin", version)
 
@@ -261,8 +246,8 @@ def scriptor(version, target):
 
     :return: None
     """
-    project_config = ProjectConfig.get_instance()
-    dist_folder = project_config["default"]["distribution_folder"]
+    conf = config.get_profile("default")
+    dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("scriptor", version)
 
