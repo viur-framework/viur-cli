@@ -2,7 +2,7 @@ import click
 import os
 import sys
 import re
-from .conf import ProjectConfig
+from .conf import config
 from . import cli, echo_error,  echo_info, utils
 
 
@@ -33,11 +33,7 @@ def update(action, name, additional_args):
 
     :return: None
     """
-    project_config = get_config()
-
-    if name not in project_config:
-        echo_error(f"{name} is not a valid config name.")
-        return
+    conf = config.get_profile(name)
 
     if action == "requirements":
         create_req()
@@ -60,9 +56,9 @@ def create_req(confirm_value=True):
 
     :return: None
     """
-    project_config = get_config()
-    dist_folder = project_config["default"]["distribution_folder"]
-    if project_config["default"]["core"] != "submodule":
+    conf = config.get_profile("default")
+    dist_folder = conf["distribution_folder"]
+    if conf["core"] != "submodule":
 
         if click.confirm(text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
                          default=confirm_value):

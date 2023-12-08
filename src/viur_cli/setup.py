@@ -1,6 +1,6 @@
 import click
 import os
-from .conf import *
+from .conf import config
 from .cli import cli
 from .utils import *
 
@@ -44,8 +44,8 @@ def create(ctx, name):
     project_json_path = f'./{name}/project.json'
 
     # collect project info
-    project_config = load_config(path=project_json_path)
-    appname = project_config["develop"]['application_name']
+    conf = config.get_profile("develop")
+    appname = conf['application_name']
 
     # run clean-base
     os.system(f'cd ./{name} && python3 clean-base.py -A={appname}')

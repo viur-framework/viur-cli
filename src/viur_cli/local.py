@@ -63,13 +63,13 @@ def env():
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
-
+    conf = config.get_profile("default")
     click.echo(f"Project Info:\n--------------------------------")
     try:
         click.echo(f'format: {config["format"]}')
-        for entry in config["default"]["builds"]:
-            if entry in config["default"]["builds"]:
-                click.echo(f'\n {entry}: {config["default"]["builds"][entry]["version"]} ')
+        for entry in conf["builds"]:
+            if entry in conf["builds"]:
+                click.echo(f'\n {entry}: {conf["builds"][entry]["version"]} ')
 
     except Exception as e:
         echo_error("Error while collecting viur info")
@@ -211,9 +211,7 @@ def do_checks(dev=True):
             all_checks_passed = False
 
     # Check npm vulnerabilities for all npm builds
-
-    project_config = get_config()
-    cfg = project_config["default"].copy()
+    cfg = config.get_profile("default")
     if builds_cfg := cfg.get("builds"):
         if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:

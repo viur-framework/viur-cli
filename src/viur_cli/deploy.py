@@ -3,7 +3,7 @@ import string
 import click
 import yaml
 import subprocess
-from .conf import ProjectConfig
+from .conf import config
 from . import cli, echo_error, echo_info, replace_vars
 from .update import create_req
 
@@ -54,14 +54,7 @@ def deploy(action, name, additional_args):
 
     :return: None
     """
-    project_config = get_config()
-
-    if name not in project_config:
-        echo_error(f"{name} is not a valid config name.")
-        return
-
-    conf = project_config["default"].copy()
-    conf.update(project_config[name])
+    conf = config.get_profile(name)
 
     if action == "app":
         from . import do_checks
@@ -165,10 +158,10 @@ def enable(action):
 
 def enable_gcp_backup():
     # Load the project Config
-    project_config = get_config()
+    conf = config.get_profile("default")
 
     # Create helper Variables
-    project_id = project_config["develop"]["application_name"]
+    project_id = conf["application_name"]
     bucket_name = f'backup-dot-{project_id}'
     backup_bucket_command = f'gsutil mb -l EUROPE-WEST3 -p {project_id} gs://{bucket_name}'
 

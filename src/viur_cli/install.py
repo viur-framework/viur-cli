@@ -137,9 +137,11 @@ def vi(version, target, next_, environment):
         elif step == 3:
             return f"extracting new vi..."
         elif step == 4:
+            return f"regenerating project.json"
+        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4, 5], label="updating vi...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -150,6 +152,8 @@ def vi(version, target, next_, environment):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
             elif element == 4:
+                config.migrate()
+            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
@@ -203,6 +207,9 @@ def downloadadmin(version: str, target: str):
         elif step == 3:
             return f"extracting new admin..."
         elif step == 4:
+            return f"regenerating project.json"
+
+        elif step == 5:
             return f"success!"
 
     with click.progressbar([1, 2, 3, 4, 5], label="updating admin...", item_show_func=step_label) as bar:
@@ -216,6 +223,8 @@ def downloadadmin(version: str, target: str):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(admin_path)
             elif element == 4:
+                conf.migrate()
+            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
