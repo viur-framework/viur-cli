@@ -7,6 +7,7 @@ import subprocess
 from .conf import config
 from . import cli, echo_error, utils
 from .install import vi as vi_install
+from types import SimpleNamespace
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -66,11 +67,13 @@ def env():
     click.echo(f"Project Info:\n--------------------------------")
     try:
         click.echo(f'format: {config["format"]}')
-        click.echo(f'Vi: {config["default"]["builds"]["vi"]["version"]}')
-        click.echo(f'Core: {config["default"]["core"]}')
-        click.echo(f'Admin: {config["default"][""}')
+        for entry in config["default"]["builds"]:
+            if entry in config["default"]["builds"]:
+                click.echo(f'\n {entry}: {config["default"]["builds"][entry]["version"]} ')
+
     except Exception as e:
         echo_error("Error while collecting viur info")
+
         echo_error(str(e))
     click.echo(f"\nCurrent Environment:\n--------------------------------")
 
