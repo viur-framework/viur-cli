@@ -1,9 +1,9 @@
-from pprint import pprint
-
+import json
 import click
 import os
 import shutil
 import subprocess
+from pprint import pprint
 from .conf import config
 from . import cli, echo_error, utils
 from .install import vi as vi_install
@@ -159,30 +159,33 @@ def env(profile):
 
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
-def check(dev):
-    """Perform security checks for vulnerabilities.
+@click.option('--autofix', '-a', is_flag=True, default=False)
+@click.argument("action", type=click.Choice(['npm', 'all']))
+def check(dev, action, autofix):
+    """
+    Perform security checks for vulnerabilities.
 
     The 'check' command performs security checks for vulnerabilities within your project.
     It checks for vulnerabilities in the Pipenv and npm dependencies of your project.
-    You can choose to include development dependencies by using the
-    '--dev' option.
+    You can choose to include development dependencies by using the '--dev' option.
 
-    :param dev: bool, default: False
-        Perform checks on development dependencies if set to 'True'.
-
-    Example Usage:
-    ```shell
-    viur check --dev
-    ```
+    Args:
+        dev (bool): Perform checks on development dependencies if set to 'True'.
+        autofix (bool): Automatically fix npm vulnerabilities if set to 'True'.
+        action (str): Specify the action to perform ('npm' or 'all').
 
     The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
 
-    :return: None
+    Usage:
+    ```shell
+       viur check --dev npm --autofix
+    ```
     """
-
     if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
+    if action == "npm":
+        checknpm(autofix)
 
 def do_checks(dev=True):
     """
@@ -208,16 +211,17 @@ def do_checks(dev=True):
         all_checks_passed = False
 
     if dev:
-        if show_output_if_not("pipenv check --output minimal --categories develop".split(), "0 vulnerabilities found"):
+        if show_output_if_not("pipenv check --output minimal --categories develop".split(),
+                              "0 vulnerabilities found"):
             all_checks_passed = False
 
     # Check npm vulnerabilities for all npm builds
     cfg = config.get_profile("default")
+
     if builds_cfg := cfg.get("builds"):
         if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
             for name in npm_apps:
                 path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
-
                 if dev:
                     args = ("npm", "audit", "--prefix", path)
                 else:
@@ -227,3 +231,88 @@ def do_checks(dev=True):
                     all_checks_passed = False
 
     return all_checks_passed
+
+
+def checknpm(autofix):
+    """
+    Check for npm vulnerabilities in the project and optionally fix them.
+
+    This function runs the "npm audit" command to check for vulnerabilities in the project's dependencies. If any
+    vulnerabilities are found, the function prompts the user to view the details and optionally run "npm audit fix
+    --force" to automatically fix the vulnerabilities.
+
+    Args:
+        autofix (bool): A boolean indicating whether to automatically fix vulnerabilities.
+
+    Raises:
+        subprocess.CalledProcessError: If an error occurs while running the "npm audit" or "npm audit fix" commands.
+    """
+    project_config = get_config()
+    sources_folder = project_config["default"]["sources_folder"]
+
+    try:
+        # Run "npm audit" command and capture the output
+        result = subprocess.run(
+            ['npm', 'audit', '--json'],
+            capture_output=True,
+            cwd=sources_folder,
+            encoding='utf-8'
+        )
+
+        audit = json.loads(result.stdout)
+        vulnerabilities = audit["metadata"]["vulnerabilities"]
+
+        if vulnerabilities["total"] >= 0:
+
+            if not autofix:
+                print(
+                    f'Npm found {vulnerabilities["total"]} Vulnerabilities \n'
+                    f'info: {vulnerabilities["info"]}\n'
+                    f'low: {vulnerabilities["low"]}\n'
+                    f'moderate: {vulnerabilities["moderate"]}\n'
+                    f'high: {vulnerabilities["high"]}\n'
+                    f'critical: {vulnerabilities["critical"]}\n'
+                    f'total: {vulnerabilities["total"]}\n'
+                )
+                show_vulnerabilities = input('Do you want a list of the found Vulnerabilities? (y/N)').strip().lower()
+
+                if show_vulnerabilities == 'y':
+                    pprint(audit["vulnerabilities"])
+
+                confirm = input('Do you want to run "npm audit fix --force" automatically? (Y/n):').strip().lower()
+
+            if autofix or confirm == 'y' or confirm == '':
+
+                try:
+                    fix = subprocess.run(
+                        ["npm", "audit", "fix", "--force",  "--json"],
+                        capture_output=True,
+                        cwd=sources_folder,
+                        encoding="utf-8",
+                    )
+
+                    fix_output = json.loads(fix.stdout)
+
+                    echo_info(
+                        f'npm added {fix_output["added"]} packages,\n'
+                        f'audited {fix_output["audited"]} packages,\n'
+                        f'changed {fix_output["changed"]} packages\n'
+                        f'and removed {fix_output["removed"]} packages\n'
+                    )
+
+                    show_all_fix = input('Do you want the whole report of the npm fixes?(y/N)').lower().strip()
+                    if show_all_fix == 'y':
+                        pprint(fix_output)
+
+                except Exception as e:
+                    echo_error(f'{e}')
+            else:
+                echo_info(
+                    'Automatic fix not confirmed. To fix vulnerabilities, '
+                    'run "npm audit fix --force" in the ./sources folder.'
+                )
+        else:
+            echo_positive('No vulnerabilities found.')
+
+    except Exception as e:
+        echo_error(f'An unexpected error occurred: {e}')
