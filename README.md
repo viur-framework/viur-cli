@@ -97,6 +97,52 @@ $ viur update {requirements}
 ```
 with this you can update your project specific requirements.txt file automatically
 
+## The project.json
+The `project.json` is your core project configuration file for every viur related operation.
+It contains the default viur project profile and it can be expanded with several individual project profiles.
+
+### Example project.json
+```json
+{
+    /* 
+      The format Key, Value pair defines the project json format, the viur-cli uses
+    */
+    "format": "2.0.0",
+    /*
+      The first level contains of your profiles
+      "default" is a profile, which is inherited by "develop" and "live" and can be customized for particular versions 
+      and/or GAE projects. Therefore, every profile can contain all keys from the "default" profile.*/
+    "default": {
+        /*
+          The builds level declares steps for the `viur build` command.
+          It can contain viur components and other components that need to be build before project deployment
+        */
+        "builds": { 
+            "admin": {
+                "command": "viur install admin",
+                "kind": "exec",
+                "version": "4.0.8"
+            },
+            "npm": {
+                "command": "build",
+                "kind": "npm",
+                "source": ""
+            }
+        },
+        "core": "3.5.1",  // viur-core version of your project
+        "distribution_folder": "./deploy", // Deploy folder uploaded to GAE
+        "sources_folder": "./sources",
+        "version": "live-$(year)-$(month)-$(day)", // Version string; Variables can be used here.
+        "application_name": "my-live-app-viur3" // Name of the GAE project *4
+    },
+    "develop": {  
+        "application_name": "my-dev-app-viur3", 
+        "version": "dev-$(user)"  
+    }
+}
+
+```
+
 ## Viur scripting interface
 
 There is a new core component that enables us to pull and push python scripts from/to a deployed application and run these in a sandbox or even locally.
