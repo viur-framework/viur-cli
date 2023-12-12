@@ -2,7 +2,6 @@
 
 
 This file documents any relevant changes.
-<<<<<<< HEAD
 
 ## [1.1.2] 2023-12-12
 - refactor: enabled profile support for all viur-cli functions
