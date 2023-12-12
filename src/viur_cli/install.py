@@ -137,7 +137,7 @@ def vi(version, target, next_, profile):
         elif step == 3:
             return f"extracting new vi..."
         elif step == 4:
-            return f"regenerating project.json"
+            return f"Editing Project.json"
         elif step == 5:
             return f"success!"
 
@@ -160,7 +160,7 @@ def vi(version, target, next_, profile):
 
 @install.command()
 @click.argument("version", default="latest")
-@click.argument("profile", default="profile")
+@click.argument("profile", default="default")
 @click.option("--target", "-t", default="vi")
 def admin(version, target, profile):
     """Install admin — the new ViUR administration interface."""
@@ -208,8 +208,7 @@ def downloadadmin(version: str, target: str, profile):
         elif step == 3:
             return f"extracting new admin..."
         elif step == 4:
-            return f"regenerating project.json"
-
+            return f"Editing Project.json"
         elif step == 5:
             return f"success!"
 
@@ -224,7 +223,7 @@ def downloadadmin(version: str, target: str, profile):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(admin_path)
             elif element == 4:
-                conf.migrate()
+                config.migrate()
             elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
@@ -271,9 +270,11 @@ def scriptor(version, target, profile):
         elif step == 2:
             return f"extracting scriptor..."
         elif step == 3:
+            return f"Editing Project.json"
+        elif step == 4:
             return f"success!"
 
-    with click.progressbar([1, 2, 3], label="updating scriptor...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4], label="updating scriptor...", item_show_func=step_label) as bar:
         for element in bar:
             match element:
                 case 1:
@@ -282,5 +283,7 @@ def scriptor(version, target, profile):
                     with zipfile.ZipFile(tmp_zip_file) as zip_f:
                         zip_f.extractall()
                 case 3:
+                    config.migrate()
+                case 4:
                     tmp_zip_file.unlink()
                     bar.label = "updated successful"

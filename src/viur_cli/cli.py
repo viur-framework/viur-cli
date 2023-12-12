@@ -56,38 +56,10 @@ def cli(ctx):
 
 
 @cli.command()
-@click.argument("action", type=click.Choice(['add', 'remove', 'list', 'scanNpm']))
-def project(action):
-    """
-    Manage project.json and generate if missing.
-
-    This command allows you to manage the 'project.json' file and associated project configuration settings. You can
-    add, remove, list, and modify project information using this command.
-
-    :param action: str
-        The action to perform on 'project.json' and project configuration. It can be one of the following:
-        - 'add': Add project information to 'project.json.
-        - 'remove': Remove project information from 'project.json.'
-        - 'list': List project information.
-
-    Example Usage:
-    ```shell
-    viur-cli project add
-    viur-cli project remove
-    viur-cli project list
-    ```
-
-    Note:
-    - When using the 'add' actions, you can provide additional information as needed.
-    - The 'list' action displays project information in a formatted JSON format.
-
-    :return: None
-    """
-    project_config = get_config()
-    if action == "add":
-        add_to_config()
-    elif action == "remove":
-        remove_from_config()
-        click.echo(click.style(json.dumps(project_config, indent=4, sort_keys=True), fg="cyan"))
-    elif action == "list":
-        pass
+@click.argument("action", type=click.Choice(['list']))
+@click.argument("profile", default="default")
+def project(action, profile):
+    project_config = config.get_profile(profile)
+    if action == "list":
+        echo_info(f"These are the Settings for {profile} profile")
+        pprint(project_config)

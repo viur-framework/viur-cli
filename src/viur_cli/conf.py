@@ -68,12 +68,19 @@ class ProjectConfig(dict):
         f.write(json.dumps(self, indent=4, sort_keys=True))
         f.close()
 
-    def get_profile(self, profilename):
-        if profilename == "format":
+    def get_profile(self, profile):
+        if profile == "format":
             echo_fatal("Your profile can not be named 'Format' ")
-        if profilename not in self:
-            echo_fatal("Please create a Profile not named default!")
-        return self["default"].copy() | self[profilename]
+        return self["default"].copy() | self[profile]
+
+    def yeet(self):
+
+        configname = click.prompt('name')
+        try:
+            del self[configname]
+            self.save()
+        except:
+            raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
     def migrate(self):
         """
