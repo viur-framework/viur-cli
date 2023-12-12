@@ -128,9 +128,9 @@ def build():
 
 
 @build.command(context_settings={"ignore_unknown_options": True})
-@click.argument("name", default='develop')
+@click.argument("profile", default='develop')
 @click.argument("additional_args", nargs=-1)
-def release(name, additional_args):
+def release(profile, additional_args):
     """
     Build all relevant applications to deploy this project.
 
@@ -155,7 +155,7 @@ def release(name, additional_args):
 
     :return: None
     """
-    conf = config.get_profile(name)
+    conf = config.get_profile(profile)
     utils.echo_info("building started...")
 
     for build_name, build_cfg in conf.get("builds", {}).items():
@@ -167,7 +167,8 @@ def release(name, additional_args):
 @build.command(context_settings={"ignore_unknown_options": True})
 @click.argument("appname")
 @click.argument("additional_args", nargs=-1)
-def app(appname, additional_args):
+@click.argument("profile", default="default")
+def app(appname, profile, additional_args):
     """
     Build a specific application.
 
@@ -191,9 +192,7 @@ def app(appname, additional_args):
     :return: None
     """
 
-
-
-    conf = config.get_config()
+    conf = config.get_profile(profile)
 
     if not (build_cfg := conf.get("builds").get(appname)):
         utils.echo_fatal(f"""{appname=} must be one of these options: {", ".join(conf["builds"].keys())}""")
@@ -205,7 +204,8 @@ def app(appname, additional_args):
 
 @build.command
 @click.argument("target", default="")
-def clean(target):
+@click.argument("name", default="default")
+def clean(target, profile):
     """
     Clean up build artifacts.
 
@@ -228,7 +228,7 @@ def clean(target):
 
     :return: None
     """
-    conf = config.get_profile("default")
+    conf = config.get_profile(profile)
 
     builds = conf.get("builds", {})
     if target:

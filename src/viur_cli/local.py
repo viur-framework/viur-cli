@@ -11,9 +11,9 @@ from types import SimpleNamespace
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("name", default='default')
+@click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
-def run(name, additional_args):
+def run(profile, additional_args):
     """
         Start your application locally.
 
@@ -37,12 +37,13 @@ def run(name, additional_args):
         :return: None
     """
 
-    conf = config.get_profile(name)
+    conf = config.get_profile(profile)
 
     utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
 @cli.command()
-def env():
+@click.argument("profile", default="default")
+def env(profile):
     """
        Check the local environment for ViUR development.
 
@@ -63,7 +64,7 @@ def env():
     valid_icon = "\U00002714"
     failed_icon = "\U0000274C"
 
-    conf = config.get_profile("default")
+    conf = config.get_profile(profile)
     click.echo(f"Project Info:\n--------------------------------")
     try:
         click.echo(f'format: {config["format"]}')

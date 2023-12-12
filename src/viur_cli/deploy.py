@@ -10,9 +10,9 @@ from .update import create_req
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue']))
-@click.argument("name", default='develop')
+@click.argument("profile", default='develop')
 @click.argument("additional_args", nargs=-1)
-def deploy(action, name, additional_args):
+def deploy(action, profile, additional_args):
     """
     Deploy a Google Cloud application or different YAML files.
 
@@ -54,7 +54,7 @@ def deploy(action, name, additional_args):
 
     :return: None
     """
-    conf = config.get_profile(name)
+    conf = config.get_profile(profile)
 
     if action == "app":
         from . import do_checks

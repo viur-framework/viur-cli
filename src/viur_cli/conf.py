@@ -66,12 +66,12 @@ class ProjectConfig(dict):
         f.write(json.dumps(self, indent=4, sort_keys=True))
         f.close()
 
-    def get_profile(self, name):
-        if name == "format":
+    def get_profile(self, profilename):
+        if profilename == "format":
             echo_fatal("Your profile can not be named 'Format' ")
-        if name not in self:
+        if profilename not in self:
             echo_fatal("Please create a Profile not named default!")
-        return self["default"].copy() | self[name]
+        return self["default"].copy() | self[profilename]
 
     def migrate(self):
         """

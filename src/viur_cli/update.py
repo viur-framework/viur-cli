@@ -8,9 +8,9 @@ from . import cli, echo_error,  echo_info, utils
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["requirements"]))
-@click.argument("name", default='develop')
+@click.argument("profile", default='develop')
 @click.argument("additional_args", nargs=-1)
-def update(action, name, additional_args):
+def update(action, profile, additional_args):
     """
     Update project-specific files and dependencies.
 
@@ -33,13 +33,14 @@ def update(action, name, additional_args):
 
     :return: None
     """
-    conf = config.get_profile(name)
+    conf = config.get_profile(profile)
 
     if action == "requirements":
-        create_req()
+        create_req(profile)
 
 
-def create_req(confirm_value=True):
+
+def create_req(profile, confirm_value=True):
     """
     Load project's pipenv and build a requirements.txt.
 
@@ -56,7 +57,7 @@ def create_req(confirm_value=True):
 
     :return: None
     """
-    conf = config.get_profile("default")
+    conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
     if conf["core"] != "submodule":
 

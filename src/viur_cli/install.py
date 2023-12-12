@@ -85,10 +85,10 @@ def install():
 
 @install.command()
 @click.argument("version", default="latest")
+@click.argument("profile", default="default")
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
 @click.option("--target", "-t", default="vi")
-@click.option("--environment", "-e", default="default")
-def vi(version, target, next_, environment):
+def vi(version, target, next_, profile):
     """Install the legacy ViUR administration interface.
 
     This subcommand allows you to install the legacy ViUR administration interface. You can specify a version to
@@ -121,7 +121,7 @@ def vi(version, target, next_, environment):
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
 
-    conf = config.get_profile(environment)
+    conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
@@ -160,13 +160,14 @@ def vi(version, target, next_, environment):
 
 @install.command()
 @click.argument("version", default="latest")
+@click.argument("profile", default="profile")
 @click.option("--target", "-t", default="vi")
-def admin(version, target):
+def admin(version, target, profile):
     """Install admin — the new ViUR administration interface."""
-    return downloadadmin(version, target)
+    return downloadadmin(version, target, profile)
 
 
-def downloadadmin(version: str, target: str):
+def downloadadmin(version: str, target: str, profile):
     """
     Install the new ViUR administration interface.
 
@@ -191,7 +192,7 @@ def downloadadmin(version: str, target: str):
 
     :return: None
     """
-    conf = config.get_profile("default")
+    conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("admin", version)
@@ -231,8 +232,9 @@ def downloadadmin(version: str, target: str):
 
 @install.command()
 @click.argument("version", default="latest")
+@click.argument("profile", default="default")
 @click.option("--target", "-t", default="scriptor")
-def scriptor(version, target):
+def scriptor(version, target, profile):
     """
     Install the scriptor IDE.
 
@@ -255,7 +257,7 @@ def scriptor(version, target):
 
     :return: None
     """
-    conf = config.get_profile("default")
+    conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("scriptor", version)
