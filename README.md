@@ -102,7 +102,7 @@ The `project.json` is your core project configuration file for every viur relate
 It contains the default viur project profile and it can be expanded with several individual project profiles.
 
 ### Example project.json
-```json
+```json lines
 {
     /* 
       The format Key, Value pair defines the project json format, the viur-cli uses
