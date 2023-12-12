@@ -1,4 +1,6 @@
 import json
+from pprint import pprint
+
 import click
 from .utils import *
 
@@ -115,8 +117,16 @@ class ProjectConfig(dict):
                 List of versions to convert to builds.
             :return: None
         """
+        # Check if Builds is in the project.json
+        if "builds" not in self["default"].keys():
+            self["default"]["builds"] = {}
+
+        if self["format"] == "1.1.1":
+            self["format"] = "2.0.0"
 
         for entry in ("admin", "scriptor", "vi"):
+            if not self["default"]["builds"]:
+                self["default"]["builds"]
             if entry in self["default"]:
                 version_value = self["default"][entry].lstrip("v")
                 self["default"]["builds"][entry] = {
