@@ -2,12 +2,17 @@
 
 
 This file documents any relevant changes.
+<<<<<<< HEAD
 
-## [1.1.1] 2023-12-12
+## [1.1.2] 2023-12-12
 - refactor: enabled profile support for all viur-cli functions
 - fix: `viur env` now runs without errors
 - refactor: project.json functionalities
 
+## [1.1.1] 2023-11-28
+- chore: updated dependencies
+- feat: added npm audit function
+ 
 ## [1.1.0] 2023-11-23
 - chore: added more `viur2to3` replacements
 - fix: fixed `viur script` subdirectory duplicates

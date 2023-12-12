@@ -41,9 +41,10 @@ def create(ctx, name):
     # fetch base project
     os.system(
         f'git clone https://github.com/viur-framework/viur-base.git {name}')
+    project_json_path = f'./{name}/project.json'
 
     # collect project info
-    conf = config.get_profile("default")
+    conf = config.get_profile("develop")
     appname = conf['application_name']
 
     # run clean-base
