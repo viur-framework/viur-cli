@@ -65,7 +65,7 @@ def create_req(yes, confirm_value=True):
     dist_folder = project_config["default"]["distribution_folder"]
     if project_config["default"]["core"] != "submodule":
         echo_positive(str(yes))
-        #Exclusive Or should work this way i guess
+        #or evaluates "yes" first and skips confirmation prompt
         if yes or click.confirm(text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
                          default=confirm_value):
             os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
