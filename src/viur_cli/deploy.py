@@ -11,7 +11,8 @@ from .update import create_req
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue']))
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
-def deploy(action, name, additional_args):
+@click.option("--ext", "-e", default=None)
+def deploy(action, name, ext, additional_args):
     """
     Deploy a Google Cloud application or different YAML files.
 
@@ -76,6 +77,9 @@ def deploy(action, name, additional_args):
 
         # gcloud only allows for version identifiers in lower-case order and only accepting these characters
         version = "".join([c for c in version.lower() if c in string.ascii_lowercase + string.digits + "-"])
+
+        if ext:
+            version += f"-{ext}"
 
         # rebuild requirements.txt
         create_req(False)
