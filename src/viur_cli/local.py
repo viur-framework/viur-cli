@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import click
 import os
 import shutil

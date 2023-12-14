@@ -3,7 +3,7 @@
 
 This file documents any relevant changes.
 
-## [1.1.2] 2023-12-12
+## [2.0.0dev] 2023-12-12
 - refactor: enabled profile support for all viur-cli functions
 - fix: `viur env` now runs without errors
 - refactor: project.json functionalities

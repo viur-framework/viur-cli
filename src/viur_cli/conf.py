@@ -1,6 +1,4 @@
 import json
-from pprint import pprint
-
 import click
 from .utils import *
 
@@ -73,8 +71,7 @@ class ProjectConfig(dict):
             echo_fatal("Your profile can not be named 'Format' ")
         return self["default"].copy() | self[profile]
 
-    def yeet(self):
-
+    def delete(self):
         configname = click.prompt('name')
         try:
             del self[configname]

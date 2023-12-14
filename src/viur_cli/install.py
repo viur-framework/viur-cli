@@ -1,8 +1,6 @@
 import os
 import shutil
 import zipfile
-from pprint import pprint
-
 import click
 import requests
 from .conf import config
