@@ -64,7 +64,6 @@ def create_req(yes, confirm_value=True):
     project_config = get_config()
     dist_folder = project_config["default"]["distribution_folder"]
     if project_config["default"]["core"] != "submodule":
-        echo_positive(str(yes))
         # "or" operator evaluates "yes" first and skips confirmation prompt
         if yes or click.confirm(
                 text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
