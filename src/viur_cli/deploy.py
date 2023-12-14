@@ -12,7 +12,7 @@ from .update import create_req
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
-@click.option("--yes", "-y", is_flag = True, default=False)
+@click.option("--yes", "-y", is_flag=True, default=False)
 def deploy(action, name, ext, yes, additional_args):
     """
     Deploy a Google Cloud application or different YAML files.
@@ -84,7 +84,7 @@ def deploy(action, name, ext, yes, additional_args):
             version += f"-{ext}"
 
         # rebuild requirements.txt
-        create_req(yes,False)
+        create_req(yes, False)
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} --version={version} '
