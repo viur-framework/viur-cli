@@ -1,8 +1,6 @@
 # Changelog
 
-
 This file documents any relevant changes.
-
 ## [2.0.0dev] 2023-12-12
 - refactor: enabled profile support for all viur-cli functions
 - fix: `viur env` now runs without errors
