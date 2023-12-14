@@ -12,7 +12,8 @@ from .update import create_req
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
-def deploy(action, name, ext, additional_args):
+@click.option("--yes", "-y", is_flag = True, default=False)
+def deploy(action, name, ext, yes, additional_args):
     """
     Deploy a Google Cloud application or different YAML files.
 
@@ -66,6 +67,7 @@ def deploy(action, name, ext, additional_args):
     if action == "app":
         from . import do_checks
         if not do_checks(dev=False):
+            # --yes will not be implemented here because deploying security issues should be an explicit decission
             if not click.confirm(f"The checks were not successful, do you want to continue?"):
                 return
         else:
@@ -82,11 +84,11 @@ def deploy(action, name, ext, additional_args):
             version += f"-{ext}"
 
         # rebuild requirements.txt
-        create_req(False)
+        create_req(yes,False)
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} --version={version} '
-            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]}')
+            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}')
     else:
         if action not in ["index", "queue", "cron"]:
             echo_error(f"{action} is not a valid action. Valid is app, index, queue, cron")
