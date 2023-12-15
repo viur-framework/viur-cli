@@ -3,7 +3,7 @@ import os
 import sys
 import re
 from .conf import config
-from . import cli, echo_error, get_config, echo_positive, echo_info, utils
+from . import cli, echo_error, echo_positive, echo_info, utils
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
