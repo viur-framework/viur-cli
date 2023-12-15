@@ -1,9 +1,11 @@
 import re
 import subprocess
+import click
 from .conf import *
 from .version import __version__
 from .version import MINIMAL_PIPENV
 import semver
+import pprint
 
 
 @click.group(invoke_without_command=True,
@@ -63,3 +65,4 @@ def project(action, profile):
     if action == "list":
         echo_info(f"These are the Settings for {profile} profile")
         pprint(project_config)
+
