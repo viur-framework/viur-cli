@@ -1,13 +1,13 @@
 import os
 import shutil
 import zipfile
-from pathlib import Path
-from urllib.request import urlretrieve
-
 import click
 import requests
+from .conf import config
+from pathlib import Path
+from urllib.request import urlretrieve
+from . import cli, echo_error, echo_info
 
-from . import cli, echo_error, echo_info, get_config, write_config
 
 REPOS = {
     "vi": ("viur-framework/viur-vi", "viur-vi.zip"),
@@ -39,9 +39,8 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
     else:
         # It's a validated and real existing version, save it to our config
         real_version: str = req.json()["name"]
-        project_config = get_config()
-        project_config["default"][software] = real_version.lstrip("v")
-        write_config(project_config)
+        config["default"][software] = real_version.lstrip("v")
+        config.save()
 
     if not real_version and version == "latest":
         download_url = f"https://github.com/{repo}/releases/latest/download/{download_name}"
@@ -82,12 +81,12 @@ def install():
     :return: None
     """
 
-
 @install.command()
 @click.argument("version", default="latest")
+@click.argument("profile", default="default")
 @click.option("--next", "-n", "next_", is_flag=True, default=False)
 @click.option("--target", "-t", default="vi")
-def vi(version, target, next_):
+def vi(version, target, next_, profile):
     """Install the legacy ViUR administration interface.
 
     This subcommand allows you to install the legacy ViUR administration interface. You can specify a version to
@@ -120,8 +119,8 @@ def vi(version, target, next_):
         echo_info("DEPRECATED please use: viur install admin")
         return downloadadmin(version, target)
 
-    projectConfig = get_config()
-    dist_folder = projectConfig["default"]["distribution_folder"]
+    conf = config.get_profile(profile)
+    dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
 
@@ -136,9 +135,11 @@ def vi(version, target, next_):
         elif step == 3:
             return f"extracting new vi..."
         elif step == 4:
+            return f"Editing Project.json"
+        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4, 5], label="updating vi...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -149,19 +150,22 @@ def vi(version, target, next_):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
             elif element == 4:
+                config.migrate()
+            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
 
 @install.command()
 @click.argument("version", default="latest")
+@click.argument("profile", default="default")
 @click.option("--target", "-t", default="vi")
-def admin(version, target):
+def admin(version, target, profile):
     """Install admin — the new ViUR administration interface."""
-    return downloadadmin(version, target)
+    return downloadadmin(version, target, profile)
 
 
-def downloadadmin(version: str, target: str):
+def downloadadmin(version: str, target: str, profile):
     """
     Install the new ViUR administration interface.
 
@@ -186,8 +190,8 @@ def downloadadmin(version: str, target: str):
 
     :return: None
     """
-    projectConfig = get_config()
-    dist_folder = projectConfig["default"]["distribution_folder"]
+    conf = config.get_profile(profile)
+    dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("admin", version)
 
@@ -202,9 +206,11 @@ def downloadadmin(version: str, target: str):
         elif step == 3:
             return f"extracting new admin..."
         elif step == 4:
+            return f"Editing Project.json"
+        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4], label="updating admin...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4, 5], label="updating admin...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -215,14 +221,17 @@ def downloadadmin(version: str, target: str):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(admin_path)
             elif element == 4:
+                config.migrate()
+            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
 
 @install.command()
 @click.argument("version", default="latest")
+@click.argument("profile", default="default")
 @click.option("--target", "-t", default="scriptor")
-def scriptor(version, target):
+def scriptor(version, target, profile):
     """
     Install the scriptor IDE.
 
@@ -245,8 +254,8 @@ def scriptor(version, target):
 
     :return: None
     """
-    projectConfig = get_config()
-    dist_folder = projectConfig["default"]["distribution_folder"]
+    conf = config.get_profile(profile)
+    dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("scriptor", version)
 
@@ -259,9 +268,11 @@ def scriptor(version, target):
         elif step == 2:
             return f"extracting scriptor..."
         elif step == 3:
+            return f"Editing Project.json"
+        elif step == 4:
             return f"success!"
 
-    with click.progressbar([1, 2, 3], label="updating scriptor...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4], label="updating scriptor...", item_show_func=step_label) as bar:
         for element in bar:
             match element:
                 case 1:
@@ -270,5 +281,7 @@ def scriptor(version, target):
                     with zipfile.ZipFile(tmp_zip_file) as zip_f:
                         zip_f.extractall()
                 case 3:
+                    config.migrate()
+                case 4:
                     tmp_zip_file.unlink()
                     bar.label = "updated successful"

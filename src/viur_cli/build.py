@@ -4,10 +4,11 @@ Performs build steps configured within the project, or creates any necessary ste
 
 import click
 import os
-from . import cli, conf, utils
+from .conf import config
+from . import cli, utils
 
 
-def _build(cfg, name, build_cfg, additional_args):
+def _build(conf, name, build_cfg, additional_args):
     """Internal function to perform steps required for a given build configuration.
 
     This internal function is responsible for building an application according to the specified build configuration.
@@ -15,7 +16,7 @@ def _build(cfg, name, build_cfg, additional_args):
         - npm: For building Node.js applications using npm package manager.
         - exec: For executing custom commands specified in the build configuration.
 
-    :param cfg: dict
+    :param conf: dict
         The project configuration, which can be either the default configuration or project-specific configuration.
     :param name: str
         The name of the application to build.
@@ -38,15 +39,13 @@ def _build(cfg, name, build_cfg, additional_args):
 
     :return: None
     """
-
     utils.echo_info(f"""- {build_cfg["kind"]} {name}""")
-
     match build_cfg["kind"]:
         case "npm":
             utils.system(
                 " && ".join(
                     (
-                        f'cd {os.path.join(cfg["sources_folder"], build_cfg["source"])}',
+                        f'cd {os.path.join(conf["sources_folder"], build_cfg["source"])}',
                         "npm install",
                         f'npm run {build_cfg["command"]}'
                     )
@@ -60,7 +59,7 @@ def _build(cfg, name, build_cfg, additional_args):
             utils.echo_fatal(f"Unknown build kind {other!r}")
 
 
-def _clean(cfg, name, build_cfg):
+def _clean(conf, name, build_cfg):
     """Perform steps required to clean a given build configuration.
 
     This internal function is responsible for cleaning the artifacts and files generated during the build process
@@ -68,7 +67,7 @@ def _clean(cfg, name, build_cfg):
         - npm: For cleaning Node.js applications built with npm package manager.
         - exec: For executing custom clean commands specified in the build configuration.
 
-    :param cfg: dict
+    :param conf: dict
         The project configuration, which can be either the default configuration or a
         project-specific configuration.
 
@@ -100,14 +99,14 @@ def _clean(cfg, name, build_cfg):
         # for npm, drop the target folder and node_modules (npm)
         case "npm":
             if target_dir := build_cfg.get("target"):
-                target_dir = os.path.join(cfg["distribution_folder"], target_dir)
+                target_dir = os.path.join(conf["distribution_folder"], target_dir)
                 utils.echo_info(f"  - dropping {target_dir}")
                 utils.rmdir(target_dir)
 
             if build_cfg["kind"] == "npm":
                 # todo: Later, call "npm run clean" or a similar command when it exists
 
-                node_modules = os.path.join(cfg["sources_folder"], build_cfg["source"], "node_modules")
+                node_modules = os.path.join(conf["sources_folder"], build_cfg["source"], "node_modules")
                 utils.echo_info(f"  - dropping {node_modules}")
                 utils.rmdir(os.path.join(node_modules))
 
@@ -129,9 +128,9 @@ def build():
 
 
 @build.command(context_settings={"ignore_unknown_options": True})
-@click.argument("name", default='develop')
+@click.argument("profile", default='develop')
 @click.argument("additional_args", nargs=-1)
-def release(name, additional_args):
+def release(profile, additional_args):
     """
     Build all relevant applications to deploy this project.
 
@@ -156,19 +155,11 @@ def release(name, additional_args):
 
     :return: None
     """
-
-    projectConfig = conf.get_config()
-
-    if name not in projectConfig:
-        utils.echo_fatal(f"{name} is not a valid config name.")
-
-    cfg = projectConfig["default"].copy()
-    cfg.update(projectConfig[name])
-
+    conf = config.get_profile(profile)
     utils.echo_info("building started...")
 
-    for build_name, build_cfg in cfg.get("builds", {}).items():
-        _build(cfg, build_name, build_cfg, additional_args)
+    for build_name, build_cfg in conf.get("builds", {}).items():
+        _build(conf, build_name, build_cfg, additional_args)
 
     utils.echo_info("building finished!")
 
@@ -176,7 +167,8 @@ def release(name, additional_args):
 @build.command(context_settings={"ignore_unknown_options": True})
 @click.argument("appname")
 @click.argument("additional_args", nargs=-1)
-def app(appname, additional_args):
+@click.argument("profile", default="default")
+def app(appname, profile, additional_args):
     """
     Build a specific application.
 
@@ -200,21 +192,20 @@ def app(appname, additional_args):
     :return: None
     """
 
-    projectConfig = conf.get_config()
+    conf = config.get_profile(profile)
 
-    cfg = projectConfig["default"].copy()
-
-    if not (build_cfg := cfg.get("builds").get(appname)):
-        utils.echo_fatal(f"""{appname=} must be one of these options: {", ".join(cfg["builds"].keys())}""")
+    if not (build_cfg := conf.get("builds").get(appname)):
+        utils.echo_fatal(f"""{appname=} must be one of these options: {", ".join(conf["builds"].keys())}""")
 
     utils.echo_info("building started...")
-    _build(cfg, appname, build_cfg, additional_args)
+    _build(conf, appname, build_cfg, additional_args)
     utils.echo_info("building finished!")
 
 
 @build.command
 @click.argument("target", default="")
-def clean(target):
+@click.argument("name", default="default")
+def clean(target, profile):
     """
     Clean up build artifacts.
 
@@ -237,19 +228,18 @@ def clean(target):
 
     :return: None
     """
-    projectConfig = conf.get_config()
-    cfg = projectConfig["default"].copy()
+    conf = config.get_profile(profile)
 
-    builds = cfg.get("builds", {})
+    builds = conf.get("builds", {})
     if target:
         if not (build_cfg := builds.get(target)):
-            utils.echo_fatal(f"""{target=} must be one of these options: {", ".join(cfg["builds"].keys())}""")
+            utils.echo_fatal(f"""{target=} must be one of these options: {", ".join(conf["builds"].keys())}""")
 
         builds = {target: build_cfg}
 
     utils.echo_info("clean started...")
 
     for build_name, build_cfg in builds.items():
-        _clean(cfg, build_name, build_cfg)
+        _clean(conf, build_name, build_cfg)
 
     utils.echo_info("clean finished!")

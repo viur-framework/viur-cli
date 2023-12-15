@@ -1,202 +1,171 @@
-"""
-Everything related to maintaining the project.json configuration file for a viur project.
-"""
-
 import json
+import click
 from .utils import *
 
-DEFAULT_PYODIDE_VERSION = "0.19.1"
 
-pectConfig = None
-projectConfigFilePath = "project.json"
+PROJECT_CONFIG_FILE = "project.json"
+PROJECT_CONFIG_VERSION = "2.0.0"
 
 
-def load_config(path=None):
-    """
-        Load project.json and write to the global projectConfig.
+class ProjectConfig(dict):
 
-        This function is responsible for loading the project.json configuration file and populating the global
-        projectConfig variable.
-        It handles error checks, such as missing or invalid JSON configuration files, and updates the project
-        configuration.
+    def __init__(self):
+        super().__init__()
+        self["default"] = {}
+        self["format"] = PROJECT_CONFIG_VERSION
+        self.load()
 
-        :param path: str, optional
-            The path to the project.json file. If not provided, the default projectConfigFilePath is used.
-
-        :return: dict
-            The project configuration loaded from the project.json file.
+    def load(self):
         """
-    global projectConfig
+            Load project.json and write to the global projectConfig.
 
-    if not path:
-        path = projectConfigFilePath
+            This function is responsible for loading the project.json configuration file and populating the global
+            projectConfig variable.
+            It handles error checks, such as missing or invalid JSON configuration files, and updates the project
+            configuration.
+
+            :param path: str, optional
+                The path to the project.json file. If not provided, the default projectConfigFilePath is used.
+
+            :return: dict
+                The project configuration loaded from the project.json file.
+        """
+
 
         # Search in any parent folder for a project.json,
         # change working directory because subsequent commands
         # require for project root folder.
         changed = False
-        while not os.path.exists(path):
+        while not os.path.exists(PROJECT_CONFIG_FILE):
             os.chdir("..")
             changed = True
 
             if os.getcwd() == "/":
-                echo_fatal(f"{path} not found - please check if you are in the right folder.")
+                echo_fatal(f"{PROJECT_CONFIG_FILE} not found - please check if you are in the right folder.")
 
         if changed:
             echo_info(f"Project root is {os.getcwd()}")
 
-    try:
-        f = open(path, "r")
-        projectConfig = json.loads(f.read())
-    except FileNotFoundError:
-        echo_fatal(f"Can't open {path} for reading")
+        try:
+            f = open(PROJECT_CONFIG_FILE, "r")
+            self.update(json.loads(f.read()))
 
-    except json.decoder.JSONDecodeError as e:
-        echo_fatal(f"The configuration in {path} contains invalid JSON: {str(e)}. Please verify right syntax.")
+        except FileNotFoundError:
+            echo_fatal(f"Can't open {PROJECT_CONFIG_FILE} for reading")
 
-    update_config(path)
-    return projectConfig
+        except json.decoder.JSONDecodeError as e:
+            echo_fatal(f"The configuration in {PROJECT_CONFIG_FILE} contains invalid JSON: {str(e)}. Please verify right syntax.")
 
+        self.migrate()
 
-def write_config(conf, path=None):
-    """
-    Write the current projectConfig dictionary to project.json.
+    def save(self):
+        """
+        Write the current projectConfig dictionary to project.json.
+        """
+        f = open(PROJECT_CONFIG_FILE, "w")
+        f.write(json.dumps(self, indent=4, sort_keys=True))
+        f.close()
 
-    This function is used to write the current project configuration, provided as a dictionary,
-    to the project.json file.
+    def get_profile(self, profile):
+        if profile == "format":
+            echo_fatal("Your profile can not be named 'Format' ")
+        return self["default"].copy() | self[profile]
 
-    :param conf: dict
-        The project configuration to be written to the project.json file.
+    def delete(self):
+        configname = click.prompt('name')
+        try:
+            del self[configname]
+            self.save()
+        except:
+            raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
-    :param path: str, optional
-        The path to the project.json file. If not provided, the default projectConfigFilePath is used.
+    def migrate(self):
+        """
+        Update the project configuration.
 
-    :return: None
-    """
-    global projectConfig
+        This method performs updates and migrations on the project configuration as needed. It includes version checks
+        and format updates. Ensure that 'load_config()' is called before invoking this method.
 
-    projectConfig = conf
-
-    if not path:
-        path = projectConfigFilePath
-
-    f = open(path, "w")
-    f.write(json.dumps(conf, indent=4, sort_keys=True))
-    f.close()
-
-
-def get_config():
-    """
-        Get the current project configuration.
-
-        This function returns the current project configuration stored in the global projectConfig variable.
-
-        :return: dict
-            The project configuration.
-    """
-    global projectConfig
-    return projectConfig
-
-
-def add_to_config():
-    """
-        Add a new configuration to project.json.
-
-        This function allows the addition of a new configuration to the project.json file.
-        It prompts for the configuration name, application name, and version.
+        :param path: str, optional
+            The path to the project.json file. If not provided, the root directory of the project is used.
 
         :return: None
-    """
-    global projectConfig
-    if not projectConfig:
-        return
+        """
+        assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", PROJECT_CONFIG_VERSION], \
+            "Invalid formatversion, you have to fix it manually"
 
-    projectConfig.update({click.prompt('name'): {
-        "application_name": click.prompt('application name'),
-        "version": click.prompt('develop version name')
-    }})
+        # Version 1.0.1
+        if (pyodide_version := self["default"].get("pyodide")) and pyodide_version.startswith("v"):
+            self["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
 
-    write_config(projectConfig)
+        if self["format"] == "1.0.0":
+            self["format"] = "1.0.1"
 
+        # Version 1.1.1
+        if self["format"] == "1.1.0":
+            self["format"] = "1.1.1"
+            builds = self["default"].get("builds", {}).copy()
+            for k, v in builds.items():
+                if builds[k]["kind"] == "script":
+                    builds[k]["kind"] = "exec"
+            self["default"]["builds"] = builds
 
-def remove_from_config():
-    """
-    Remove a configuration from project.json.
+        # Version 1.2.0
+        """
+            Convert versions in the configuration to builds.
 
-    This function allows the removal of an existing configuration from the project.json file. It prompts for the
-    configuration name to remove.
+            This method iterates through the provided version list and updates the project configuration
+            by converting versions to builds.
 
-    :return: None
-    """
-    global projectConfig
-    configname = click.prompt('name')
-    try:
-        del projectConfig[configname]
-        write_config(projectConfig)
-    except:
-        raise click.ClickException(click.style(f"{configname} not found", fg="red"))
+            :param version_list: list
+                List of versions to convert to builds.
+            :return: None
+        """
+        # Check if Builds is in the project.json
+        if "builds" not in self["default"].keys():
+            self["default"]["builds"] = {}
 
-def fetch_core_version():
-    """
-    Fetch the version of the 'viur-core' package.
+        if self["format"] == "1.1.1":
+            self["format"] = "2.0.0"
 
-    This function is responsible for fetching the version of the 'viur-core' package using 'pip list' and updating
-    the project configuration accordingly.
+        for entry in ("admin", "scriptor", "vi"):
+            if not self["default"]["builds"]:
+                self["default"]["builds"]
+            if entry in self["default"]:
+                version_value = self["default"][entry].lstrip("v")
+                self["default"]["builds"][entry] = {
+                    "command": f"viur install {entry}",
+                    "kind": "exec",
+                    "version": version_value
+                }
+                del self["default"][entry]
 
-    :return: None
-    """
-    try:
-        result = os.popen('pip list --format=json').read()
-        coreVersion = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
+        if "admin" in self["default"]["builds"] and "vi" in self["default"]["builds"]:
+            echo_info(f"It seems like you have an Admin and a Vi Version in your project.json. \n"
+                      f"per default the VI version will be overwritten by the viur-admin \n"
+                      f"if you want to keep your vi press 'n'")
+            if click.confirm(text=f"Do you want to use admin?", default=True):
+                del self["default"]["builds"]["vi"]
+            else:
+                del self["default"]["builds"]["admin"]
 
-        projectConfig["default"]["core"] = coreVersion
-        write_config(projectConfig)
-    except:
-        if projectConfig and projectConfig["default"]:
-            projectConfig["default"]["core"] = "submodule"
-            write_config(projectConfig)
+        """
+             Fetch the version of the 'viur-core' package.
 
+             This method is responsible for fetching the version of the 'viur-core' package using 'pip list' and updating
+             the project configuration accordingly.
 
-def update_config(path=None):
-    """
-    Update the project configuration.
+             :return: None
+        """
+        try:
+            result = os.popen('pip list --format=json').read()
+            core_version = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
+            self["default"]["core"] = core_version
 
-    This function performs updates and migrations on the project configuration as needed. It includes version checks
-    and format updates. Ensure that 'load_config()' is called before invoking this function.
+        except:
+            self["default"]["core"] = "submodule"
 
-    :param path: str, optional
-        The path to the project.json file. If not provided, the root directory of the project. is used.
+        # conf updates must increase format version
+        self.save()
 
-    :return: None
-    """
-    assert projectConfig, "load_config() must be called first!"
-
-    assert projectConfig["default"]["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1"], \
-        "Invalid formatversion, you have to fix it manually"
-
-    if "format" not in projectConfig["default"]:
-        projectConfig["default"]["format"] = "1.0.1"
-
-    # Version 1.0.1
-
-    if (pyodide_version := projectConfig["default"].get("pyodide")) and pyodide_version.startswith("v"):
-        projectConfig["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
-
-    if projectConfig["default"]["vi"].startswith("v"):
-        projectConfig["default"]["vi"] = projectConfig["default"]["vi"][1:]  # remove v prefix
-
-    if projectConfig["default"]["format"] == "1.0.0":
-        projectConfig["default"]["format"] = "1.0.1"
-
-    # Version 1.1.1
-
-    if projectConfig["default"]["format"] == "1.1.0":
-        projectConfig["default"]["format"] = "1.1.1"
-        builds = projectConfig["default"].get("builds", {}).copy()
-        for k, v in builds.items():
-            if builds[k]["kind"] == "script":
-                builds[k]["kind"] = "exec"
-        projectConfig["default"]["builds"] = builds
-
-    # conf updates must increase format version
-    write_config(projectConfig, path)
+config = ProjectConfig()

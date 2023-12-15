@@ -1,6 +1,11 @@
 # Changelog
 
 This file documents any relevant changes.
+## [2.0.0dev] 2023-12-12
+- refactor: enabled profile support for all viur-cli functions
+- fix: `viur env` now runs without errors
+- refactor: project.json functionalities
+
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies
 - feat: added npm audit function

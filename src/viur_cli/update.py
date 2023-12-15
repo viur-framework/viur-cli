@@ -2,16 +2,15 @@ import click
 import os
 import sys
 import re
-
-from viur_cli import echo_positive
-from . import cli, echo_error, get_config, echo_info, utils
+from .conf import config
+from . import cli, echo_error, get_config, echo_positive, echo_info, utils
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["requirements"]))
-@click.argument("name", default='develop')
+@click.argument("profile", default='develop')
 @click.argument("additional_args", nargs=-1)
-def update(action, name, additional_args):
+def update(action, profile, additional_args):
     """
     Update project-specific files and dependencies.
 
@@ -34,17 +33,15 @@ def update(action, name, additional_args):
 
     :return: None
     """
-    project_config = get_config()
-
-    if name not in project_config:
-        echo_error(f"{name} is not a valid config name.")
-        return
+    conf = config.get_profile(profile)
 
     if action == "requirements":
-        create_req()
+        create_req(profile)
 
 
-def create_req(yes, confirm_value=True):
+
+
+def create_req(yes, profile, confirm_value=True):
     """
     Load project's pipenv and build a requirements.txt.
 
@@ -61,10 +58,9 @@ def create_req(yes, confirm_value=True):
 
     :return: None
     """
-    project_config = get_config()
-    dist_folder = project_config["default"]["distribution_folder"]
-    if project_config["default"]["core"] != "submodule":
-        # "or" operator evaluates "yes" first and skips confirmation prompt
+    conf = config.get_profile(profile)
+    dist_folder = conf["distribution_folder"]
+    if conf["core"] != "submodule":
         if yes or click.confirm(
                 text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
                 default=confirm_value):

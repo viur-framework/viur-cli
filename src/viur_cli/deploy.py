@@ -3,13 +3,14 @@ import string
 import click
 import yaml
 import subprocess
-from . import cli, echo_error, get_config, echo_info, replace_vars
+from .conf import config
+from . import cli, echo_error, echo_info, replace_vars
 from .update import create_req
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue']))
-@click.argument("name", default='develop')
+@click.argument("profile", default='develop')
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
 @click.option("--yes", "-y", is_flag=True, default=False)
@@ -55,14 +56,7 @@ def deploy(action, name, ext, yes, additional_args):
 
     :return: None
     """
-    projectConfig = get_config()
-
-    if name not in projectConfig:
-        echo_error(f"{name} is not a valid config name.")
-        return
-
-    conf = projectConfig["default"].copy()
-    conf.update(projectConfig[name])
+    conf = config.get_profile(profile)
 
     if action == "app":
         from . import do_checks
@@ -84,7 +78,7 @@ def deploy(action, name, ext, yes, additional_args):
             version += f"-{ext}"
 
         # rebuild requirements.txt
-        create_req(yes, False)
+        create_req(yes = yes, False)
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} --version={version} '
@@ -170,10 +164,10 @@ def enable(action):
 
 def enable_gcp_backup():
     # Load the project Config
-    project_config = get_config()
+    conf = config.get_profile("default")
 
     # Create helper Variables
-    project_id = project_config["develop"]["application_name"]
+    project_id = conf["application_name"]
     bucket_name = f'backup-dot-{project_id}'
     backup_bucket_command = f'gsutil mb -l EUROPE-WEST3 -p {project_id} gs://{bucket_name}'
 
