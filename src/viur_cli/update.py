@@ -3,7 +3,7 @@ import os
 import sys
 import re
 from .conf import config
-from . import cli, echo_error,  echo_info, utils
+from . import cli, echo_error, get_config, echo_positive, echo_info, utils
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -40,7 +40,8 @@ def update(action, profile, additional_args):
 
 
 
-def create_req(profile, confirm_value=True):
+
+def create_req(yes, profile, confirm_value=True):
     """
     Load project's pipenv and build a requirements.txt.
 
@@ -60,9 +61,9 @@ def create_req(profile, confirm_value=True):
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
     if conf["core"] != "submodule":
-
-        if click.confirm(text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
-                         default=confirm_value):
+        if yes or click.confirm(
+                text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
+                default=confirm_value):
             os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
             file_object = open(f"{dist_folder}/requirements.txt", 'r')
             generated_requirements = file_object.read()

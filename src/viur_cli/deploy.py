@@ -12,7 +12,9 @@ from .update import create_req
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue']))
 @click.argument("profile", default='develop')
 @click.argument("additional_args", nargs=-1)
-def deploy(action, profile, additional_args):
+@click.option("--ext", "-e", default=None)
+@click.option("--yes", "-y", is_flag=True, default=False)
+def deploy(action, name, ext, yes, additional_args):
     """
     Deploy a Google Cloud application or different YAML files.
 
@@ -59,6 +61,7 @@ def deploy(action, profile, additional_args):
     if action == "app":
         from . import do_checks
         if not do_checks(dev=False):
+            # --yes will not be implemented here because deploying security issues should be an explicit decission
             if not click.confirm(f"The checks were not successful, do you want to continue?"):
                 return
         else:
@@ -71,12 +74,15 @@ def deploy(action, profile, additional_args):
         # gcloud only allows for version identifiers in lower-case order and only accepting these characters
         version = "".join([c for c in version.lower() if c in string.ascii_lowercase + string.digits + "-"])
 
+        if ext:
+            version += f"-{ext}"
+
         # rebuild requirements.txt
-        create_req(False)
+        create_req(yes = yes, False)
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} --version={version} '
-            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]}')
+            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}')
     else:
         if action not in ["index", "queue", "cron"]:
             echo_error(f"{action} is not a valid action. Valid is app, index, queue, cron")
