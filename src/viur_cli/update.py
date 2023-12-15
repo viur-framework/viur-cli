@@ -2,6 +2,8 @@ import click
 import os
 import sys
 import re
+
+from viur_cli import echo_positive
 from . import cli, echo_error, get_config, echo_info, utils
 
 
@@ -42,7 +44,7 @@ def update(action, name, additional_args):
         create_req()
 
 
-def create_req(confirm_value=True):
+def create_req(yes, confirm_value=True):
     """
     Load project's pipenv and build a requirements.txt.
 
@@ -62,9 +64,10 @@ def create_req(confirm_value=True):
     project_config = get_config()
     dist_folder = project_config["default"]["distribution_folder"]
     if project_config["default"]["core"] != "submodule":
-
-        if click.confirm(text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
-                         default=confirm_value):
+        # "or" operator evaluates "yes" first and skips confirmation prompt
+        if yes or click.confirm(
+                text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
+                default=confirm_value):
             os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
             file_object = open(f"{dist_folder}/requirements.txt", 'r')
             generated_requirements = file_object.read()
