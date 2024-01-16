@@ -11,8 +11,7 @@ from .update import create_req
 
 @cli.group()
 def cloud():
-    """FUCK FUCK FUUUUCK"""
-
+    """Manage cloud Actions"""
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
@@ -114,6 +113,117 @@ def disable_gcp_backup():
 
     print('Success! Gcloud Backups have been disabled')
 
+
+
+@cloud.command(context_settings={"ignore_unknown_options": True})#
+@click.argument("action", type=click.Choice(["gcsetup"]))
+def setup(action):
+    if action == "gcsetup":
+        gcloud_setup()
+
+
+def gcloud_setup():
+    project = input("Enter PROJECT_ID").strip()
+
+    if not project:
+        echo_fatal("Usage: python scrtipt.py PROJECT_ID")
+        return
+
+    echo_info("Check if user is authorized with gcloud....")
+
+    try:
+        run_command("gcloud auth print-access-token >/dev/null 2>&1")
+    except subprocess.CalledProcessError:
+        echo_warning(
+            "##############################################################\n"
+            "# Please authenticate your Google user with gcloud SDK to    #\n"
+            "# execute administrative commands.                           #\n"
+            "# In this step, a separate browser window opens to           #\n"
+            "# authenticate.                                              #\n"
+            "# This step is only required once on this computer.          #\n"
+            "##############################################################\n"
+        )
+        response = input("Are you ready?[Y/n]")
+        if not response.lower() in ("y", ""):
+            echo_fatal("User aborted")
+            return
+
+        run_command("gcloud auth login --no-ptomote")
+
+    # Check if App already exists
+    try:
+        run_command(f"gcloud app describe --project={project} >/dev/null 2>&1")
+    except subprocess.CalledProcessError:
+        echo_warning(
+            "##############################################################\n"
+            "# Please check and confirm that your project is created and  #\n"
+            "# connected with a billing account in Google Cloud console.  #\n"
+            "# Otherwise, some of the following calls may fail.           #\n"
+            "##############################################################"
+        )
+        response = input("Continue? [Y/n] ")
+        if not response.lower() in ("y", ""):
+            print("User aborted.")
+            return
+
+        # Create the Appengine app
+        run_command(f"gcloud app create --project={project} --region=europe-west3")
+
+    # Activate APIs and Services
+    services = [
+        "datastore.googleapis.com",
+        "firestore.googleapis.com",
+        "iamcredentials.googleapis.com",
+        "cloudbuild.googleapis.com",
+        "cloudtasks.googleapis.com",
+        "cloudscheduler.googleapis.com",
+        "secretmanager.googleapis.com"
+    ]
+
+    for service in services:
+        run_command(f"gcloud services enable --project={project} {service}")
+
+        # Configure Google Cloud Storage
+    run_command(f"gsutil uniformbucketlevelaccess set on gs://{project}.appspot.com/")
+    run_command("pushd deploy")
+    for yaml in ["cron.yaml", "queue.yaml", "index.yaml"]:
+        run_command(f"gcloud app deploy -q --project={project} {yaml} >/dev/null 2>&1")
+
+    echo_info("Check if app engine default credentials are set...")
+    try:
+        run_command("gcloud auth application-default print-access-token >/dev/null 2>&1")
+
+    except subprocess.CalledProcessError:
+        echo_warning(
+            "##############################################################\n"
+            "# Please authenticate your Google user with gcloud SDK now   #\n"
+            "# to set the application default user. This step is required #\n"
+            "# to run ViUR applications locally without further           #\n"
+            "# credentials that must be supplied from a file.             #\n"
+            "# This step is only required once on this computer.          #\n"
+            "##############################################################")
+        response = input("Are you ready? [Y/n] ")
+        if not response.lower() in ("y", ""):
+            echo_fatal("User aborted.")
+            return
+
+        run_command("gcloud auth application-default login")
+
+    echo_positive(
+        "All done!\n"
+        "You should now be able to run your project locally with\n"
+        "   viur runv \n"
+        "At the first run, it might happen that some functions are\n"
+        "causing error 500 because indexes are not immediately\n"
+        "served. Therefore, maybe wait a few minutes.\n"
+        "Have a nice day.\n")
+
+def run_command(command):
+    try:
+        subprocess.run(command, check=True, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {e}")
+
 @cloud.command()
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue', 'cloudfunction']))
 @click.argument("profile", default='develop')
@@ -210,6 +320,8 @@ def deploy(action, profile, name, ext, yes, additional_args):
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file}')
 
+
+
 def build_deploy_command(name, conf):
     """Builds the deployment command string for the cloud function."""
 
@@ -219,7 +331,6 @@ def build_deploy_command(name, conf):
     if name not in conf["functions"]:
         echo_fatal(f"The cloudfunction {name} was not found your project.json\n "
                    f"You can create a cloudfunction entry by calling 'viur cloud create function'")
-
 
     command = (
         f"gcloud functions deploy "
