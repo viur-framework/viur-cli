@@ -13,6 +13,7 @@ from .update import create_req
 def cloud():
     """Manage cloud Actions"""
 
+
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
 def enable(action):
@@ -21,6 +22,7 @@ def enable(action):
     """
     if action == "backup":
         enable_gcp_backup()
+
 
 def enable_gcp_backup():
     # Load the project Config
@@ -63,6 +65,7 @@ def enable_gcp_backup():
 
     print('Success! It may take a while until you can use Gcloud Backups')
 
+
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
 def disable(action):
@@ -71,6 +74,7 @@ def disable(action):
     """
     if action == "backup":
         disable_gcp_backup()
+
 
 def disable_gcp_backup():
     # Load the project Config
@@ -114,8 +118,7 @@ def disable_gcp_backup():
     print('Success! Gcloud Backups have been disabled')
 
 
-
-@cloud.command(context_settings={"ignore_unknown_options": True})#
+@cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["gcsetup"]))
 def setup(action):
     if action == "gcsetup":
@@ -218,11 +221,13 @@ def gcloud_setup():
         "served. Therefore, maybe wait a few minutes.\n"
         "Have a nice day.\n")
 
+
 def run_command(command):
     try:
         subprocess.run(command, check=True, shell=True)
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
+
 
 @cloud.command()
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue', 'cloudfunction']))
@@ -321,7 +326,6 @@ def deploy(action, profile, name, ext, yes, additional_args):
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file}')
 
 
-
 def build_deploy_command(name, conf):
     """Builds the deployment command string for the cloud function."""
 
@@ -347,7 +351,8 @@ def build_deploy_command(name, conf):
 
     return command
 
-#create cloudfunction entry in project.json
+
+# create cloudfunction entry in project.json
 @cloud.command()
 @click.argument("action", type=click.Choice(['function']))
 @click.argument("profile", default="default")
@@ -359,10 +364,10 @@ def build_deploy_command(name, conf):
 @click.option("--runtime", "-rt")
 @click.option("--trigger", "-tr")
 def create(profile, action, source, name, entrypoint, env_vars_file, memory, runtime, trigger):
-
+    """Create cloudfunction entry"""
     if action == "function":
         conf = config.get_profile(profile)
-        ## First layer initialization:
+        # First layer initialization:
         conf["gcloud"] = conf.get("gcloud", {})
         conf["gcloud"]["functions"] = conf["gcloud"].get("functions", {})
         conf["gcloud"]["max-instances"] = conf["gcloud"].get("max-instances", click.prompt(
