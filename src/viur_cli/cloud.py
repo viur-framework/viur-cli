@@ -1,3 +1,6 @@
+import configparser
+import json
+import pprint
 import subprocess
 import os
 import string
@@ -119,10 +122,109 @@ def disable_gcp_backup():
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action", type=click.Choice(["gcsetup"]))
-def setup(action):
-    if action == "gcsetup":
+@click.argument("action", type=click.Choice(["gcloud","gcroles"]))
+@click.argument("profile", default="default")
+def setup(action, profile):
+    """Setup project for different Cloud Services"""
+    if action == "gcloud":
         gcloud_setup()
+
+    if action == "gcroles":
+        gcloud_setup_roles(profile)
+
+
+@cloud.command(context_settings={"ignore_unknown_options": True})
+@click.argument("action", type=click.Choice(["gcroles"]))
+@click.argument("profile", default='default')
+def get(action, profile):
+    """Setup project for different Cloud Services"""
+
+    if action == "gcroles":
+        gcloud_get_roles(profile)
+
+
+def gcloud_get_roles(profile):
+    conf = config.get_profile(profile)
+    try:
+        run_command(f"gcloud projects get-iam-policy {conf['application_name']} > {conf['application_name']}.yaml")
+
+        with open(f"./{conf['application_name']}.yaml", "r") as file:
+            try:
+                roles_dict = yaml.safe_load(file)
+                usable_dict = transform_yaml_to_dict(roles_dict)
+                with open(f"./{profile}_roles.json", 'w') as json_file:
+                    json.dump(usable_dict, json_file, indent=4)
+                echo_info("you can now watch your gcloud Roles Setup in your '.roles.json'  file ")
+            except yaml.YAMLError as e:
+                print("An Error Occured during YAML to Dictionairy transformation", e)
+
+        if os.path.exists(f"{conf['application_name']}.yaml"):
+            os.remove(f"{conf['application_name']}.yaml")
+
+    except subprocess.CalledProcessError:
+        echo_error("An error occured while fetching Role data")
+
+def gcloud_setup_roles(profile):
+    conf = config.get_profile(profile)
+    with open(f"{profile}_roles.json", "r") as json_file:
+        pprint.pprint(json_file)
+        try:
+            roles = json.load(json_file)
+            pprint.pprint(roles)
+            yaml_data = transform_dict_to_yaml(roles)
+
+            with open(f"./{conf['application_name']}.yaml", 'w') as yaml_file:
+                yaml.dump(yaml_data, yaml_file, default_flow_style=False)
+
+        except yaml.YAMLError as e:
+            print("Error: ", e)
+
+
+def transform_yaml_to_dict(dict_data):
+    transformed_data = {'bindings': []}
+
+    # Create a dictionary to store unique members and their corresponding roles
+    member_roles = {}
+
+    # Iterate through the original data and organize it
+    for binding in dict_data['bindings']:
+        role = binding['role']
+        for member in binding['members']:
+            if member in member_roles:
+                member_roles[member].append(role)
+            else:
+                member_roles[member] = [role]
+
+    # Create the transformed data structure
+    for member, roles in member_roles.items():
+        transformed_data['bindings'].append({'members': member, 'role': roles})
+
+    transformed_data["etag"] = dict_data["etag"]
+    transformed_data["version"] = dict_data["version"]
+
+    return transformed_data
+
+
+def transform_dict_to_yaml(transformed_data):
+    original_data = {'bindings': []}
+
+    # Create a dictionary to store roles and their corresponding members
+    role_members = {}
+    # Iterate through the transformed data and organize it
+    for binding in transformed_data['bindings']:
+        members = binding['members']
+        roles = binding['role']
+        for role in roles:
+            if role in role_members:
+                role_members[role].extend(members)
+            else:
+                role_members[role] = members.copy()
+
+        # Create the original data structure
+    for role, members in role_members.items():
+        original_data['bindings'].append({'members': list(set(members)), 'role': role})
+
+    return original_data
 
 
 def gcloud_setup():
@@ -224,7 +326,7 @@ def gcloud_setup():
 
 def run_command(command):
     try:
-        subprocess.run(command, check=True, shell=True)
+        subprocess.run(command, check=True, shell=True, capture_output=True)
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
 
