@@ -7,7 +7,6 @@ from .version import MINIMAL_PIPENV
 import semver
 import pprint
 
-
 @click.group(invoke_without_command=True,
              no_args_is_help=True,
              context_settings={"help_option_names": ["-h", "--help"]})
@@ -61,8 +60,9 @@ def cli(ctx):
 @click.argument("action", type=click.Choice(['list']))
 @click.argument("profile", default="default")
 def project(action, profile):
+    """List your project.json Configuration File"""
     project_config = config.get_profile(profile)
     if action == "list":
         echo_info(f"These are the Settings for {profile} profile")
-        pprint(project_config)
+        pprint.pprint(project_config)
 

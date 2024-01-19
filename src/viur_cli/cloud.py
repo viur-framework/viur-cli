@@ -122,7 +122,7 @@ def disable_gcp_backup():
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action", type=click.Choice(["gcloud","gcroles"]))
+@click.argument("action", type=click.Choice(["gcloud", "gcroles"]))
 @click.argument("profile", default="default")
 def setup(action, profile):
     """Setup project for different Cloud Services"""
@@ -145,39 +145,64 @@ def get(action, profile):
 
 def gcloud_get_roles(profile):
     conf = config.get_profile(profile)
-    try:
-        run_command(f"gcloud projects get-iam-policy {conf['application_name']} > {conf['application_name']}.yaml")
 
-        with open(f"./{conf['application_name']}.yaml", "r") as file:
-            try:
+    try:
+        # Run gcloud command to get IAM policy and save it to a YAML file
+        yaml_file_path = f"./{conf['application_name']}.yaml"
+        run_command(f"gcloud projects get-iam-policy {conf['application_name']} > {yaml_file_path}")
+
+        try:
+            # Load YAML data and transform it to a dictionary
+            with open(yaml_file_path, "r") as file:
                 roles_dict = yaml.safe_load(file)
                 usable_dict = transform_yaml_to_dict(roles_dict)
-                with open(f"./{profile}_roles.json", 'w') as json_file:
-                    json.dump(usable_dict, json_file, indent=4)
-                echo_info("you can now watch your gcloud Roles Setup in your '.roles.json'  file ")
-            except yaml.YAMLError as e:
-                print("An Error Occured during YAML to Dictionairy transformation", e)
 
-        if os.path.exists(f"{conf['application_name']}.yaml"):
-            os.remove(f"{conf['application_name']}.yaml")
+                # Save the transformed dictionary to a JSON file
+                json_file_path = f"./{profile}_roles.json"
+                with open(json_file_path, 'w') as json_file:
+                    json.dump(usable_dict, json_file, indent=4)
+
+                echo_positive(f"You can now watch your gcloud Roles Setup in your '{json_file_path}' file ")
+
+        except yaml.YAMLError as e:
+            echo_error(f"An error occurred during YAML to Dictionary transformation: {e}")
+
+        finally:
+            # Delete the temporary YAML file
+            if os.path.exists(yaml_file_path):
+                os.remove(yaml_file_path)
 
     except subprocess.CalledProcessError:
-        echo_error("An error occured while fetching Role data")
+        echo_error("An error occurred while fetching Role data")
+
 
 def gcloud_setup_roles(profile):
     conf = config.get_profile(profile)
-    with open(f"{profile}_roles.json", "r") as json_file:
-        pprint.pprint(json_file)
-        try:
-            roles = json.load(json_file)
-            pprint.pprint(roles)
-            yaml_data = transform_dict_to_yaml(roles)
 
-            with open(f"./{conf['application_name']}.yaml", 'w') as yaml_file:
+    # Use a more descriptive variable name for the JSON file
+    roles_json_file_path = f"{profile}_roles.json"
+
+    try:
+        with open(roles_json_file_path, "r") as json_file:
+            # Load roles from the JSON file and transform to .yaml
+            roles = json.load(json_file)
+            yaml_data = transform_dict_to_yaml(roles)
+            yaml_file_path = f"./{conf['application_name']}.yaml"
+
+            # Save YAML data to a file
+            with open(yaml_file_path, 'w') as yaml_file:
                 yaml.dump(yaml_data, yaml_file, default_flow_style=False)
 
-        except yaml.YAMLError as e:
-            print("Error: ", e)
+                try:
+                    # Run gcloud command to get IAM policy
+                    run_command(f"gcloud projects get-iam-policy {conf['application_name']} {yaml_file_path}")
+                except ValueError as e:
+                    echo_error(f"An error occurred while uploading Role data to Cloud: {e}")
+
+    except json.JSONDecodeError as e:
+        echo_fatal(f"Error decoding JSON from {roles_json_file_path}: {e}")
+    except yaml.YAMLError as e:
+        echo_fatal(f"Error opening or writing the .yaml file: {e}")
 
 
 def transform_yaml_to_dict(dict_data):
@@ -190,17 +215,13 @@ def transform_yaml_to_dict(dict_data):
     for binding in dict_data['bindings']:
         role = binding['role']
         for member in binding['members']:
-            if member in member_roles:
-                member_roles[member].append(role)
-            else:
-                member_roles[member] = [role]
+            member_roles.setdefault(member, []).append(role)
 
     # Create the transformed data structure
-    for member, roles in member_roles.items():
-        transformed_data['bindings'].append({'members': member, 'role': roles})
+    transformed_data['bindings'] = [{'members': member, 'role': roles} for member, roles in member_roles.items()]
 
-    transformed_data["etag"] = dict_data["etag"]
-    transformed_data["version"] = dict_data["version"]
+    # Add E-Tag and Version
+    transformed_data.update({"etag": dict_data["etag"], "version": dict_data["version"]})
 
     return transformed_data
 
@@ -210,19 +231,23 @@ def transform_dict_to_yaml(transformed_data):
 
     # Create a dictionary to store roles and their corresponding members
     role_members = {}
+
     # Iterate through the transformed data and organize it
     for binding in transformed_data['bindings']:
         members = binding['members']
         roles = binding['role']
-        for role in roles:
-            if role in role_members:
-                role_members[role].extend(members)
-            else:
-                role_members[role] = members.copy()
 
-        # Create the original data structure
-    for role, members in role_members.items():
-        original_data['bindings'].append({'members': list(set(members)), 'role': role})
+        # Ensure members is a list
+        members = [members] if not isinstance(members, list) else members
+
+        for role in roles:
+            role_members.setdefault(role, []).extend(members)
+
+    # Create the original data structure
+    original_data['bindings'] = [{'members': list(set(members)), 'role': role} for role, members in role_members.items()]
+
+    # Add E-Tag and Version
+    original_data.update({"etag": transformed_data["etag"], "version": transformed_data["version"]})
 
     return original_data
 
@@ -324,6 +349,7 @@ def gcloud_setup():
         "Have a nice day.\n")
 
 
+# Helper function for running Commands in subprocess and getting the Output
 def run_command(command):
     try:
         subprocess.run(command, check=True, shell=True, capture_output=True)
