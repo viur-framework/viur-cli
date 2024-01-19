@@ -1,6 +1,4 @@
-import configparser
 import json
-import pprint
 import subprocess
 import os
 import string
@@ -244,7 +242,9 @@ def transform_dict_to_yaml(transformed_data):
             role_members.setdefault(role, []).extend(members)
 
     # Create the original data structure
-    original_data['bindings'] = [{'members': list(set(members)), 'role': role} for role, members in role_members.items()]
+    original_data['bindings'] = [
+        {'members': list(set(members)), 'role': role} for role, members in role_members.items()
+    ]
 
     # Add E-Tag and Version
     original_data.update({"etag": transformed_data["etag"], "version": transformed_data["version"]})
@@ -366,6 +366,48 @@ def run_command(command):
 @click.option("--name", "-n", default=None)
 def deploy(action, profile, name, ext, yes, additional_args):
 
+    """
+        Deploy a Google Cloud application or different YAML files.
+
+        This command allows you to deploy various components of a Google Cloud application, such as the app itself,
+        index.yaml configurations, cron.yaml configurations, or queue.yaml configurations.
+        The deployment action and the specific project configuration
+        to deploy are determined by the 'action' and 'name' parameters.
+        Please make sure to configure your global installation of the gcloud-cli accordingly.
+
+        :param action: str
+            The deployment action. It can be one of the following:
+            - 'app': Deploy the Google Cloud application.
+            - 'index': Deploy the index.yaml configuration.
+            - 'cron': Deploy the cron.yaml configuration.
+            - 'queue': Deploy the queue.yaml configuration.
+
+        :param name: str, default: 'develop'
+            The name of the project configuration to use for deployment.
+            It should correspond to a valid project configuration.
+
+        :param additional_args: tuple
+            Additional arguments that can be passed to the deployment process.
+
+        Example Usage:
+        ```shell
+        viur deploy app my_config --version v2
+        viur deploy index my_config
+        viur deploy cron my_config
+        viur deploy queue my_config
+        ```
+
+        The `deploy` command deploys the specified components based on the 'action' and 'name' parameters.
+        It includes checks for successful deployments and offers a confirmation prompt for any failed checks.
+
+        Note:
+        - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
+        - The 'app' action includes vulnerability checks and a confirmation prompt if checks fail.
+        - The 'index' action sorts the index.yaml file by kind for cleaner organization.
+
+        :return: None
+    """
+
     conf = config.get_profile(profile)
 
     if action == "app":
@@ -480,7 +522,6 @@ def build_deploy_command(name, conf):
     return command
 
 
-# create cloudfunction entry in project.json
 @cloud.command()
 @click.argument("action", type=click.Choice(['function']))
 @click.argument("profile", default="default")

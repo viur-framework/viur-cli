@@ -5,6 +5,11 @@ This file documents any relevant changes.
 - refactor: enabled profile support for all viur-cli functions
 - fix: `viur env` now runs without errors
 - refactor: project.json functionalities
+- feature: cloudfunctions creation and deployment via ClI
+- feature: backup disabling/ enabling via CLI
+- refactor: `viur deploy` is now `viur cloud deploy` 
+- feature: appengine Setup can now be done via CLI
+- feature: Appengine Roles can now be managed via CLI
 
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies
