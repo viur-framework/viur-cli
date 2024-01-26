@@ -2,17 +2,13 @@ import os
 import shutil
 import subprocess
 import zipfile
-from pprint import pprint
-
 import click
 import requests
-
 from viur_cli import echo_positive, echo_fatal
 from .conf import config
 from pathlib import Path
 from urllib.request import urlretrieve
 from . import cli, echo_error, echo_info
-
 
 REPOS = {
     "vi": ("viur-framework/viur-vi", "viur-vi.zip"),
@@ -106,7 +102,7 @@ def update(action, profile):
         for build in conf["builds"]:
             echo_info(f"updating {build}...")
             output = subprocess.run(f"viur install {build} latest {profile}",
-                                     capture_output=True, check=True, shell=True)
+                                    capture_output=True, check=True, shell=True)
             checkreturncode(output)
 
     # This function is obsolete, howerver the user might expect this behaviour.
@@ -114,7 +110,6 @@ def update(action, profile):
         output = subprocess.run(f"viur install {action} latest {profile}",
                                 capture_output=True, check=True, shell=True)
         checkreturncode(output)
-
 
 
 @install.command()
