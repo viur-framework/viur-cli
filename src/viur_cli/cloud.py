@@ -253,7 +253,7 @@ def transform_dict_to_yaml(transformed_data):
 
 
 def gcloud_setup():
-    project = input("Enter PROJECT_ID").strip()
+    project = input("Enter PROJECT_ID: ").strip()
 
     if not project:
         echo_fatal("Usage: python scrtipt.py PROJECT_ID")
@@ -262,7 +262,7 @@ def gcloud_setup():
     echo_info("Check if user is authorized with gcloud....")
 
     try:
-        run_command("gcloud auth print-access-token >/dev/null 2>&1")
+        run_command("gcloud auth print-access-token")
     except subprocess.CalledProcessError:
         echo_warning(
             "##############################################################\n"
@@ -282,7 +282,7 @@ def gcloud_setup():
 
     # Check if App already exists
     try:
-        run_command(f"gcloud app describe --project={project} >/dev/null 2>&1")
+        run_command(f"gcloud app describe --project={project}")
     except subprocess.CalledProcessError:
         echo_warning(
             "##############################################################\n"
@@ -315,13 +315,13 @@ def gcloud_setup():
 
         # Configure Google Cloud Storage
     run_command(f"gsutil uniformbucketlevelaccess set on gs://{project}.appspot.com/")
-    run_command("pushd deploy")
+
     for yaml in ["cron.yaml", "queue.yaml", "index.yaml"]:
-        run_command(f"gcloud app deploy -q --project={project} {yaml} >/dev/null 2>&1")
+        run_command(f"cd deploy && gcloud app deploy -q --project={project} {yaml}")
 
     echo_info("Check if app engine default credentials are set...")
     try:
-        run_command("gcloud auth application-default print-access-token >/dev/null 2>&1")
+        run_command("gcloud auth application-default print-access-token")
 
     except subprocess.CalledProcessError:
         echo_warning(
@@ -342,7 +342,7 @@ def gcloud_setup():
     echo_positive(
         "All done!\n"
         "You should now be able to run your project locally with\n"
-        "   viur runv \n"
+        "   viur run \n"
         "At the first run, it might happen that some functions are\n"
         "causing error 500 because indexes are not immediately\n"
         "served. Therefore, maybe wait a few minutes.\n"
@@ -352,7 +352,9 @@ def gcloud_setup():
 # Helper function for running Commands in subprocess and getting the Output
 def run_command(command):
     try:
-        subprocess.run(command, check=True, shell=True, capture_output=True)
+        output = subprocess.check_output(command, shell=True)
+        print(output)
+        return output
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
 
