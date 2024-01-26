@@ -1,6 +1,9 @@
 # Changelog
 
-This file documents any relevant changes.
+## [1.1.2] 2024-01-26:
+- chore: removed python-minifier
+- chore: updated appserver
+
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies
 - feat: added npm audit function
