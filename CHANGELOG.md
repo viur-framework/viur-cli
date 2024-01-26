@@ -6,6 +6,9 @@ This file documents any relevant changes.
 - fix: `viur env` now runs without errors
 - refactor: project.json functionalities
 
+## [1.1.2] 2024-01-26
+- chore: updated dependencies
+
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies
 - feat: added npm audit function
