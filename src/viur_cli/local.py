@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from .conf import config
 from . import cli, echo_error, utils
-from .install import vi as vi_install
+from .packet import vi as vi_install
 from types import SimpleNamespace
 
 
