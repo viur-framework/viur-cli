@@ -17,11 +17,29 @@ REPOS = {
 
 
 def get_version_info(software: str, version: str) -> tuple[str, str]:
-    """Validate the version name and return the download url.
+    """
 
-    :param software: The key of a software in REPOS
-    :param version: The version number entered by the user
-    :return: A pair of the real version number and the download url
+    get_version_info(software: str, version: str) -> tuple[str, str]
+
+    Retrieves version information for a software from a given repository.
+
+    Parameters:
+    - software: A string representing the name of the software.
+    - version: A string representing the version of the software.
+
+    Returns:
+    A tuple containing the real version (str) and the download URL (str) for the software.
+
+    Note:
+    - The version should be provided without a leading "v".
+    - If the version is set to "latest", the latest release information and download URL will be fetched.
+    - If the version is a valid existing release, the real version will be saved to the config.
+    - If the version is not a valid existing release, the real_version will be None (Unknown).
+    - The download URL will be constructed based on the real_version and the download name for the software.
+
+    Example Usage:
+    real_version, download_url = get_version_info("sample_software", "1.2.3")
+
     """
     repo, download_name = REPOS[software]
 
@@ -58,6 +76,23 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 @click.argument('profile', default='default')
 @click.argument("version", default="latest")
 def packet(operation, component, profile, version):
+    """
+    This method is used to handle packet operations, such as updating or installing components.
+
+    Parameters:
+    - operation (str): The operation to perform. Must be either 'update' or 'install'.
+    - component (str): The component to update or install. Must be one of: 'vi', 'admin', 'scriptor', 'all'.
+    - profile (str, optional): The profile to use. Defaults to 'default'.
+    - version (str, optional): The version of the component to update or install. Defaults to 'latest'.
+
+    Note: The 'all' component option is only applicable to the 'update' operation.
+
+    Examples:
+    packet('update', 'vi') -> Updates 'vi' component to the latest version using the default profile.
+    packet('install', 'admin', profile='prod', version='1.0') -> Installs 'admin' component with version '1.0' using the 'prod' profile.
+    packet('update', 'all', version='2.0') -> Updates all components to version '2.0' using the default profile.
+
+    """
     conf = config.get_profile(profile)
     operations_links = {
         'vi': vi,
@@ -90,6 +125,16 @@ def packet(operation, component, profile, version):
 
 
 def checkreturncode(output):
+    """
+    Checks the return code of a command execution and prints a message based on the return code.
+
+    Parameters:
+    - output: A subprocess.CompletedProcess object representing the output of a command execution.
+
+    Returns:
+    None
+
+    """
     if output.returncode == 0:
         echo_positive("update was successful")
     else:
@@ -97,6 +142,17 @@ def checkreturncode(output):
 
 
 def scriptor(version, target, profile):
+    """
+    Update the Scriptor tool to the specified version.
+
+    Parameters:
+    - version (str): The version of Scriptor to update to.
+    - target (str): The target directory for the updated Scriptor tool.
+    - profile (str): The specific profile to use for configuration.
+
+    Returns:
+    None
+    """
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
@@ -132,28 +188,18 @@ def scriptor(version, target, profile):
 
 def admin(version: str, target: str, profile):
     """
-    Install the new ViUR administration interface.
+    Updates the admin tool to a specified version.
 
-    This subcommand allows you to install the new ViUR administration interface. You can specify a version to install,
-    or use the latest available version.
+    Parameters:
+        version (str): The version of the admin tool to update to.
+        target (str): The target folder to update the admin tool in.
+        profile: The profile to use for configuration.
 
-    :param version: str, default: 'latest'
-        The version of the new ViUR administration interface to install. Use 'latest' for the latest available version.
-
-    :param target: str, default: 'vi'
-        The target folder where the new ViUR administration interface will be installed.
+    Returns:
+        None
 
     Example Usage:
-    ```shell
-    viur install admin --version v2.0.0 --target my-admin
-    viur install admin --version latest
-    ```
-
-    The 'admin' subcommand downloads and installs the specified or latest version of the new
-    ViUR administration interface.
-    It updates the configuration with the installed version.
-
-    :return: None
+        admin("1.2.0", "C:/admin", "production")
     """
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
@@ -193,33 +239,19 @@ def admin(version: str, target: str, profile):
 
 
 def vi(version, target, profile):
-    """Install the legacy ViUR administration interface.
+    """
+    Updates the version of vi based on the provided parameters.
 
-    This subcommand allows you to install the legacy ViUR administration interface. You can specify a version to
-    install, or use the latest available version. It includes a 'next' option for compatibility,
-    but it is deprecated in favor of the 'admin' subcommand.
+    Parameters:
+    - version (str): The version of vi to update to.
+    - target (str): The target folder where vi will be installed.
+    - profile (str): The profile to use for configuration.
 
-    :param version: str, default: 'latest'
-        The version of the legacy ViUR administration interface to install.
-        Use 'latest' for the latest available version.
+    Returns:
+    None
 
-    :param target: str, default: 'vi'
-        The target folder where the ViUR administration interface will be installed.
-
-    :param next_: bool, default: False
-        A deprecated option, please use the 'admin' subcommand for the new administration interface.
-
-    Example Usage:
-    ```shell
-    viur install vi --version v2.0.0 --target my-admin
-    viur install vi --version latest
-    ```
-
-    The 'vi' subcommand downloads and installs the specified
-    or latest version of the legacy ViUR administration interface.
-    It updates the configuration with the installed version.
-
-    :return: None
+    Example:
+    vi("1.2.3", "/path/to/vi", "production")
     """
 
     conf = config.get_profile(profile)
