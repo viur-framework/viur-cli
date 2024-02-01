@@ -62,10 +62,9 @@ class ProjectConfig(dict):
         """
         Write the current projectConfig dictionary to project.json.
         """
-        f = open(PROJECT_CONFIG_FILE, "w")
-        f.write(json.dumps(self, indent=4, sort_keys=True))
-        f.write('\n')
-        f.close()
+        with open(PROJECT_CONFIG_FILE, "w") as f:
+            json.dump(self, f, indent=4, sort_keys=True))
+            f.write('\n')
 
     def get_profile(self, profile):
         if profile == "format":
