@@ -4,29 +4,36 @@ from .conf import *
 from .cli import cli
 from .utils import *
 
-
-@cli.command()
-def init():
-    """initialize project.json"""
-
-    projectConfig = get_config()
-    try:
-        f = open(projectConfigFilePath)
-        if click.confirm("project.json already exists, do you want to delete it and create a new project.json?"):
-            os.remove(projectConfigFilePath)
-            create_new_config()
-    except:
-
-        if not projectConfig:
-            if click.confirm("Do you want to create a new project.json file?"):
-                create_new_config()
-
-
 @cli.command()
 @click.argument("name")
 @click.pass_context
 def create(ctx, name):
-    """create a new ViUR project"""
+    """
+    Create a new ViUR project.
+
+    The 'create' command allows you to create a new ViUR project by cloning the ViUR base project and configuring it.
+    You can specify the name of the new project as the 'name' argument.
+
+    :param name: str
+        The name of the new ViUR project.
+
+    Example Usage:
+    ```shell
+    viur create my_new_project
+    ```
+
+    The 'create' command performs the following steps:
+    1. Clones the ViUR base project from the official GitHub repository.
+    2. Configures the new project by running 'clean-base.py'.
+    3. Optionally configures the project as a new gcloud project (if confirmed).
+
+    Note:
+    - This command initializes the new ViUR project based on the ViUR base project.
+    - Make sure to provide a unique project name to avoid conflicts with existing folders.
+
+
+    :return: None
+    """
     if os.path.exists(f'./{name}'):
         echo_error(f'"{name}" Folder exists. Please use a different name or remove this folder ./{name}')
         return
@@ -37,7 +44,6 @@ def create(ctx, name):
     project_json_path = f'./{name}/project.json'
 
     # collect project info
-    create_new_config(project_json_path)
     projectConfig = load_config(path=project_json_path)
     appname = projectConfig["develop"]['application_name']
 

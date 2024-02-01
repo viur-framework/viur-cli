@@ -1,5 +1,10 @@
-import click, os, string, sys, re, yaml
+import os
+import string
+import click
+import yaml
+import subprocess
 from . import cli, echo_error, get_config, echo_info, replace_vars
+from .update import create_req
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -7,7 +12,47 @@ from . import cli, echo_error, get_config, echo_info, replace_vars
 @click.argument("name", default='develop')
 @click.argument("additional_args", nargs=-1)
 def deploy(action, name, additional_args):
-    """deploy gcloud app or different yaml files"""
+    """
+    Deploy a Google Cloud application or different YAML files.
+
+    This command allows you to deploy various components of a Google Cloud application, such as the app itself,
+    index.yaml configurations, cron.yaml configurations, or queue.yaml configurations.
+    The deployment action and the specific project configuration
+    to deploy are determined by the 'action' and 'name' parameters.
+    Please make sure to configure your global installation of the gcloud-cli accordingly.
+
+    :param action: str
+        The deployment action. It can be one of the following:
+        - 'app': Deploy the Google Cloud application.
+        - 'index': Deploy the index.yaml configuration.
+        - 'cron': Deploy the cron.yaml configuration.
+        - 'queue': Deploy the queue.yaml configuration.
+
+    :param name: str, default: 'develop'
+        The name of the project configuration to use for deployment.
+        It should correspond to a valid project configuration.
+
+    :param additional_args: tuple
+        Additional arguments that can be passed to the deployment process.
+
+    Example Usage:
+    ```shell
+    viur deploy app my_config --version v2
+    viur deploy index my_config
+    viur deploy cron my_config
+    viur deploy queue my_config
+    ```
+
+    The `deploy` command deploys the specified components based on the 'action' and 'name' parameters.
+    It includes checks for successful deployments and offers a confirmation prompt for any failed checks.
+
+    Note:
+    - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
+    - The 'app' action includes vulnerability checks and a confirmation prompt if checks fail.
+    - The 'index' action sorts the index.yaml file by kind for cleaner organization.
+
+    :return: None
+    """
     projectConfig = get_config()
 
     if name not in projectConfig:
@@ -33,10 +78,11 @@ def deploy(action, name, additional_args):
         version = "".join([c for c in version.lower() if c in string.ascii_lowercase + string.digits + "-"])
 
         # rebuild requirements.txt
-        create_req()
+        create_req(False)
 
         os.system(
-            f'gcloud app deploy --project={conf["application_name"]} --version={version} --no-promote {" ".join(additional_args)} {conf["distribution_folder"]}')
+            f'gcloud app deploy --project={conf["application_name"]} --version={version} '
+            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]}')
     else:
         if action not in ["index", "queue", "cron"]:
             echo_error(f"{action} is not a valid action. Valid is app, index, queue, cron")
@@ -47,18 +93,28 @@ def deploy(action, name, additional_args):
         if action == "index":
             try:
                 with open(yaml_file, "r") as source_file:
-                    try:
-                        data = yaml.safe_load(source_file)
-                    except:
-                        raise ValueError()
+                    data = yaml.safe_load(source_file)
 
                     if "indexes" not in data:
-                        raise ValueError()
+                        raise ValueError("indexes section missing in index.yaml")
 
                     indexes = sorted(
                         data["indexes"],
                         key=lambda k: k["kind"] if isinstance(k, dict) and "kind" in k else k
                     )
+
+                    # Remove duplicate entries with the help of dict,
+                    # where keys can only occur once.
+                    # The keys are a hashable representation of an entry.
+                    indexes = {
+                        (
+                            entry.get("kind"),
+                            tuple(tuple(prop.items())
+                                  for prop in entry.get("properties", []))
+                        ): entry
+                        for entry in indexes
+                    }
+                    indexes = list(indexes.values())
 
                     # Only update index.yaml when something has changed
                     if data["indexes"] != indexes:
@@ -71,7 +127,7 @@ def deploy(action, name, additional_args):
                                 yaml.dump(data).replace("- kind: ", "\n- kind: ")
                             )
 
-                        echo_info(f"{yaml_file} has been sorted by kind")
+                        echo_info(f"{yaml_file} has been sorted by kind and duplicates have been removed")
 
             except FileNotFoundError:
                 echo_error(f"{yaml_file} not found")
@@ -83,81 +139,66 @@ def deploy(action, name, additional_args):
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file}')
 
-def create_req():
+
+@cli.command(context_settings={"ignore_unknown_options": True})
+@click.argument("action", type=click.Choice(["backup"]))
+def enable(action):
     """
-    load projects pipenv and build a requirements.txt
+    Enable specific features for the project.
 
-    cores requirements.txt cant be validated currently, because of the core does not provide a feature for that
+    The 'enable' command allows enabling various features for the project. Currently, only the 'backup' action is
+    supported.
+
+    Args:
+        action (str): The action to perform. Currently, only 'backup' is supported.
+
+    Example:
+    ```bash
+    $ viur enable backup
+    ```
+
     """
-    projectConfig = get_config()
-    distFolder = projectConfig["default"]["distribution_folder"]
-    if projectConfig["default"]["core"] != "submodule":
-
-        if click.confirm(f"Do you want to regenerate the requirements.txt located in the {distFolder}?"):
-            os.system(f"pipfile2req  --hashes > {distFolder}/requirements.txt")
-
-            file_object = open(f"{distFolder}/requirements.txt", 'r')
-            generated_requirements = file_object.read()
-            for line in generated_requirements.splitlines():
-                if "]==" in line:
-                    # we got a dependency with extras
-                    generated_requirements+=re.sub(r"\[.*?\]","",line)+"\n"
-            file_object.close()
-
-            file_obj = open(f"{distFolder}/requirements.txt", 'w')
-            file_obj.write(generated_requirements)
-            file_obj.close()
-            echo_info("requirements.txt successfully generated")
-
-        if check_req(f"{distFolder}/requirements.txt"):
-            if not click.confirm(f"There are some depencency errors, are you sure you want to continue?"):
-                sys.exit(0)
+    if action == "backup":
+        enable_gcp_backup()
 
 
-def check_req(projects_requirements_path):
-    import site
-    from pip._internal.req import parse_requirements
-    from pip._internal.network.session import PipSession
+def enable_gcp_backup():
+    # Load the project Config
+    project_config = get_config()
 
-    def requirements_to_dict(requirements):
+    # Create helper Variables
+    project_id = project_config["develop"]["application_name"]
+    bucket_name = f'backup-dot-{project_id}'
+    backup_bucket_command = f'gsutil mb -l EUROPE-WEST3 -p {project_id} gs://{bucket_name}'
 
-        ret = {}
-        for requirement in requirements:
-            package, version = requirement.requirement.split(";")[0].split("==")
-            package = package.split("[")[0]
+    # Create the Backup Bucket
+    try:
+        result = subprocess.run(
+            backup_bucket_command,
+            capture_output=True,
+            shell=True,
+        )
+        print(result)
+        if result.returncode != 0:
+            print('Error creating bucket.')
 
-            requirement.options.update({"version":version.strip()})
-            ret.update({package.lower():requirement.options})
-        return ret
+    except Exception as e:
+        print(f'An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights')
 
-    core_requirements = os.path.join(site.getsitepackages()[0],"viur","requirements.txt")
+    # Helper Variables for IAM
+    iam_roles = ["roles/storage.admin", "roles/datastore.importExportAdmin"]
+    service_worker_mail = f'{project_id}@appspot.gserviceaccount.com'
 
-    if not os.path.exists(core_requirements):
-        echo_info("could now find core package, please update the core to validate the requirements.txt")
-        return []
+    for r in iam_roles:
+        iam_roles_command = (f'gcloud projects add-iam-policy-binding {project_id} --member '
+                             f'serviceAccount:{service_worker_mail} --role {r}')
+        try:
+            subprocess.run(iam_roles_command, capture_output=True, shell=True)
 
-    core_requirements_obj = requirements_to_dict(parse_requirements(core_requirements, session=PipSession()))
+        except Exception as e:
+            print(f'An Error Occured during Roles {e}\n '
+                  f'Please make sure you have the correct Google Cloud Access rights'
+                  )
+            return
 
-    projects_requirements_obj = requirements_to_dict(parse_requirements(projects_requirements_path, session=PipSession()))
-
-
-    errors = []
-    for package,options in core_requirements_obj.items():
-        if package not in projects_requirements_obj:
-            errors.append(f"missing package: {package} with version {options['version']}")
-            continue
-        elif options["version"]!=projects_requirements_obj[package]["version"]:
-            errors.append(f"version mismatch: expected {options['version']} got {projects_requirements_obj[package]['version']}: {package}")
-            continue
-        else:
-            # package exists, test hash
-            project_hashes = projects_requirements_obj[package]["hashes"]["sha256"]
-            core_hashes = options["hashes"]["sha256"]
-
-            if not set(core_hashes).issubset(set(project_hashes)):
-                errors.append(f"package hash mismatch: {package}")
-
-    for error in errors:
-        echo_error(error)
-
-    return errors
+    print('Success! It may take a while until you can use Gcloud Backups')

@@ -49,7 +49,7 @@ $ viur run [target]
 run the appserver and start your app locally. You may specify a target projectID.
 
 ```sh
-$ viur check {--dev}
+$ viur check {npm|--dev|--autofix}
 ```
 Runs a security check for the python environment and for each npm project registered under builds.
 
@@ -61,25 +61,20 @@ By default this would be the projectID you gave when initializing the project, b
 if you would like to have an additional system for testing for example.
 
 ```sh
+$ viur enable {backup}
+```
+create a backup bucket and enable the gcloud service worker account to access it.
+
+
+```sh
 $ viur install {vi|scriptor}
 ```
 ask viur-cli to install either vi or the scriptor into your project
 
 ```sh
-$ viur flare {release|debug|watch} [appname]
-```
-if you have a flare component in your project you can build a `release`, start a `debug` helper or `watch` the flare app for code changes 
-which will automatically rebuild it when you save your changes.
-
-```sh
-$ viur flare watch vi
-```
-this would watch the vi flare app for changes and automatically rebuild it in case of changes.
-
-```sh
 $ viur build release
 ```
-build all flare and npm apps and produce a release that can be deployed
+build all npm apps and produce a release that can be deployed
 
 ```sh
 $ viur build app [appname]
@@ -92,11 +87,15 @@ $ viur env
 check the environment you are in right now, show versions of viur-cli, viur-core and vi etc.
 
 ```sh
-$ viur project {add|remove|list|addFlare|scanNpm}
+$ viur project {add|remove|list}
 ```
-with this you can manage your project.json or generate a new one. You can add or remove targets to/from the project.json, 
-list what has been added to the project.json, add a flare application with `addFlare` to be built when running `viur build release` 
-or walk through the projects sources with `scanNpm` and identify all npm applications to be added
+with this you can manage your project.json or generate a new one. You can add or remove targets to/from the 
+project.json, list what has been added to the project.json, to be built when running `viur build release`.
+
+```sh
+$ viur update {requirements}
+```
+with this you can update your project specific requirements.txt file automatically
 
 ## Viur scripting interface
 
@@ -119,11 +118,10 @@ Commands:
 In order to use the packaged tools, you can run:
 
 ```sh
-$ viur tool {2to3|flare|pyodide|ssl-fix}
+$ viur tool {2to3|pyodide|ssl-fix}
 ```
 Scripts:
 - `2to3`     viur porting script
-- `flare`    flare build script
 - `pyodide`  run the get_pyodide command
 - `ssl-fix`  ssl fix for MacOS
 

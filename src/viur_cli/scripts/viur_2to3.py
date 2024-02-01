@@ -7,6 +7,7 @@ import os, argparse, difflib
 
 # Naive lookup table. Could be done better later...
 lookup = {
+    # old: new
     "BasicApplication": "SkelModule",
     "addItemSuccess": "addSuccess",
     "callDeferred": "CallDeferred",
@@ -27,6 +28,13 @@ lookup = {
     "utils.isLocalDevelopmentServer": "conf[\"viur.instance.is_dev_server\"]",
     "utils.projectID": "conf[\"viur.instance.project_id\"]",
     "clearUpdateTag=True": "update_relations=False",
+    "seoLanguageMap": "seo_language_map",  # 800
+    "forcePost": "force_post",  # 800
+    "forceSSL": "force_ssl",  # 800
+    "internalExposed": "internal_exposed",  # 800
+    "Session.sameSite": "Session.same_site",
+    "Session.useSessionCookie": "Session.use_session_cookie",
+    "Session.cookieName": "Session.cookie_name",
 }
 
 bones = [

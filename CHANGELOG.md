@@ -1,6 +1,57 @@
 # Changelog
 
-This file documents any relevant changes.
+## [1.1.2] 2024-01-26:
+- chore: removed python-minifier
+- chore: updated appserver
+
+## [1.1.1] 2023-11-28
+- chore: updated dependencies
+- feat: added npm audit function
+ 
+## [1.1.0] 2023-11-23
+- chore: added more `viur2to3` replacements
+- fix: fixed `viur script` subdirectory duplicates
+- chore: updated Pipenv to work with Python <=3.12
+- feat: Added code documentation
+- feat: Remove `index.yaml` duplicate entries
+- refactor: added update command
+- refactor: some PEP8 Changes
+- [BREAKING]: Removed all flare scripts and functionality
+- [BREAKING]: Removed `scanNPM` function  
+- [BREAKING]: Removed `viur init` 
+
+
+## [1.0.16] 2023-09-29
+- feat: Add targets to all install softwares and ensure a specific version is correctly working
+- chore: refactored install.py
+
+## [1.0.15] 2023-09-15
+- chore: support viur core 3.5.0
+
+## [1.0.14] 2023-09-15
+- chore: update app_server to 0.9.6
+
+## [1.0.13] 2023-09-14
+- chore: use `viur install admin` to install the vi admin
+- chore: update app_server to 0.9.5
+
+## [1.0.11] 2023-07-24
+- fix: do_checks now works as expected
+
+## [1.0.10] 2023-07-18
+- fix: do_checks now works as expected
+
+## [1.0.9] 2023-07-12
+- refactor: local module
+- feat: added rmdir method to prevent removing beyond project dir
+
+## [1.0.8] 2023-07-11
+- feat: added a clean command to remove build artifacts
+
+## [1.0.7] 2023-07-11
+- feat: improved viur3to3 script for core 3.4
+- refactor: `viur build` now more generalized
+
 ## [1.0.6] 2023-06-28
 - fix: viur check:  dont kill the command on error 
 - chore: added requests as dependency

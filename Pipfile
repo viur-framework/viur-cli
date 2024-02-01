@@ -6,12 +6,9 @@ name = "pypi"
 [packages]
 build = "*"
 twine = "*"
-requests = "*"
-
-[dev-packages]
 
 [requires]
-python_version = "3.9"
+python_version = "3"
 
 [scripts]
 build_release = "python -m build"
