@@ -5,6 +5,7 @@ This file documents any relevant changes.
 - refactor: enabled profile support for all viur-cli functions
 - fix: `viur env` now runs without errors
 - refactor: project.json functionalities
+- feat: `viur package install` and `viur package update` functions 
 
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies

@@ -75,7 +75,7 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 @click.argument('component', type=click.Choice(['vi', 'admin', 'scriptor', 'all']))
 @click.argument('profile', default='default')
 @click.argument("version", default="latest")
-def packet(operation, component, profile, version):
+def package(operation, component, profile, version):
     """
     This method is used to handle packet operations, such as updating or installing components.
 
@@ -121,7 +121,7 @@ def packet(operation, component, profile, version):
             else:
                 # We want to force the User to use the new Admin, so Vi can only be installed explicitly!!
                 for build in ["admin", "scriptor"]:
-                    perform_operation(build, version)
+                    perform_operation(build, "latest")
 
 
 def checkreturncode(output):
