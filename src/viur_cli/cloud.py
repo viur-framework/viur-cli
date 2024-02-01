@@ -352,9 +352,7 @@ def gcloud_setup():
 # Helper function for running Commands in subprocess and getting the Output
 def run_command(command):
     try:
-        output = subprocess.check_output(command, shell=True)
-        print(output)
-        return output
+        return subprocess.check_output(command, shell=True)
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
 
