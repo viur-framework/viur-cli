@@ -256,7 +256,7 @@ def gcloud_setup():
     project = input("Enter PROJECT_ID: ").strip()
 
     if not project:
-        echo_fatal("Usage: python scrtipt.py PROJECT_ID")
+        echo_fatal("Usage: viur setup gcloud PROJECT_ID")
         return
 
     echo_info("Check if user is authorized with gcloud....")
