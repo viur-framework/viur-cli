@@ -8,8 +8,8 @@ import sys
 import glob
 from requests.sessions import cookiejar_from_dict
 from weakref import proxy
-from .scriptor import Request, init, viur
-from ..cli import cli
+from viur.scriptor import Request, init, viur
+from .cli import (cli)
 
 
 class Config(dict):
@@ -91,17 +91,18 @@ def setup():
     base_url = config.get("base_url")
     try:
         session = requests.session()
-        skey = session.get(base_url + "/json/skey")
+        skey = session.get(base_url + "/vi/skey")
         username: str = config.get("username", "")
         if not username:
             username = click.prompt("Enter the username")
 
         password: str = click.prompt("Enter the password", hide_input=True)
 
-        response = session.post(base_url + "/json/user/auth_userpassword/login", data={
+        response = session.post(base_url + "/vi/user/auth_userpassword/login", data={
             "skey": skey.json(),
             "name": username,
-            "password": password
+            "password": password,
+            "@vi-admin": True,
         })
 
         if response.json() != "FAILURE":
@@ -136,7 +137,7 @@ def pull(ctx: click.Context, force: bool):
     """
     check_session(ctx)
     Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
-    from .scriptor.module import TreeModule
+    from viur.scriptor.module import TreeModule
     tree = TreeModule("script")
 
     async def main():
@@ -188,7 +189,7 @@ def push(ctx: click.Context, force: bool):
     check_session(ctx)
     Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
 
-    from .scriptor.module import TreeModule
+    from viur.scriptor.module import TreeModule
     tree = TreeModule("script")
 
     async def main():
