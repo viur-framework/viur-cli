@@ -41,7 +41,6 @@ def enable_gcp_backup():
             capture_output=True,
             shell=True,
         )
-        print(result)
         if result.returncode != 0:
             echo_error('Error creating bucket.')
 
