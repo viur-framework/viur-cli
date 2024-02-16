@@ -69,14 +69,15 @@ create a backup bucket and enable the gcloud service worker account to access it
 ```sh
 $ viur package {install|update} {vi|scriptor|admin|all} 
 ```
-handles viur ecosystem package operations
+handles ViUR ecosystem package operations
 
 Commands:
-- `install`  Installes a viur package
-- `update`   updates a viur package
+- `install`  installs a ViUR package (in a specific version)
+- `update`   updates a ViUR package to the newest version
+
 Arguments:
-- `profile`  profile you want to install to 
-- `version`  version you want to install
+- `profile`  profile to install to
+- `version`  version to install
 
 ```sh
 $ viur build release
