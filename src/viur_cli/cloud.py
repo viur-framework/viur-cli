@@ -43,7 +43,7 @@ def enable_gcp_backup():
         )
         print(result)
         if result.returncode != 0:
-            print('Error creating bucket.')
+            echo_error('Error creating bucket.')
 
     except Exception as e:
         print(f'An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights')
