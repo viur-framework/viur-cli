@@ -1,5 +1,6 @@
 from .cli import *
 from .conf import *
+from .install import *
 from .deploy import *
 from .package import *
 from .local import *
@@ -9,4 +10,4 @@ from .version import *
 from .scriptor import script
 from .tool import *
 from .update import *
-from .package import *
+from .cloud import *
