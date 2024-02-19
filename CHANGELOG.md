@@ -2,12 +2,15 @@
 
 This file documents any relevant changes.
 
-## [2.0.0.dev3] 2024-02-19
+## [2.0.0-dev4] 2024-02-19
+- chore: updated github workflows
+
+## [2.0.0-dev3] 2024-02-19
 - feature: appengine Setup can now be done via CLI
 - feature: Appengine Roles can now be managed via CLI
 - feature: `viur package install` and `viur package update` functions 
 
-## [2.0.0.dev2] 2024-01-09
+## [2.0.0-dev2] 2024-01-09
 - refactor: enabled profile support for all viur-cli functions
 - fix: `viur env` now runs without errors
 - refactor: project.json functionalities
