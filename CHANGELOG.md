@@ -10,6 +10,7 @@ This file documents any relevant changes.
 - refactor: `viur deploy` is now `viur cloud deploy` 
 - feature: appengine Setup can now be done via CLI
 - feature: Appengine Roles can now be managed via CLI
+- feature: `viur package install` and `viur package update` functions 
 
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies

@@ -60,9 +60,17 @@ create a backup bucket and enable the gcloud service worker account to access it
 
 
 ```sh
-$ viur install {vi|scriptor}
+$ viur package {install|update} {vi|scriptor|admin|all} 
 ```
-ask viur-cli to install either vi or the scriptor into your project
+handles ViUR ecosystem package operations
+
+Commands:
+- `install`  installs a ViUR package (in a specific version)
+- `update`   updates a ViUR package to the newest version
+
+Arguments:
+- `profile`  profile to install to
+- `version`  version to install
 
 ```sh
 $ viur build release
