@@ -54,13 +54,6 @@ $ viur check {npm|--dev|--autofix}
 Runs a security check for the python environment and for each npm project registered under builds.
 
 ```sh
-$ viur deploy {app|index} [target]
-```
-you can deploy the app or the index.yaml to a google cloud project target of your choice, though the target is optional.
-By default this would be the projectID you gave when initializing the project, but you can add targets to the project.json
-if you would like to have an additional system for testing for example.
-
-```sh
 $ viur enable {backup}
 ```
 create a backup bucket and enable the gcloud service worker account to access it.
@@ -88,6 +81,38 @@ build all npm apps and produce a release that can be deployed
 $ viur build app [appname]
 ```
 build a specific app
+
+```sh
+$ viur cloud deploy {app|index|cloudfunction} {profile} {--ext|--yes|--name}
+```
+This Function deploys the Google Cloud application and / or different .yaml files
+Scripts:
+- `app`           Deploy application to the Google Appengine
+- `index`         Deploy index.yaml to Google Appenginge
+- `cloudfunction` Deploy Cloudfunction to Google Appengine
+Commands:
+- `profile`       The project.json profile you want to Work from
+
+
+```sh
+$ viur cloud {enable|disable} backup
+```
+Enable/ Disable the Backup buckets you need to Backup a cloud project in the Google Cloud Console
+
+```sh
+$ viur cloud setup {gcloud|gcroles} 
+```
+Scripts:
+- `gcloud`    This Function setups your project to work on the gcloud plattform
+- `gcroles`   This function lets you set up Roles for your google appengine Workspace
+
+
+```sh
+$ viur cloud get {gcroles} 
+```
+Scripts:
+- `gcroles`   This function lets you get Roles for your google appengine Workspace in a readable .json Format
+
 
 ```sh
 $ viur env
@@ -219,7 +244,7 @@ viur-cli depends on
 
 ## License
 
-Copyright © 2023 by Mausbrand Informationssysteme GmbH.<br>
+Copyright © 2024 by Mausbrand Informationssysteme GmbH.<br>
 Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
 
 This project is free software under the MIT license.<br>
