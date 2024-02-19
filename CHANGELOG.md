@@ -1,10 +1,22 @@
 # Changelog
 
 This file documents any relevant changes.
+
+## [2.0.0-dev4] 2024-02-19
+- chore: updated github workflows
+
+## [2.0.0-dev3] 2024-02-19
+- feature: appengine Setup can now be done via CLI
+- feature: Appengine Roles can now be managed via CLI
+- feature: `viur package install` and `viur package update` functions 
+
 ## [2.0.0-dev2] 2024-01-09
 - refactor: enabled profile support for all viur-cli functions
 - fix: `viur env` now runs without errors
 - refactor: project.json functionalities
+- feature: cloudfunctions creation and deployment via ClI
+- feature: backup disabling/ enabling via CLI
+- refactor: `viur deploy` is now `viur cloud deploy`
 
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies

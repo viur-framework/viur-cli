@@ -62,9 +62,9 @@ class ProjectConfig(dict):
         """
         Write the current projectConfig dictionary to project.json.
         """
-        f = open(PROJECT_CONFIG_FILE, "w")
-        f.write(json.dumps(self, indent=4, sort_keys=True))
-        f.close()
+        with open(PROJECT_CONFIG_FILE, "w") as f:
+            json.dump(self, f, indent=4, sort_keys=True))
+            f.write('\n')
 
     def get_profile(self, profile):
         if profile == "format":
@@ -80,17 +80,7 @@ class ProjectConfig(dict):
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
     def migrate(self):
-        """
-        Update the project configuration.
 
-        This method performs updates and migrations on the project configuration as needed. It includes version checks
-        and format updates. Ensure that 'load_config()' is called before invoking this method.
-
-        :param path: str, optional
-            The path to the project.json file. If not provided, the root directory of the project is used.
-
-        :return: None
-        """
         assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", PROJECT_CONFIG_VERSION], \
             "Invalid formatversion, you have to fix it manually"
 
