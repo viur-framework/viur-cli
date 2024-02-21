@@ -12,23 +12,13 @@ from .update import create_req
 
 @cli.group()
 def cloud():
-    """
-    This method defines a command group for working with cloud resources.
-    """
+    """This method defines a command group for working with cloud resources."""
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
 def enable(action):
-    """
-    Enable a specific action based on the provided parameter.
-
-    :param action: String
-        The action to be performed:
-
-    :return: None
-
-    """
+    """Enable a specific action based on the provided parameter."""
     if action == "backup":
         enable_gcp_backup()
 
@@ -97,14 +87,7 @@ def enable_gcp_backup():
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
 def disable(action):
-    """
-    Disables a specific action.
-
-    :param action: String
-        The action to disable.
-
-    :return: None
-    """
+    """Disables a specific action."""
     if action == "backup":
         disable_gcp_backup()
 
@@ -180,14 +163,6 @@ def disable_gcp_backup():
 def setup(action, profile):
     """
     Set up the specified action for the given profile.
-
-    :param action: String
-        The Setup action to be performed
-    :param profile: String
-        The Profile on which the action should be performed
-
-    :return: None
-
     """
     if action == "gcloud":
         gcloud_setup()
@@ -200,18 +175,7 @@ def setup(action, profile):
 @click.argument("action", type=click.Choice(["gcroles"]))
 @click.argument("profile", default='default')
 def get(action, profile):
-    """
-    Get Method to retrieve Information from Hosting Environment
-
-    :param action: String
-        The action to be Performed
-
-    :param profile: String
-        The profile to use
-
-    Example Usage:
-    `viur get gcroles default`
-    """
+    """Get Method to retrieve Information from Cloud Service Environment"""
 
     if action == "gcroles":
         gcloud_get_roles(profile)
@@ -501,19 +465,7 @@ def run_command(command):
 @click.option("--yes", "-y", is_flag=True, default=False)
 @click.option("--name", "-n", default=None)
 def deploy(action, profile, name, ext, yes, additional_args):
-    """
-
-    Deploy the specified action to the cloud.
-
-    Parameters:
-    - action (str): The action to be deployed. Must be one of 'app', 'index', 'cron', 'queue', 'cloudfunction'.
-    - profile (str): The profile to be used for deployment. Defaults to 'develop'.
-    - name (str): The name of the cloud function to deploy. Only required if action is 'cloudfunction'.
-    - ext (str): The extension to be appended to the version. Optional.
-    - yes (bool): Specifies whether to automatically answer 'yes' to deployment prompts. Defaults to False.
-    - additional_args (tuple): Additional arguments to be passed to the deployment command. Optional.
-
-    """
+    """ Deploy the specified action to a cloud service."""
 
     conf = config.get_profile(profile)
 
@@ -662,25 +614,7 @@ def build_deploy_command(name, conf):
 @click.option("--runtime", "-rt")
 @click.option("--trigger", "-tr")
 def create(profile, action, source, name, entrypoint, env_vars_file, memory, runtime, trigger):
-    """
-
-    Creates a cloud function based on the provided parameters.
-
-    Parameters:
-    - profile (str): The profile name to use for the configuration.
-    - action (str): The action to perform. Only 'function' is currently supported.
-    - source (str): The directory of the cloud function.
-    - name (str, optional): The name of the cloud function.
-    - entrypoint (str, optional): The entrypoint of the cloud function.
-    - env_vars_file (str, optional): The name of the environment variables file.
-    - memory (str, optional): The memory usage of the cloud function.
-    - runtime (str, optional): The runtime of the cloud function.
-    - trigger (str, optional): The trigger type of the cloud function.
-
-    Returns:
-    None
-
-    """
+    """Creates a cloud function based on the provided parameters."""
     if action == "function":
         conf = config.get_profile(profile)
         # First layer initialization:

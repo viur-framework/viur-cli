@@ -1,7 +1,5 @@
 from .cli import *
 from .conf import *
-from .install import *
-from .deploy import *
 from .package import *
 from .local import *
 from .build import *

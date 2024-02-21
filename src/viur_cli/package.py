@@ -89,21 +89,7 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 @click.argument("version", default="latest")
 def package(operation, component, profile, version):
     """
-    This method is used to perform operations on packages.
-
-    :param operation: String
-        The operation to perform. Must be either 'update' or 'install'.
-    :param component: String
-        The component to perform the operation on. Must be one of 'vi', 'admin', 'scriptor', or 'all'.
-    :param profile: String
-        The profile to use. Default is 'default'.
-    :param version: String
-        The version of the component to use. Default is 'latest'.
-
-    Example:
-    ```
-    viur package update all
-    ```
+    Performs installements and updates of ViUR Ecosystem packages
     """
     conf = config.get_profile(profile)
     operations_links = {
