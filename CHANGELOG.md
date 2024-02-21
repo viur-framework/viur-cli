@@ -2,10 +2,10 @@
 
 This file documents any relevant changes.
 ## [2.0.0-dev4] 2024-02-19
-- chore: updated github workflows
+- chore: updated Github workflows
 
 ## [2.0.0-dev3] 2024-02-19
-- feature: appengine Setup can now be done via CLI
+- feature: Appengine Setup can now be done via CLI
 - feature: Appengine Roles can now be managed via CLI
 - feature: `viur package install` and `viur package update` functions 
 
