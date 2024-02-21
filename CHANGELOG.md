@@ -1,7 +1,6 @@
 # Changelog
 
 This file documents any relevant changes.
-
 ## [2.0.0-dev4] 2024-02-19
 - chore: updated github workflows
 
@@ -17,6 +16,10 @@ This file documents any relevant changes.
 - feature: cloudfunctions creation and deployment via ClI
 - feature: backup disabling/ enabling via CLI
 - refactor: `viur deploy` is now `viur cloud deploy`
+
+## [1.1.2] 2024-01-26:
+- chore: removed python-minifier
+- chore: updated appserver
 
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies
