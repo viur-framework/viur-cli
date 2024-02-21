@@ -65,6 +65,16 @@ def enable_gcp_backup():
 
     print('Success! It may take a while until you can use Gcloud Backups')
 
+@cloud.command(context_settings={"ignore_unknown_options": True})
+@click.argument("service", type=click.Choice(["gcloud"]), default="gcloud")
+@click.argument("option", type=click.Choice(["datastore"]), default="datastore")
+@click.argument("profile", default="default")
+def cleanup(service, option, profile):
+    conf = config.get_profile(profile)
+
+    if service == "gcloud" and option == "datastore":
+        run_command(f"gcloud datastore indexes cleanup deploy/index.yaml --project={conf['application_name']}")
+
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
