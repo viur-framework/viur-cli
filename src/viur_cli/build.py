@@ -9,7 +9,8 @@ from . import cli, utils
 
 
 def _build(conf, name, build_cfg, additional_args):
-    """Internal function to perform steps required for a given build configuration.
+    """
+    Internal function to perform steps required for a given build configuration.
 
     This internal function is responsible for building an application according to the specified build configuration.
     It can handle two types of builds:
@@ -39,6 +40,7 @@ def _build(conf, name, build_cfg, additional_args):
 
     :return: None
     """
+
     utils.echo_info(f"""- {build_cfg["kind"]} {name}""")
     match build_cfg["kind"]:
         case "npm":
@@ -60,7 +62,8 @@ def _build(conf, name, build_cfg, additional_args):
 
 
 def _clean(conf, name, build_cfg):
-    """Perform steps required to clean a given build configuration.
+    """
+    Perform steps required to clean a given build configuration.
 
     This internal function is responsible for cleaning the artifacts and files generated during the build process
     for a specified application. It supports two types of cleaning methods:

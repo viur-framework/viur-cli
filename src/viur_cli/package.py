@@ -19,26 +19,38 @@ REPOS = {
 def get_version_info(software: str, version: str) -> tuple[str, str]:
     """
 
-    get_version_info(software: str, version: str) -> tuple[str, str]
+    :param software: String
+        Name of the ViUR Software
 
-    Retrieves version information for a software from a given repository.
+    :param version: String
+        Desired version of the ViUR Software
 
-    Parameters:
-    - software: A string representing the name of the software.
-    - version: A string representing the version of the software.
+    :returns: tuple[str, str]
+        real version and download URL
 
-    Returns:
-    A tuple containing the real version (str) and the download URL (str) for the software.
+    Description:
+    This method takes in the name of a software and a desired version,
+    and returns the real version and download URL for that software.
 
-    Note:
-    - The version should be provided without a leading "v".
-    - If the version is set to "latest", the latest release information and download URL will be fetched.
-    - If the version is a valid existing release, the real version will be saved to the config.
-    - If the version is not a valid existing release, the real_version will be None (Unknown).
-    - The download URL will be constructed based on the real_version and the download name for the software.
+    The 'software' parameter is a string that represents the name of the software.
 
-    Example Usage:
-    real_version, download_url = get_version_info("sample_software", "1.2.3")
+    The 'version' parameter is a string that represents the desired version of the software.
+    If the version starts with 'v', it will be normalized by removing the leading 'v'.
+    *The 'version' can also be set as 'latest' to get the latest version available.
+
+    The method uses the provided 'software' parameter to fetch the repository
+    and download information from REPOS dictionary.
+
+    If the 'version' is 'latest', the method constructs the URL using the repository information to fetch the
+    latest release information from GitHub API. If the request fails, an error message
+    * will be displayed. If the request is successful, the real version of the latest release is obtained
+    and saved in the config.
+
+    If the 'version' is not 'latest', the method constructs the URL using the repository and desired version information.
+    If the request for the version tag information fails, the method
+    * falls back to the previously obtained real version. Else, the tag is used to construct the download URL.
+
+    Finally, the method returns a tuple containing the real version and download URL.
 
     """
     repo, download_name = REPOS[software]
@@ -77,21 +89,21 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 @click.argument("version", default="latest")
 def package(operation, component, profile, version):
     """
-    This method is used to handle packet operations, such as updating or installing components.
+    This method is used to perform operations on packages.
 
-    Parameters:
-    - operation (str): The operation to perform. Must be either 'update' or 'install'.
-    - component (str): The component to update or install. Must be one of: 'vi', 'admin', 'scriptor', 'all'.
-    - profile (str, optional): The profile to use. Defaults to 'default'.
-    - version (str, optional): The version of the component to update or install. Defaults to 'latest'.
+    :param operation: String
+        The operation to perform. Must be either 'update' or 'install'.
+    :param component: String
+        The component to perform the operation on. Must be one of 'vi', 'admin', 'scriptor', or 'all'.
+    :param profile: String
+        The profile to use. Default is 'default'.
+    :param version: String
+        The version of the component to use. Default is 'latest'.
 
-    Note: The 'all' component option is only applicable to the 'update' operation.
-
-    Examples:
-    packet('update', 'vi') -> Updates 'vi' component to the latest version using the default profile.
-    packet('install', 'admin', profile='prod', version='1.0') -> Installs 'admin' component with version '1.0' using the 'prod' profile.
-    packet('update', 'all', version='2.0') -> Updates all components to version '2.0' using the default profile.
-
+    Example:
+    ```
+    viur package update all
+    ```
     """
     conf = config.get_profile(profile)
     operations_links = {
@@ -126,14 +138,7 @@ def package(operation, component, profile, version):
 
 def checkreturncode(output):
     """
-    Checks the return code of a command execution and prints a message based on the return code.
-
-    Parameters:
-    - output: A subprocess.CompletedProcess object representing the output of a command execution.
-
-    Returns:
-    None
-
+    Check the return code of a process output.
     """
     if output.returncode == 0:
         echo_positive("update was successful")
@@ -143,15 +148,7 @@ def checkreturncode(output):
 
 def scriptor(version, target, profile):
     """
-    Update the Scriptor tool to the specified version.
-
-    Parameters:
-    - version (str): The version of Scriptor to update to.
-    - target (str): The target directory for the updated Scriptor tool.
-    - profile (str): The specific profile to use for configuration.
-
-    Returns:
-    None
+    Update the Scriptor tool to a specified version.
     """
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
@@ -187,20 +184,7 @@ def scriptor(version, target, profile):
 
 
 def admin(version: str, target: str, profile):
-    """
-    Updates the admin tool to a specified version.
-
-    Parameters:
-        version (str): The version of the admin tool to update to.
-        target (str): The target folder to update the admin tool in.
-        profile: The profile to use for configuration.
-
-    Returns:
-        None
-
-    Example Usage:
-        admin("1.2.0", "C:/admin", "production")
-    """
+    """Update the admin to a specific version."""
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
@@ -239,20 +223,7 @@ def admin(version: str, target: str, profile):
 
 
 def vi(version, target, profile):
-    """
-    Updates the version of vi based on the provided parameters.
-
-    Parameters:
-    - version (str): The version of vi to update to.
-    - target (str): The target folder where vi will be installed.
-    - profile (str): The profile to use for configuration.
-
-    Returns:
-    None
-
-    Example:
-    vi("1.2.3", "/path/to/vi", "production")
-    """
+    """Updates Vi to the specified version."""
 
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]

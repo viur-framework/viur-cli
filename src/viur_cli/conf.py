@@ -2,7 +2,6 @@ import json
 import click
 from .utils import *
 
-
 PROJECT_CONFIG_FILE = "project.json"
 PROJECT_CONFIG_VERSION = "2.0.0"
 
@@ -31,7 +30,6 @@ class ProjectConfig(dict):
                 The project configuration loaded from the project.json file.
         """
 
-
         # Search in any parent folder for a project.json,
         # change working directory because subsequent commands
         # require for project root folder.
@@ -54,7 +52,8 @@ class ProjectConfig(dict):
             echo_fatal(f"Can't open {PROJECT_CONFIG_FILE} for reading")
 
         except json.decoder.JSONDecodeError as e:
-            echo_fatal(f"The configuration in {PROJECT_CONFIG_FILE} contains invalid JSON: {str(e)}. Please verify right syntax.")
+            echo_fatal(
+                f"The configuration in {PROJECT_CONFIG_FILE} contains invalid JSON: {str(e)}. Please verify right syntax.")
 
         self.migrate()
 
@@ -67,11 +66,13 @@ class ProjectConfig(dict):
             f.write('\n')
 
     def get_profile(self, profile):
+        """Get profile configuration"""
         if profile == "format":
             echo_fatal("Your profile can not be named 'Format' ")
         return self["default"].copy() | self[profile]
 
     def delete(self):
+        """Delete profile cofniguration"""
         configname = click.prompt('name')
         try:
             del self[configname]
@@ -157,5 +158,6 @@ class ProjectConfig(dict):
 
         # conf updates must increase format version
         self.save()
+
 
 config = ProjectConfig()
