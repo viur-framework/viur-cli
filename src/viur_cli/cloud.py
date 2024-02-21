@@ -70,6 +70,7 @@ def enable_gcp_backup():
 @click.argument("option", type=click.Choice(["datastore"]), default="datastore")
 @click.argument("profile", default="default")
 def cleanup(service, option, profile):
+    """Cleans up unused indexes in Google Cloud Datastore using the 'gcloud' command."""
     conf = config.get_profile(profile)
 
     if service == "gcloud" and option == "datastore":
