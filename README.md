@@ -32,7 +32,7 @@ $ viur -h
 will show all the commands that are currently supported by viur-cli
 
 ```sh
-$ viur -version 
+$ viur --version 
 ```
 will show your current viur-cli version
 
