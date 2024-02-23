@@ -113,7 +113,7 @@ $ viur package {update|install} {vi|admin|scriptor|all} [profile] [version]
 Performs operation on packages
 
 Scripts:
-- `update` Updates an installed packages
+- `update` Updates an installed package
 - `install` Installs a declared package
 
 Options:
