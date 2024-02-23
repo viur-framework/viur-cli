@@ -125,7 +125,7 @@ Options:
 ```sh
 $ viur env
 ```
-prints information about your environment you are into
+Show information about your current environment.
 
 ```sh
 $ viur project list
