@@ -12,7 +12,7 @@
 </div>
 
 ## What does it do?
-`viur-cli` allows to control, maintain and develop and deploy a ViUR project from one central 
+`viur-cli` allows to control, maintain, develop and deploy a ViUR project from one central 
 location by using the `viur` command.
 
 
