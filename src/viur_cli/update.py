@@ -36,7 +36,7 @@ def update(action, profile, additional_args):
     conf = config.get_profile(profile)
 
     if action == "requirements":
-        create_req(profile)
+        create_req(True,profile)
 
 
 
