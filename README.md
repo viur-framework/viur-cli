@@ -130,7 +130,7 @@ prints information about your environment you are into
 ```sh
 $ viur project list
 ```
-Pretty prints your `project.json` file in the Terminal
+Pretty prints your `project.json` file on the console.
 
 ```sh
 $ viur update {requirements}
