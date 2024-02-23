@@ -12,24 +12,13 @@ def tool():
     The 'tool' group allows you to execute various ViUR-related scripts that help with tasks such as project porting,
     Pyodide installation, and SSL certificate fixes.
 
-    Usage:
-    ```
-    viur tool <command> [options]
-    ```
-
     Available Commands:
-    - '2to3': ViUR porting script.
-    - 'pyodide': Run the get_pyodide command.
-    - 'ssl_fix': SSL certificate fix for macOS.
 
-    Use 'viur tool <command> -h' for command-specific help.
+        - '2to3': ViUR porting script.
 
-    Example Usage:
-    ```
-    viur tool 2to3 /path/to/project
-    ```
+        - 'pyodide': Run the get_pyodide command.
 
-    :return: None
+        - 'ssl_fix': SSL certificate fix for macOS.
     """
 
 

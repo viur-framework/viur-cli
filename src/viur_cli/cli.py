@@ -7,6 +7,7 @@ from .version import MINIMAL_PIPENV
 import semver
 import pprint
 
+
 @click.group(invoke_without_command=True,
              no_args_is_help=True,
              context_settings={"help_option_names": ["-h", "--help"]})
@@ -16,26 +17,14 @@ def cli(ctx):
     """
     Command-line interface for managing project configuration and information.
 
-    The viur-cli provides a set of commands to manage your project's configuration in the 'project.json'
-    if missing. It also offers commands to view and modify project information.
-
-    Usage:
-    ```
-    viur [OPTIONS] COMMAND [ARGS]...
-    ```
-
-    Options:
-      -h, --help      Show this message and exit.
-      --version       Show the CLI tool's version.
-
-    Commands:
-      project         Manage project.json and generate if missing.
+    The viur-cli provides a set of commands to manage your project's configuration in the 'project.json'.
+     It also offers commands to view and modify project information.
 
     Note:
-    - Use the `--version` option to display the CLI tool's version.
-    - Run the 'project' command to manage 'project.json' and project configuration settings.
 
-    :return: None
+        - Use the `--version` option to display the CLI tool's version.
+
+        - Run the 'project' command to manage 'project.json' and project configuration settings.
     """
 
     # Get the systems pipenv Version Number
@@ -48,13 +37,10 @@ def cli(ctx):
     if semver.compare(sys_pipenv, MINIMAL_PIPENV) < 0:
         echo_warning(
             f"Your pipenv Version does not match the recommended pipenv version. \n"
-            f"This mismatch may cause Errors, please consider to update your Systems pipenv version \n"
+            f"This mismatch may cause Errors, please consider updating your Systems pipenv version \n"
             f"Your Version: {sys_pipenv}\n"
             f"Recommended Version: {MINIMAL_PIPENV}"
         )
-
-
-
 
 @cli.command()
 @click.argument("action", type=click.Choice(['list']))
@@ -65,4 +51,3 @@ def project(action, profile):
     if action == "list":
         echo_info(f"These are the Settings for {profile} profile")
         pprint.pprint(project_config)
-
