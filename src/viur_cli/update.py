@@ -16,22 +16,15 @@ def update(action, profile, additional_args):
 
     This command allows you to update project-specific files and dependencies for a specified project configuration.
     Currently, it supports the 'requirements' action, which is used to update the requirements.
-
-    :param action: str
-        The action to perform. Currently, only 'requirements' is supported for updating requirements or dependencies.
-    :param name: str, default: 'develop'
-        The name of the project configuration to update. It should correspond to a valid project configuration.
-    :param additional_args: tuple
-        Additional arguments that can be passed to the update process.
-
     The `update` command performs the specified 'action' to update project-specific files or dependencies. It ensures
     that the specified project configuration exists.
 
     Note:
-    - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
-    - Additional arguments can be used to customize the update process if supported by the action.
 
-    :return: None
+        - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
+
+        - Additional arguments can be used to customize the update process if supported by the action.
+
     """
     conf = config.get_profile(profile)
 

@@ -9,7 +9,8 @@ from . import cli, utils
 
 
 def _build(conf, name, build_cfg, additional_args):
-    """Internal function to perform steps required for a given build configuration.
+    """
+    Internal function to perform steps required for a given build configuration.
 
     This internal function is responsible for building an application according to the specified build configuration.
     It can handle two types of builds:
@@ -39,6 +40,7 @@ def _build(conf, name, build_cfg, additional_args):
 
     :return: None
     """
+
     utils.echo_info(f"""- {build_cfg["kind"]} {name}""")
     match build_cfg["kind"]:
         case "npm":
@@ -60,7 +62,8 @@ def _build(conf, name, build_cfg, additional_args):
 
 
 def _clean(conf, name, build_cfg):
-    """Perform steps required to clean a given build configuration.
+    """
+    Perform steps required to clean a given build configuration.
 
     This internal function is responsible for cleaning the artifacts and files generated during the build process
     for a specified application. It supports two types of cleaning methods:
@@ -137,23 +140,16 @@ def release(profile, additional_args):
     This command is used to build all relevant applications necessary for deploying the project. It allows you to
     specify the project configuration to use and any additional arguments to pass to the build process.
 
-    :param name: str, default: 'develop'
-        The name of the project configuration to use for building. This configuration can be either 'default' or a
-        project-specific configuration.
-
-    :param additional_args: tuple
-        Additional arguments that can be passed to the build process. These arguments are passed to the underlying
-        build functions.
-
     The `release` command loads the specified project configuration, which includes build configurations for
     individual applications. It then iterates through the applications and executes the build process for each one
     using the `_build` function.
 
     Note:
-    - Ensure that the specified project configuration exists.
-    - Additional arguments can be used to customize the build process.
 
-    :return: None
+        - Ensure that the specified project configuration exists.
+
+        - Additional arguments can be used to customize the build process.
+
     """
     conf = config.get_profile(profile)
     utils.echo_info("building started...")
@@ -175,21 +171,14 @@ def app(appname, profile, additional_args):
     This function is used to build a specific application as defined in your project's configuration. It allows you to
     specify the name of the application to build and any additional arguments to pass to the build process.
 
-    :param appname: str
-        The name of the application to build. It should correspond to an application defined in your project's
-        configuration.
-
-    :param additional_args: tuple
-        Additional arguments that can be passed to the build process for the specified application.
-
     The `app` function loads the default project configuration, selects the specified application's build configuration,
     and then executes the build process using the `_build` function.
 
     Note:
-    - Ensure that the specified application name is valid and defined in your project's configuration.
-    - Additional arguments can be used to customize the build process for this specific application.
 
-    :return: None
+        - Ensure that the specified application name is valid and defined in your project's configuration.
+
+        - Additional arguments can be used to customize the build process for this specific application.
     """
 
     conf = config.get_profile(profile)
@@ -212,22 +201,20 @@ def clean(target, profile):
     This command is used to clean up build artifacts and files generated during the build process for one or more
     specific applications. It allows you to specify a target application or clean all applications in the project.
 
-    :param target: str, default: ""
-        The name of the target application to clean. If not provided, it will clean all applications defined in your
-        project's configuration.
-
-
     The `clean` command performs the following actions:
-    - If a specific 'target' is provided, it cleans the build artifacts for that application.
-    - If 'target' is not provided, it cleans the build artifacts for all applications defined in your project's
-      configuration.
+
+        - If a specific 'target' is provided, it cleans the build artifacts for that application.
+
+        - If 'target' is not provided, it cleans the build artifacts for all applications defined in your project's
+        configuration.
 
     Note:
-    - When specifying a 'target,' ensure that it corresponds to a valid application defined in your project.
-    - Running the command without a 'target' will clean all applications.
 
-    :return: None
+        - When specifying a 'target,' ensure that it corresponds to a valid application defined in your project.
+
+        - Running the command without a 'target' will clean all applications.
     """
+
     conf = config.get_profile(profile)
 
     builds = conf.get("builds", {})

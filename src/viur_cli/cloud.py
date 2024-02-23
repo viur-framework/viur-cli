@@ -12,20 +12,38 @@ from .update import create_req
 
 @cli.group()
 def cloud():
-    """Manage cloud Actions"""
+    """This method defines a command group for working with cloud resources."""
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
 def enable(action):
-    """
-        Enable specific features for the project.
-    """
+    """Enable a specific action based on the provided parameter."""
     if action == "backup":
         enable_gcp_backup()
 
 
 def enable_gcp_backup():
+    """
+    Enables Google Cloud Platform backups for the project.
+
+    This method performs the following steps:
+    1. Loads the project configuration using the "default" profile.
+    2. Creates helper variables for the project ID and the backup bucket name.
+    3. Constructs the command to create the backup bucket using gsutil.
+    4. Executes the command to create the backup bucket.
+    5. If the bucket creation fails, it prints an error message.
+    6. Creates helper variables for the IAM roles and the service worker email.
+    7. Adds the IAM policy bindings for the service worker with the specified roles.
+    8. If an error occurs during the role binding, it prints an error message.
+    9. Prints a success message.
+
+    Note:
+    - The backup bucket is created in the europe-west3 region.
+    - The IAM roles "roles/storage.admin" and "roles/datastore.importExportAdmin" are used.
+
+    :return: None
+    """
     # Load the project Config
     conf = config.get_profile("default")
 
@@ -69,14 +87,35 @@ def enable_gcp_backup():
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
 def disable(action):
-    """
-        Disable specific features for the project.
-    """
+    """Disables a specific action."""
     if action == "backup":
         disable_gcp_backup()
 
 
 def disable_gcp_backup():
+    """
+    Disables Google Cloud Platform(GCP) backups for a specified project.
+
+    This method disables GCP backups by performing the following steps:
+    1. Loads the project configuration from the "default" profile.
+    2. Creates helper variables for the project ID and backup bucket name.
+    3. Removes the backup bucket by executing the appropriate command using gsutil.
+    4. If an error occurs during bucket removal, an error message is printed.
+    5. Creates helper variables for the IAM roles and service worker email.
+    6. Removes the IAM policy bindings for the specified roles using the gcloud command.
+    7. If an error occurs during roles removal, an error message is printed.
+    8. Prints a success message if all steps complete successfully.
+
+    Returns:
+        None
+
+    Raises:
+        Any exception that occurs during the execution of the method.
+
+    Note:
+        - Make sure to have the correct Google Cloud Access rights.
+    """
+
     # Load the project Config
     conf = config.get_profile("default")
 
@@ -115,14 +154,16 @@ def disable_gcp_backup():
                   )
             return
 
-    print('Success! Gcloud Backups have been disabled')
+    echo_info('Success! Gcloud Backups have been disabled')
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["gcloud", "gcroles"]))
 @click.argument("profile", default="default")
 def setup(action, profile):
-    """Setup project for different Cloud Services"""
+    """
+    Set up the specified action for the given profile.
+    """
     if action == "gcloud":
         gcloud_setup()
 
@@ -134,13 +175,27 @@ def setup(action, profile):
 @click.argument("action", type=click.Choice(["gcroles"]))
 @click.argument("profile", default='default')
 def get(action, profile):
-    """Setup project for different Cloud Services"""
+    """Get Method to retrieve Information from Cloud Service Environment"""
 
     if action == "gcroles":
         gcloud_get_roles(profile)
 
 
 def gcloud_get_roles(profile):
+    """
+    Retrieve IAM roles from Google Cloud Platform using the gcloud command-line tool.
+
+    :param profile: String:
+        The profile name to use for retrieving the roles.
+
+    :raises:
+        subprocess.CalledProcessError: If an error occurs while fetching the role data.
+
+    Note:
+    - This method requires the gcloud command-line tool to be installed and configured in the environment.
+    - The gcloud configuration file should contain the necessary authentication information.
+
+    """
     conf = config.get_profile(profile)
 
     try:
@@ -174,6 +229,16 @@ def gcloud_get_roles(profile):
 
 
 def gcloud_setup_roles(profile):
+    """
+    Sets up roles in Google Cloud Platform (GCP) based on the given profile.
+
+    :param profile: The profile to use for setting up roles in GCP
+    :type profile: str
+
+    :raises json.JSONDecodeError: If there is an error decoding JSON from the roles JSON file
+    :raises yaml.YAMLError: If there is an error opening or writing the .yaml file
+
+    """
     conf = config.get_profile(profile)
 
     # Use a more descriptive variable name for the JSON file
@@ -203,6 +268,9 @@ def gcloud_setup_roles(profile):
 
 
 def transform_yaml_to_dict(dict_data):
+    """
+    Transforms a YAML file to a dict Object
+    """
     transformed_data = {'bindings': []}
 
     # Create a dictionary to store unique members and their corresponding roles
@@ -224,6 +292,15 @@ def transform_yaml_to_dict(dict_data):
 
 
 def transform_dict_to_yaml(transformed_data):
+    """
+    Transforms a dictionary to YAML format.
+
+    :param transformed_data: Dictionary
+        The transformed data in dictionary format.
+
+    :returns: dict
+        The original data in YAML format.
+    """
     original_data = {'bindings': []}
 
     # Create a dictionary to store roles and their corresponding members
@@ -252,6 +329,24 @@ def transform_dict_to_yaml(transformed_data):
 
 
 def gcloud_setup():
+    """
+    Set up the Google Cloud Platform (GCP) environment for a ViUR project.
+
+    This method performs the following steps:
+    1. Prompts the user to enter the GCP project ID.
+    2. Checks if the user is authorized with gcloud.
+       - If not authorized, prompts the user to authenticate with gcloud and login.
+    3. Checks if the GCP App Engine app already exists.
+       - If not, prompts the user to create the app and confirm the project is connected to a billing account.
+    4. Enables necessary APIs and services for the project.
+    5. Configures Google Cloud Storage for the project.
+    6. Deploys necessary deployment files (cron.yaml, queue.yaml, index.yaml) to the project.
+    7. Checks if the app engine default credentials are set.
+       - If not set, prompts the user to authenticate and set the application default user.
+    8. Prints a success message with instructions on how to run the project locally.
+
+    Note: This method does not return anything.
+    """
     project = input("Enter PROJECT_ID: ").strip()
 
     if not project:
@@ -292,7 +387,7 @@ def gcloud_setup():
         )
         response = input("Continue? [Y/n] ")
         if not response.lower() in ("y", ""):
-            print("User aborted.")
+            echo_error("User aborted.")
             return
 
         # Create the Appengine app
@@ -350,6 +445,12 @@ def gcloud_setup():
 
 # Helper function for running Commands in subprocess and getting the Output
 def run_command(command):
+    """
+    Executes the specified command in the system shell and returns the output.
+
+    :param command: String
+        The command to be executed in the Subprocess.
+    """
     try:
         return subprocess.check_output(command, shell=True)
     except subprocess.CalledProcessError as e:
@@ -364,48 +465,7 @@ def run_command(command):
 @click.option("--yes", "-y", is_flag=True, default=False)
 @click.option("--name", "-n", default=None)
 def deploy(action, profile, name, ext, yes, additional_args):
-
-    """
-        Deploy a Google Cloud application or different YAML files.
-
-        This command allows you to deploy various components of a Google Cloud application, such as the app itself,
-        index.yaml configurations, cron.yaml configurations, or queue.yaml configurations.
-        The deployment action and the specific project configuration
-        to deploy are determined by the 'action' and 'name' parameters.
-        Please make sure to configure your global installation of the gcloud-cli accordingly.
-
-        :param action: str
-            The deployment action. It can be one of the following:
-            - 'app': Deploy the Google Cloud application.
-            - 'index': Deploy the index.yaml configuration.
-            - 'cron': Deploy the cron.yaml configuration.
-            - 'queue': Deploy the queue.yaml configuration.
-
-        :param name: str, default: 'develop'
-            The name of the project configuration to use for deployment.
-            It should correspond to a valid project configuration.
-
-        :param additional_args: tuple
-            Additional arguments that can be passed to the deployment process.
-
-        Example Usage:
-        ```shell
-        viur deploy app my_config --version v2
-        viur deploy index my_config
-        viur deploy cron my_config
-        viur deploy queue my_config
-        ```
-
-        The `deploy` command deploys the specified components based on the 'action' and 'name' parameters.
-        It includes checks for successful deployments and offers a confirmation prompt for any failed checks.
-
-        Note:
-        - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
-        - The 'app' action includes vulnerability checks and a confirmation prompt if checks fail.
-        - The 'index' action sorts the index.yaml file by kind for cleaner organization.
-
-        :return: None
-    """
+    """ Deploy the specified action to a cloud service."""
 
     conf = config.get_profile(profile)
 
@@ -496,7 +556,29 @@ def deploy(action, profile, name, ext, yes, additional_args):
 
 
 def build_deploy_command(name, conf):
-    """Builds the deployment command string for the cloud function."""
+    """
+
+    Builds a deployment command for a cloud function.
+
+    :param name: The name of the cloud function to deploy. If not provided, the user will be prompted to enter it.
+    :type name: str
+    :param conf: The project configuration.
+    :type conf: dict
+    :return: The deployment command.
+    :rtype: str
+
+    The method builds a command for deploying a cloud function using the Google Cloud Platform (GCP) CLI. It first checks if the name of the cloud function is provided. If not, it prompts
+    * the user to enter it using the `click.prompt` function. It then checks if the provided name exists in the project configuration.
+
+    The deployment command is built using a formatted string that includes the function name and the specified region. Additionally, the `max-instances` parameter from the project configuration
+    * is included in the command.
+
+    Next, the method iterates over the configuration of the specified cloud function and adds additional parameters to the command based on the key-value pairs. If the key is "trigger",
+    * "update", "set", or "remove", it adds a flag to the command including the key and its corresponding value. Otherwise, it adds a flag to the command including the key and its corresponding
+    * value as a string.
+
+    Finally, the built command is returned.
+    """
 
     if not name:
         name = click.prompt("Please enter the name of the cloudfunction you want to deploy")
@@ -532,7 +614,7 @@ def build_deploy_command(name, conf):
 @click.option("--runtime", "-rt")
 @click.option("--trigger", "-tr")
 def create(profile, action, source, name, entrypoint, env_vars_file, memory, runtime, trigger):
-    """Create cloudfunction entry"""
+    """Creates a cloud function based on the provided parameters."""
     if action == "function":
         conf = config.get_profile(profile)
         # First layer initialization:
@@ -571,3 +653,4 @@ def create(profile, action, source, name, entrypoint, env_vars_file, memory, run
         config.migrate()
         echo_positive("Your cloudfunction creation was succesfull, if you want to add more flags, "
                       "add them in your project.json under")
+

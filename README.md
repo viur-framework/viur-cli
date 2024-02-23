@@ -12,7 +12,8 @@
 </div>
 
 ## What does it do?
-`viur-cli` allows to control, maintain and develop a ViUR project from one central location by using the `viur` command.
+`viur-cli` allows to control, maintain, develop and deploy a ViUR project from one central 
+location by using the `viur` command.
 
 
 ## Installation
@@ -26,9 +27,15 @@ $ pipenv install --dev viur-cli
 ## Usage
 
 ```sh
-$ viur --help
+$ viur -h
 ```
 will show all the commands that are currently supported by viur-cli
+
+```sh
+$ viur --version 
+```
+will show your current viur-cli version
+
 
 ```sh
 $ viur create myapp
@@ -37,27 +44,15 @@ this will create a new project folder, clone the base project and then call `viu
 you can use this to get started quickly with a new viur project from scratch.
 
 ```sh
-$ viur init
+$ viur run [profile]
 ```
-this will initialize a new project in the current folder, you will be asked a couple of questions like if 
-you would like to create a new project.json file, what components should be preinstalled and what the 
-projectID of your application will be.
+run the appserver and start your app locally. You may specify a target profile. 
+
 
 ```sh
-$ viur run [target]
-```
-run the appserver and start your app locally. You may specify a target projectID.
-
-```sh
-$ viur check {npm|--dev|--autofix}
+$ viur check [--dev]
 ```
 Runs a security check for the python environment and for each npm project registered under builds.
-
-```sh
-$ viur enable {backup}
-```
-create a backup bucket and enable the gcloud service worker account to access it.
-
 
 ```sh
 $ viur package {install|update} {vi|scriptor|admin|all} 
@@ -73,14 +68,13 @@ Arguments:
 - `version`  version to install
 
 ```sh
-$ viur build release
+$ viur build {app|clean|release} [option]
 ```
-build all npm apps and produce a release that can be deployed
-
-```sh
-$ viur build app [appname]
-```
-build a specific app
+Builds ViUR Project or specific apps
+Commands:
+- `app` Build a specific application
+- `clean` Clean up Build Artifacts
+- `release` Build all relevant applications to deploy the project 
 
 ```sh
 $ viur cloud deploy {app|index|cloudfunction} {profile} {--ext|--yes|--name}
@@ -88,10 +82,10 @@ $ viur cloud deploy {app|index|cloudfunction} {profile} {--ext|--yes|--name}
 This Function deploys the Google Cloud application and / or different .yaml files
 Scripts:
 - `app`           Deploy application to the Google Appengine
-- `index`         Deploy index.yaml to Google Appenginge
-- `cloudfunction` Deploy Cloudfunction to Google Appengine
-Commands:
-- `profile`       The project.json profile you want to Work from
+  - `index`         Deploy index.yaml to Google Appenginge
+  - `cloudfunction` Deploy Cloudfunction to Google Appengine
+  Commands:
+  - `profile`       The project.json profile you want to Work from
 
 
 ```sh
@@ -104,7 +98,7 @@ $ viur cloud setup {gcloud|gcroles}
 ```
 Scripts:
 - `gcloud`    This Function setups your project to work on the gcloud plattform
-- `gcroles`   This function lets you set up Roles for your google appengine Workspace
+  - `gcroles`   This function lets you set up Roles for your google appengine Workspace
 
 
 ```sh
@@ -113,17 +107,30 @@ $ viur cloud get {gcroles}
 Scripts:
 - `gcroles`   This function lets you get Roles for your google appengine Workspace in a readable .json Format
 
+```sh
+$ viur package {update|install} {vi|admin|scriptor|all} [profile] [version]
+```
+Performs operations on packages
+
+Scripts:
+- `update` Updates an installed package
+- `install` Installs a declared package
+
+Options:
+- `vi`
+- `admin` 
+- `scriptor` 
+- `all`
 
 ```sh
 $ viur env
 ```
-check the environment you are in right now, show versions of viur-cli, viur-core and vi etc.
+Show information about your current environment.
 
 ```sh
-$ viur project {add|remove|list}
+$ viur project list
 ```
-with this you can manage your project.json or generate a new one. You can add or remove targets to/from the 
-project.json, list what has been added to the project.json, to be built when running `viur build release`.
+Pretty prints your `project.json` file on the console.
 
 ```sh
 $ viur update {requirements}
@@ -162,6 +169,20 @@ It contains the default viur project profile and it can be expanded with several
                 "source": ""
             }
         },
+        "gcloud": {
+            "functions": { //Declarations for a cloud function
+                "testfunction1": {
+                    "entry-point": "main",
+                    "env-vars-file": "env.yaml",
+                    "memory": "512MB",
+                    "runtime": "python311",
+                    "source": "deploy/cloudfunction/function1",
+                    "trigger": "http"
+                }
+            },
+            "max-instances": "1",
+            "region": "europe-west3"
+        },
         "core": "3.5.1",  // viur-core version of your project
         "distribution_folder": "./deploy", // Deploy folder uploaded to GAE
         "sources_folder": "./sources",
@@ -184,6 +205,7 @@ The GUI version is called scriptor and can be accessed via a webinterface, but v
 ```sh
 $ viur script {configure|pull|push|run|setup}
 ```
+Manage your ViUR Scriptor Scripts via the CLI
 Commands:
 - `configure`  Manage configuration settings.
 - `pull`       Pull contents from server to working_dir.
@@ -240,7 +262,6 @@ viur-cli depends on
 * [app_server](https://github.com/XeoN-GHMB/app_server)
 * [pipfile-requirements](https://github.com/frostming/pipfile-requirements)
 * [watchgod](https://github.com/samuelcolvin/watchgod)
-* [python-minifier](https://github.com/dflook/python-minifier)
 
 ## License
 
