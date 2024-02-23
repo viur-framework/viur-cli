@@ -34,7 +34,7 @@ will show all the commands that are currently supported by viur-cli
 ```sh
 $ viur -version 
 ```
-will show you your current viur-cli version
+will show your current viur-cli version
 
 
 ```sh
