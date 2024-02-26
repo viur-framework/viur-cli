@@ -2,7 +2,7 @@
 
 This file documents any relevant changes.
 
-## [2.0.o-rc1] 2024-02-23
+## [2.0.0-rc1] 2024-02-23
 - docs: updated documentation
 
 ## [2.0.0-dev4] 2024-02-19
