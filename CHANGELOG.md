@@ -2,6 +2,9 @@
 
 This file documents any relevant changes.
 
+## [2.0.0-rc2] 2024-02-06
+- chore: update dependencies
+
 ## [2.0.0-rc1] 2024-02-23
 - docs: updated documentation
 
