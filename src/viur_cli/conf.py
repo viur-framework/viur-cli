@@ -81,7 +81,6 @@ class ProjectConfig(dict):
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
     def migrate(self):
-
         assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", PROJECT_CONFIG_VERSION], \
             "Invalid formatversion, you have to fix it manually"
 
@@ -118,6 +117,9 @@ class ProjectConfig(dict):
 
         if self["format"] == "1.1.1":
             self["format"] = "2.0.0"
+            format_version_updated = True
+        else:
+            format_version_updated = False
 
         for entry in ("admin", "scriptor", "vi"):
             if not self["default"]["builds"]:
@@ -131,13 +133,16 @@ class ProjectConfig(dict):
                 }
                 del self["default"][entry]
 
-        if "admin" in self["default"]["builds"] and "vi" in self["default"]["builds"]:
-            echo_info(f"It seems like you have an Admin and a Vi Version in your project.json. \n"
-                      f"per default the VI version will be overwritten by the viur-admin \n"
-                      f"if you want to keep your vi press 'n'")
-            if click.confirm(text=f"Do you want to use admin?", default=True):
+        if format_version_updated:
+            response = click.prompt(
+                text="Do you want to enforce use of admin only? (yes/no/keep)",
+                type=click.Choice(["yes", "no", "keep"]),
+                default="yes"
+            )
+
+            if response == "yes":
                 del self["default"]["builds"]["vi"]
-            else:
+            elif response == "no":
                 del self["default"]["builds"]["admin"]
 
         """

@@ -193,7 +193,7 @@ def app(appname, profile, additional_args):
 
 @build.command
 @click.argument("target", default="")
-@click.argument("name", default="default")
+@click.argument("profile", default="default")
 def clean(target, profile):
     """
     Clean up build artifacts.
