@@ -8,8 +8,7 @@ import semver
 import pprint
 
 
-@click.group(invoke_without_command=True,
-             no_args_is_help=True,
+@click.group(invoke_without_command=True, no_args_is_help=True,
              context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__)
 @click.pass_context
@@ -28,9 +27,9 @@ def cli(ctx):
     """
 
     # Get the systems pipenv Version Number
-    foobar = subprocess.check_output(['pipenv', '--version']).decode("utf-8")
+    pipenv_version = subprocess.check_output(['pipenv', '--version']).decode("utf-8")
     version_pattern = r'\b(\d+\.\d+\.\d+)\b'
-    match = re.search(version_pattern, foobar)
+    match = re.search(version_pattern, pipenv_version)
     sys_pipenv = match.group(1)
 
     # sys kleiner min
@@ -41,6 +40,7 @@ def cli(ctx):
             f"Your Version: {sys_pipenv}\n"
             f"Recommended Version: {MINIMAL_PIPENV}"
         )
+
 
 @cli.command()
 @click.argument("action", type=click.Choice(['list']))
