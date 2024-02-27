@@ -144,8 +144,6 @@ class ProjectConfig(dict):
                 del self["default"]["builds"]["vi"]
             elif response == "no":
                 del self["default"]["builds"]["admin"]
-            else:
-                pass  # Do nothing
 
         """
              Fetch the version of the 'viur-core' package.
