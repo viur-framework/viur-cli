@@ -1,11 +1,33 @@
+import json
+
 import click
 import os
 import shutil
 import subprocess
+
+from viur_cli import echo_info, echo_warning
 from .conf import config
 from . import cli, echo_error, utils
+from requests import get
 from .package import vi as vi_install
 from types import SimpleNamespace
+
+
+def get_user_info():
+    gcloud_auth_process = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'],
+                                         capture_output=True,
+                                         text=True)
+
+    auth_token = gcloud_auth_process.stdout.strip()  # Extract auth token
+
+    curl_command = f'curl -X GET -H "Authorization: Bearer {auth_token}" "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"'
+
+    curl_process = subprocess.run(curl_command,
+                                  capture_output=True, shell = True,
+                                  text=True)
+    user_info = json.loads(curl_process.stdout)
+
+    return user_info
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -16,7 +38,7 @@ def run(profile, additional_args):
         Start your application locally.
         The 'run' command launches your ViUR application locally specified configuration and optional arguments.
     """
-
+    echo_warning(f"You are using the development Server with your default account: {get_user_info()["email"]}")
     conf = config.get_profile(profile)
 
     utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
@@ -127,6 +149,9 @@ def env(profile):
     else:
         click.echo(f"{failed_icon} gcloud")
 
+    click.echo(f"Your default gcloud user Info:")
+    for k,v in get_user_info().items():
+        click.echo(f"{k}: {v}")
 
 @cli.command()
 @click.option('--dev', '-d', is_flag=True, default=False)
