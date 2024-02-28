@@ -2,6 +2,10 @@
 
 This file documents any relevant changes.
 
+## [2.0.0-rc4] 2024-02-28
+- fix: deployment issues
+- chore: added default gcloud account information in env
+
 ## [2.0.0-rc3] 2024-02-27
 - fix: minor bugfixesg
 
