@@ -3,7 +3,7 @@
 This file documents any relevant changes.
 
 ## [2.0.0-rc3] 2024-02-27
-- fix: minor bugfixesg
+- fix: minor bugfixes
 
 ## [2.0.0-rc2] 2024-02-26
 - chore: update dependencies
