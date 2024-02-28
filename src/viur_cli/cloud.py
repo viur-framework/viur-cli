@@ -504,9 +504,10 @@ def deploy(action, profile, name, ext, yes, additional_args):
 
         os.system(
             f'gcloud app deploy --project={conf["application_name"]} --version={version} '
-            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}')
+            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}'
+        )
 
-    if action == "cloudfunction":
+    elif action == "cloudfunction":
         os.system(build_deploy_command(name, conf))
 
     else:
