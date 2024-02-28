@@ -22,7 +22,6 @@ def get_user_info():
 
     curl_command = f'curl -X GET -H "Authorization: Bearer {auth_token}" "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"'
 
-
     curl_process = subprocess.run(curl_command,
                                   capture_output=True, shell = True,
                                   text=True)
@@ -39,8 +38,7 @@ def run(profile, additional_args):
         Start your application locally.
         The 'run' command launches your ViUR application locally specified configuration and optional arguments.
     """
-    echo_warning("ATTENTION:")
-    echo_info(f"You are using the development Server with your default account: {get_user_info()["email"]}")
+    echo_warning(f"You are using the development Server with your default account: {get_user_info()["email"]}")
     conf = config.get_profile(profile)
 
     utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
