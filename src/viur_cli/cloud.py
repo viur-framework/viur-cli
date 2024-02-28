@@ -470,7 +470,7 @@ def run_command(command):
 
 @cloud.command()
 @click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue', 'cloudfunction']))
-@click.argument("profile", default='develop')
+@click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
 @click.option("--yes", "-y", is_flag=True, default=False)

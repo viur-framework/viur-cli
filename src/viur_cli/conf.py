@@ -69,6 +69,8 @@ class ProjectConfig(dict):
         """Get profile configuration"""
         if profile == "format":
             echo_fatal("Your profile can not be named 'Format' ")
+        if profile not in self:
+            echo_fatal(f"{profile!r} is not a valid profile name")
         return self["default"].copy() | self[profile]
 
     def delete(self):
