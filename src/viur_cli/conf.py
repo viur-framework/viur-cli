@@ -83,6 +83,10 @@ class ProjectConfig(dict):
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
     def migrate(self):
+        if old_format := self["default"].get("format"):
+            self["format"] = old_format
+            del self["default"]["format"]
+
         assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", PROJECT_CONFIG_VERSION], \
             "Invalid formatversion, you have to fix it manually"
 
