@@ -131,7 +131,7 @@ def build():
 
 
 @build.command(context_settings={"ignore_unknown_options": True})
-@click.argument("profile", default='develop')
+@click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
 def release(profile, additional_args):
     """

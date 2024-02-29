@@ -8,7 +8,7 @@ from . import cli, echo_error, echo_positive, echo_info, utils
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["requirements"]))
-@click.argument("profile", default='develop')
+@click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
 def update(action, profile, additional_args):
     """
