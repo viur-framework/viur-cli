@@ -2,6 +2,9 @@
 
 This file documents any relevant changes.
 
+## [2.0.0-rc5] 2024-03-05
+- fix: format in project.json
+
 ## [2.0.0-rc4] 2024-02-28
 - fix: deployment issues
 - chore: added default gcloud account information in env
