@@ -1,4 +1,6 @@
 import json
+from pprint import pprint
+
 import click
 from .utils import *
 
@@ -82,7 +84,21 @@ class ProjectConfig(dict):
         except:
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
+    def find_key(self, dictionary, target_key, target, level=1):
+        for key, value in dictionary.items():
+            if key == target_key:
+                self[target][target_key] = value
+                return
+            if isinstance(value, dict):
+                self.find_key(value, target_key, target, level + 1)
+
     def migrate(self):
+
+        if "application_name" not in self["default"]:
+            self.find_key(self, target_key="application_name", target="default", level=0)
+            if "application_name" in self:
+                del self["application_name"]
+
         if old_format := self["default"].get("format"):
             self["format"] = old_format
             del self["default"]["format"]
@@ -147,10 +163,15 @@ class ProjectConfig(dict):
             )
 
             if response == "yes":
-                del self["default"]["builds"]["vi"]
+                try:
+                    del self["default"]["builds"]["vi"]
+                except:
+                    echo_info("You are using the ViUR Admin")
             elif response == "no":
-                del self["default"]["builds"]["admin"]
-
+                try:
+                    del self["default"]["builds"]["admin"]
+                except:
+                    echo_info("You are using the Vi Administration")
         """
              Fetch the version of the 'viur-core' package.
 
