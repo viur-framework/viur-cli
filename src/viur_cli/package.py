@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 import zipfile
 import click
 import requests
@@ -84,9 +85,9 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 
 @cli.command()
 @click.argument('operation', type=click.Choice(['update', 'install']))
-@click.argument('component', type=click.Choice(['vi', 'admin', 'scriptor', 'all']))
-@click.argument('profile', default='default')
+@click.argument('component', type=click.Choice(['vi', 'admin', 'scriptor', 'core', 'all']))
 @click.argument("version", default="latest")
+@click.argument('profile', default='default')
 def package(operation, component, profile, version):
     """
     Performs installements and updates of ViUR Ecosystem packages
@@ -95,14 +96,21 @@ def package(operation, component, profile, version):
     operations_links = {
         'vi': vi,
         'admin': admin,
-        'scriptor': scriptor
+        'scriptor': scriptor,
+        'core': core,
     }
 
     def perform_operation(component, version):
         if operation == 'install':
-            operations_links[component](version, target=component, profile=profile)
-        else:
-            operations_links[component](version="latest", target=component, profile=profile)
+            if component == 'core':
+                operations_links[component](version)
+            else:
+                operations_links[component](version, target=component, profile=profile)
+        elif operation == 'update':
+            if component == 'core':
+                operations_links[component](version)
+            else:
+                operations_links[component](version="latest", target=component, profile=profile)
 
     match component:
         case 'vi':
@@ -111,11 +119,15 @@ def package(operation, component, profile, version):
             perform_operation('admin', version)
         case 'scriptor':
             perform_operation('scriptor', version)
+        case 'core':
+            perform_operation('core', version)
+
         case 'all':
             if operation == 'update':
                 for build in conf["builds"]:
                     if build in operations_links:
                         perform_operation(build, "latest")
+                perform_operation("core", "latest")
             else:
                 # We want to force the User to use the new Admin, so Vi can only be installed explicitly!!
                 for build in ["admin", "scriptor"]:
@@ -246,3 +258,11 @@ def vi(version, target, profile):
             elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
+
+def core(version):
+    command = 'pipenv install viur-core'
+    if version not in ["latest", "*"]:
+        command += f'=="{version}"'
+    process = subprocess.check_output(command, shell=True).decode('utf-8')
+    echo_info(process)
+
