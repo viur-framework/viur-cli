@@ -1,6 +1,4 @@
 import json
-from pprint import pprint
-
 import click
 from .utils import *
 
