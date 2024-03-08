@@ -2,6 +2,8 @@ import os
 import shutil
 import subprocess
 import zipfile
+from pprint import pprint
+
 import click
 import requests
 from viur_cli import echo_positive, echo_fatal
@@ -261,8 +263,14 @@ def vi(version, target, profile):
 
 def core(version):
     command = 'pipenv install viur-core'
+    if config["core"] == "submodule":
+        echo_fatal("Your ViUR Core is installed as Git Submodule, "
+                   "please remove the installation and install it as Pipenv package")
     if version not in ["latest", "*"]:
         command += f'=="{version}"'
+        config['core'] = version
+    else:
+        config['core'] = "*"
     process = subprocess.check_output(command, shell=True).decode('utf-8')
     echo_info(process)
 

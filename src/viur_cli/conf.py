@@ -162,7 +162,7 @@ class ProjectConfig(dict):
         try:
             result = os.popen('pip list --format=json').read()
             core_version = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
-            self["default"]["core"] = core_version
+            self["core"] = core_version
 
         except:
             self["default"]["core"] = "submodule"
