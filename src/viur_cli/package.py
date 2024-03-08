@@ -2,8 +2,6 @@ import os
 import shutil
 import subprocess
 import zipfile
-from pprint import pprint
-
 import click
 import requests
 from viur_cli import echo_positive, echo_fatal
