@@ -84,15 +84,18 @@ class ProjectConfig(dict):
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
     def find_key(self, dictionary, target_key, target, level=0):
-        for key, value in dictionary.items():
-            if key == target_key:
-                if target == None:
-                    echo_error("I FOUND IT")
-                    self[target_key] = value
-                    return
-                else:
-                    self[target][target_key] = value
-                    return
+        if target_key in dictionary:
+            value = dictionary[target_key]
+
+            if target is None:
+                echo_error("I FOUND IT")
+                self[target_key] = value
+                return
+            else:
+                self[target][target_key] = value
+                return
+
+        for value in list(dictionary.values()):
             if isinstance(value, dict):
                 self.find_key(value, target_key, target, level=level + 1)
 
