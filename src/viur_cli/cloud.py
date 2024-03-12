@@ -15,7 +15,7 @@ def cloud():
     """This method defines a command group for working with cloud resources."""
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action", type=click.Choice(["bucket2bucket"]))
+@click.argument("action", type=click.Choice(["bucket2bucket", "bucket2local"]))
 @click.argument("profile", default="default")
 def copy(action, profile):
     if action == "bucket2bucket":
