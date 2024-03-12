@@ -14,6 +14,37 @@ from .update import create_req
 def cloud():
     """This method defines a command group for working with cloud resources."""
 
+@cloud.command(context_settings={"ignore_unknown_options": True})
+@click.argument("action", type=click.Choice(["bucket2bucket"]))
+@click.argument("profile", default="default")
+def copy(action, profile):
+    if action == "bucket2bucket":
+        if user_check_login():
+            storage_copy()
+
+    if action == "bucket2local":
+        if user_check_login():
+            datastore_import(profile)
+
+def user_check_login():
+    return click.confirm("Are you logged in with your gcloud admin account?", default=False, show_default=True)
+
+def storage_copy():
+    #https://console.cloud.google.com/transfer/jobs
+    source = click.prompt('Source bucketname')
+    target = click.prompt('Target bucketname')
+    if not click.confirm(text=f"Copy from {source} to {target}", default=True):
+        print("Abort ...")
+        return 0
+    print(f"gsutil -m cp -r gs://{source}/ gs://{target}/")
+    os.system(f"gsutil -m cp -r gs://{source} gs://{target}")
+
+
+def datastore_import(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('path to overll_export_metadata')
+    os.system(f"gcloud datastore import gs://{target} --project={conf['application_name']}")
+
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
