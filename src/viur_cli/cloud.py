@@ -2,6 +2,8 @@ import json
 import subprocess
 import os
 import string
+from datetime import datetime
+
 import click
 import yaml
 from viur_cli import echo_positive, echo_warning, echo_fatal
@@ -44,6 +46,14 @@ def datastore_import(profile):
     conf = config.get_profile(profile)
     target = click.prompt('path to overll_export_metadata')
     os.system(f"gcloud datastore import gs://{target} --project={conf['application_name']}")
+
+
+def datastore_export(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('bucketname')
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")+"-manual"
+    format = "default" #click.prompt('format(json,csv,default)',default='default')
+    os.system(f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={project_conf['application_name']} ")
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
