@@ -2,6 +2,8 @@ import json
 import subprocess
 import os
 import string
+from datetime import datetime
+
 import click
 import yaml
 from viur_cli import echo_positive, echo_warning, echo_fatal
@@ -13,6 +15,49 @@ from .update import create_req
 @cli.group()
 def cloud():
     """This method defines a command group for working with cloud resources."""
+
+@cloud.command(context_settings={"ignore_unknown_options": True})
+@click.argument("action", type=click.Choice(["bucket2bucket", "bucket2local", "local2bucket"]))
+@click.argument("profile", default="default")
+def copy(action, profile):
+    if action == "bucket2bucket":
+        if user_check_login():
+            storage_copy()
+
+    if action == "bucket2local":
+        if user_check_login():
+            datastore_import(profile)
+
+    if action == "local2bucket":
+        if user_check_login():
+            datastore_export(profile)
+
+def user_check_login():
+    return click.confirm("Are you logged in with your gcloud admin account?", default=False, show_default=True)
+
+def storage_copy():
+    #https://console.cloud.google.com/transfer/jobs
+    source = click.prompt('Source bucketname')
+    target = click.prompt('Target bucketname')
+    if not click.confirm(text=f"Copy from {source} to {target}", default=True):
+        print("Abort ...")
+        return 0
+    print(f"gsutil -m cp -r gs://{source}/ gs://{target}/")
+    os.system(f"gsutil -m cp -r gs://{source} gs://{target}")
+
+
+def datastore_import(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('path to overll_export_metadata')
+    os.system(f"gcloud datastore import gs://{target} --project={conf['application_name']}")
+
+
+def datastore_export(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('bucketname')
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")+"-manual"
+    format = "default"
+    os.system(f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={conf['application_name']} ")
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
