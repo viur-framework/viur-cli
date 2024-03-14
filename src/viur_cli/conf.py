@@ -180,7 +180,7 @@ class ProjectConfig(dict):
         # conf updates must increase format version
         self.save()
 def print_changelog_from_github(user, repo):
-    url = f"https://raw.githubusercontent.com/{user}/{repo}/master/CHANGELOG.md"
+    url = f"https://raw.githubusercontent.com/{user}/{repo}/main/CHANGELOG.md"
     response = requests.get(url)
     if response.status_code == 200:
         changelog_lines = response.text.split("\n")[:20]
