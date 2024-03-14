@@ -1,10 +1,11 @@
 import json
 import click
+import requests
 from .utils import *
+from .version import __version__ as cli_version
 
 PROJECT_CONFIG_FILE = "project.json"
 PROJECT_CONFIG_VERSION = "2.0.0"
-
 
 class ProjectConfig(dict):
 
@@ -94,6 +95,15 @@ class ProjectConfig(dict):
         if (pyodide_version := self["default"].get("pyodide")) and pyodide_version.startswith("v"):
             self["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
 
+        #Check if a Cli version is in the project.json
+        if "cli-version" not in self:
+            self["cli-version"] = cli_version
+            print_changelog_from_github('viur-framework', 'viur-cli')
+
+        if "cli-version" in self and self["cli-version"] != cli_version:
+            print_changelog_from_github('viur-framework', 'viur-cli')
+            self["cli-version"] = cli_version
+
         if self["format"] == "1.0.0":
             self["format"] = "1.0.1"
 
@@ -169,6 +179,16 @@ class ProjectConfig(dict):
 
         # conf updates must increase format version
         self.save()
-
+def print_changelog_from_github(user, repo):
+    url = f"https://raw.githubusercontent.com/{user}/{repo}/master/CHANGELOG.md"
+    response = requests.get(url)
+    if response.status_code == 200:
+        changelog_lines = response.text.split("\n")[:20]
+        echo_info("It seems you have updated your viur-cli tool!\n "
+                  "Please Consider reading the changelog!")
+        click.echo("\n".join(changelog_lines))
+        click.confirm("Done?", default=True)
+    else:
+        print("Unable to fetch the changelog.")
 
 config = ProjectConfig()

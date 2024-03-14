@@ -32,6 +32,7 @@ def cli(ctx):
     match = re.search(version_pattern, pipenv_version)
     sys_pipenv = match.group(1)
 
+
     # sys kleiner min
     if semver.compare(sys_pipenv, MINIMAL_PIPENV) < 0:
         echo_warning(
