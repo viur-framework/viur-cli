@@ -17,7 +17,7 @@ def cloud():
     """This method defines a command group for working with cloud resources."""
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action", type=click.Choice(["bucket2bucket", "bucket2local"]))
+@click.argument("action", type=click.Choice(["bucket2bucket", "bucket2local", "local2bucket"]))
 @click.argument("profile", default="default")
 def copy(action, profile):
     if action == "bucket2bucket":
@@ -27,6 +27,10 @@ def copy(action, profile):
     if action == "bucket2local":
         if user_check_login():
             datastore_import(profile)
+
+    if action == "local2bucket":
+        if user_check_login():
+            datastore_export(profile)
 
 def user_check_login():
     return click.confirm("Are you logged in with your gcloud admin account?", default=False, show_default=True)
@@ -52,8 +56,8 @@ def datastore_export(profile):
     conf = config.get_profile(profile)
     target = click.prompt('bucketname')
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")+"-manual"
-    format = "default" #click.prompt('format(json,csv,default)',default='default')
-    os.system(f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={project_conf['application_name']} ")
+    format = "default"
+    os.system(f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={conf['application_name']} ")
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
