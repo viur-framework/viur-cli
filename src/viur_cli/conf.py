@@ -96,7 +96,7 @@ class ProjectConfig(dict):
             self["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
 
         #Check if a Cli version is in the project.json
-        if "cli-version" not in self:
+        if self.get("cli-version") != cli_version:
             self["cli-version"] = cli_version
             print_changelog_from_github('viur-framework', 'viur-cli')
 
@@ -184,13 +184,13 @@ class ProjectConfig(dict):
 def print_changelog_from_github(user, repo):
     url = f"https://raw.githubusercontent.com/{user}/{repo}/main/CHANGELOG.md"
     response = requests.get(url)
-    if response.status_code == 200:
+    if response.ok:
         changelog_lines = response.text.split("\n")[:20]
-        echo_info("It seems you have updated your viur-cli tool!\n "
-                  "Please consider reading the changelog!")
+        echo_info("It seems you have updated your viur-cli!\n "
+                  "Please consider reading the changelog: https://github.com/viur-framework/viur-cli/blob/main/CHANGELOG.md")
         click.echo("\n".join(changelog_lines))
         click.confirm("Done?", default=True)
     else:
-        print("Unable to fetch the changelog.")
+        echo_error("Unable to fetch the changelog.")
 
 config = ProjectConfig()
