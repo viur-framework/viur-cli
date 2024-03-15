@@ -100,9 +100,9 @@ class ProjectConfig(dict):
             self["cli-version"] = cli_version
             print_changelog_from_github('viur-framework', 'viur-cli')
 
-        if "cli-version" in self and self["cli-version"] != cli_version:
-            print_changelog_from_github('viur-framework', 'viur-cli')
+        elif self["cli-version"] != cli_version:
             self["cli-version"] = cli_version
+            print_changelog_from_github('viur-framework', 'viur-cli')
 
         if self["format"] == "1.0.0":
             self["format"] = "1.0.1"
@@ -179,13 +179,15 @@ class ProjectConfig(dict):
 
         # conf updates must increase format version
         self.save()
+
+
 def print_changelog_from_github(user, repo):
     url = f"https://raw.githubusercontent.com/{user}/{repo}/main/CHANGELOG.md"
     response = requests.get(url)
     if response.status_code == 200:
         changelog_lines = response.text.split("\n")[:20]
         echo_info("It seems you have updated your viur-cli tool!\n "
-                  "Please Consider reading the changelog!")
+                  "Please consider reading the changelog!")
         click.echo("\n".join(changelog_lines))
         click.confirm("Done?", default=True)
     else:
