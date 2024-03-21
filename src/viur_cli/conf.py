@@ -1,11 +1,13 @@
 import json
 import click
 import requests
+import difflib
 from .utils import *
 from .version import __version__ as cli_version
 
 PROJECT_CONFIG_FILE = "project.json"
 PROJECT_CONFIG_VERSION = "2.0.0"
+LAST_VERSION = ""
 
 class ProjectConfig(dict):
 
@@ -95,14 +97,13 @@ class ProjectConfig(dict):
         if (pyodide_version := self["default"].get("pyodide")) and pyodide_version.startswith("v"):
             self["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
 
-        #Check if a Cli version is in the project.json
-        if self.get("cli-version") != cli_version:
+        if not self.get("cli-version"):
+            print_changelog_from_github('viur-framework', 'viur-cli', None)
             self["cli-version"] = cli_version
-            print_changelog_from_github('viur-framework', 'viur-cli')
 
-        elif self["cli-version"] != cli_version:
+        elif self.get("cli-version") != cli_version:
+            print_changelog_from_github('viur-framework', 'viur-cli', self.get("cli-version"))
             self["cli-version"] = cli_version
-            print_changelog_from_github('viur-framework', 'viur-cli')
 
         if self["format"] == "1.0.0":
             self["format"] = "1.0.1"
@@ -181,16 +182,33 @@ class ProjectConfig(dict):
         self.save()
 
 
-def print_changelog_from_github(user, repo):
-    url = f"https://raw.githubusercontent.com/{user}/{repo}/main/CHANGELOG.md"
-    response = requests.get(url)
-    if response.ok:
+def print_changelog_from_github(user, repo, last_version):
+    version_url = f"https://raw.githubusercontent.com/{user}/{repo}/main/CHANGELOG.md"
+    response = requests.get(version_url)
+
+    if last_version is not None:
+        version_url1 = f"https://raw.githubusercontent.com/{user}/{repo}/{last_version}/CHANGELOG.md"
+        echo_warning(version_url1)
+        response1 = requests.get(version_url1)
+
+    if last_version is None and response.ok:
         changelog_lines = response.text.split("\n")[:20]
         echo_info("It seems you have updated your viur-cli!\n "
                   "Please consider reading the changelog: https://github.com/viur-framework/viur-cli/blob/main/CHANGELOG.md")
         click.echo("\n".join(changelog_lines))
         click.confirm("Done?", default=True)
+
+    elif response.ok and response1.ok:
+        get_changelog_difference(response.text.split('\n'), response1.text.split('\n'))
+
     else:
         echo_error("Unable to fetch the changelog.")
+
+def get_changelog_difference(response, response1):
+    diff = difflib.unified_diff(response, response1)
+    for line in diff: # Skip the first 2 lines
+        if line.startswith('@@') or line.startswith('---') or line.startswith('+++'):
+            continue
+        echo_info(line[1:])
 
 config = ProjectConfig()
