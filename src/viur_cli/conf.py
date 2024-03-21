@@ -9,6 +9,7 @@ PROJECT_CONFIG_FILE = "project.json"
 PROJECT_CONFIG_VERSION = "2.0.0"
 LAST_VERSION = ""
 
+
 class ProjectConfig(dict):
 
     def __init__(self):
@@ -204,11 +205,13 @@ def print_changelog_from_github(user, repo, last_version):
     else:
         echo_error("Unable to fetch the changelog.")
 
+
 def get_changelog_difference(response, response1):
     diff = difflib.unified_diff(response, response1)
-    for line in diff: # Skip the first 2 lines
+    for line in diff:  # Skip the first 2 lines
         if line.startswith('@@') or line.startswith('---') or line.startswith('+++'):
             continue
         echo_info(line[1:])
+
 
 config = ProjectConfig()
