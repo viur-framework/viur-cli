@@ -83,6 +83,14 @@ def enable_gcp_backup():
 
     print('Success! It may take a while until you can use Gcloud Backups')
 
+@cloud.command(context_settings={"ignore_unknown_options": True})
+@click.argument("service", type=click.Choice(["gcloud"]), default="gcloud")
+@click.argument("profile", default="default")
+def init(service, profile):
+    deployments = ["cron", "queue", "cron"]
+    if service == "gcloud":
+        for element in deployments:
+            os.system(f"viur cloud deploy {element} {profile} -y")
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("service", type=click.Choice(["gcloud"]), default="gcloud")
