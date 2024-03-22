@@ -87,6 +87,12 @@ Scripts:
   Commands:
   - `profile`       The project.json profile you want to Work from
 
+```sh
+$ viur cloud init {service} {profile} 
+```
+This Function makes the init deployment for a ViUR project.
+This Function needs to be called so that the development server works locally.
+
 
 ```sh
 $ viur cloud {enable|disable} backup
