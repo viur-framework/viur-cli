@@ -1,6 +1,10 @@
 # Changelog
 
 This file documents any relevant changes.
+## [2.0.0-rc6] 2024-03-22
+- fix: format in project.json
+- feature: shows CHANGELOG.md on first start
+- feature: added gcloud initiation deployment
 
 ## [2.0.0-rc5] 2024-03-05
 - fix: format in project.json
