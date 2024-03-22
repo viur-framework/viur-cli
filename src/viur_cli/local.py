@@ -38,7 +38,7 @@ def run(profile, additional_args):
         Start your application locally.
         The 'run' command launches your ViUR application locally specified configuration and optional arguments.
     """
-    echo_warning(f"You are using the development Server with your default account: {get_user_info()['email']}")
+    echo_warning(f'You are using the development Server with your default account: {get_user_info()["email"]}')
     conf = config.get_profile(profile)
 
     utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
