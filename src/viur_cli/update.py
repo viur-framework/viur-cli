@@ -3,7 +3,7 @@ import os
 import sys
 import re
 from .conf import config
-from . import cli, echo_error, echo_positive, echo_info, utils
+from . import cli, echo_error, echo_info, utils
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -26,12 +26,8 @@ def update(action, profile, additional_args):
         - Additional arguments can be used to customize the update process if supported by the action.
 
     """
-    conf = config.get_profile(profile)
-
     if action == "requirements":
         create_req(True, profile)
-
-
 
 
 def create_req(yes, profile, confirm_value=True):
@@ -53,7 +49,7 @@ def create_req(yes, profile, confirm_value=True):
     """
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
-    if conf["core"] != "submodule":
+    if config["core"] != "submodule":
         if yes or click.confirm(
                 text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
                 default=confirm_value):
