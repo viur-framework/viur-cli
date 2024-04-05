@@ -48,14 +48,14 @@ def storage_copy():
 
 def datastore_import(profile):
     conf = config.get_profile(profile)
-    target = click.prompt('path to overll_export_metadata')
+    target = click.prompt('path to overall_export_metadata')
     os.system(f"gcloud datastore import gs://{target} --project={conf['application_name']}")
 
 
 def datastore_export(profile):
     conf = config.get_profile(profile)
     target = click.prompt('bucketname')
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")+"-manual"
+    timestamp = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-manual'
     format = "default"
     os.system(f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={conf['application_name']} ")
 
