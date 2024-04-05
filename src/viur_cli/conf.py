@@ -88,8 +88,8 @@ class ProjectConfig(dict):
             value = dictionary[target_key]
 
             if target is None:
-                echo_error("I FOUND IT")
                 self[target_key] = value
+                del value
                 return
             else:
                 self[target][target_key] = value
@@ -108,7 +108,8 @@ class ProjectConfig(dict):
 
         #check if core is in any profile
         if "core" not in self:
-            self.find_key(self, target_key="core", target=None)
+            self.find_key(self, target_key="core", target="default", level=0)
+
 
         if old_format := self["default"].get("format"):
             self["format"] = old_format
