@@ -175,15 +175,11 @@ class ProjectConfig(dict):
             )
 
             if response == "yes":
-                try:
-                    del self["default"]["builds"]["vi"]
-                except:
-                    echo_info("You are using the ViUR Admin")
+                self["default"]["builds"].pop("vi", None)
+                echo_info("You are using the ViUR Admin")
             elif response == "no":
-                try:
-                    del self["default"]["builds"]["admin"]
-                except:
-                    echo_info("You are using the Vi Administration")
+                self["default"]["builds"].pop("admin", None)
+                echo_info("You are using the Vi Administration")
         """
              Fetch the version of the 'viur-core' package.
 
