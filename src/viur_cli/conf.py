@@ -87,21 +87,33 @@ class ProjectConfig(dict):
         except:
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
+    # def find_key(self, dictionary, target_key, target, level=0):
+    #     if target_key in dictionary:
+    #         value = dictionary[target_key]
+    #
+    #         if target is None:
+    #             self[target_key] = value
+    #             del value
+    #             return
+    #         else:
+    #             self[target][target_key] = value
+    #             return
+    #
+    #     for value in list(dictionary.values()):
+    #         if isinstance(value, dict):
+    #             self.find_key(value, target_key, target, level=level + 1)
+
     def find_key(self, dictionary, target_key, target, level=0):
         if target_key in dictionary:
             value = dictionary[target_key]
-
-            if target is None:
+            if not target:
                 self[target_key] = value
-                del value
-                return
             else:
-                self[target][target_key] = value
-                return
-
-        for value in list(dictionary.values()):
-            if isinstance(value, dict):
-                self.find_key(value, target_key, target, level=level + 1)
+                self.setdefault(target, {})[target_key] = value
+        else:
+            for value in dictionary.values():
+                if isinstance(value, dict):
+                    self.find_key(value, target_key, target, level= level+1)
 
     def migrate(self):
 
