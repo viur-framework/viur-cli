@@ -87,7 +87,7 @@ class ProjectConfig(dict):
         except:
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
-    def find_key(self, dictionary, target_key, target, level=0):
+    def find_key(self, dictionary, target_key, target):
         if target_key in dictionary:
             value = dictionary[target_key]
             if not target:
@@ -97,7 +97,7 @@ class ProjectConfig(dict):
         else:
             for value in dictionary.values():
                 if isinstance(value, dict):
-                    self.find_key(value, target_key, target, level= level+1)
+                    self.find_key(value, target_key, target)
 
     def migrate(self):
 
@@ -108,7 +108,7 @@ class ProjectConfig(dict):
 
         #check if core is in any profile
         if "core" not in self:
-            self.find_key(self, target_key="core", target="default", level=0)
+            self.find_key(self, target_key="core", target="default", )
 
 
         if old_format := self["default"].get("format"):
