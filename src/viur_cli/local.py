@@ -42,12 +42,13 @@ def run(profile, additional_args):
     """
     try:
         echo_warning(f"You are using the development Server with your default account: {get_user_info()['email']}")
-        conf = config.get_profile(profile)
-        utils.system(
-            f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
     except:
         echo_fatal(f"It seems you are not Using an appropriate account. "
-                   f"Please Install the 'gcloud' tool or Log in with an appropriate account.")
+                   f"Please install the 'gcloud' tool or Log in with an appropriate account.")
+
+    conf = config.get_profile(profile)
+    utils.system(
+        f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
 
 @cli.command()
