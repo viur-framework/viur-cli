@@ -1,9 +1,12 @@
 import json
+from pprint import pprint
+
 import click
 import requests
 import difflib
 from .utils import *
 from .version import __version__ as cli_version
+
 
 PROJECT_CONFIG_FILE = "project.json"
 PROJECT_CONFIG_VERSION = "2.0.0"
@@ -86,7 +89,30 @@ class ProjectConfig(dict):
         except:
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
+    def find_key(self, dictionary, target_key, target):
+        if target_key in dictionary:
+            value = dictionary.pop(target_key)
+            if not target:
+                self[target_key] = value
+            else:
+                self.setdefault(target, {})[target_key] = value
+        else:
+            for value in list(dictionary.values()):
+                if isinstance(value, dict):
+                    self.find_key(value, target_key, target)
+
     def migrate(self):
+
+        if "application_name" not in self["default"]:
+            self.find_key(self, target_key="application_name", target="default")
+            if "application_name" in self:
+                del self["application_name"]
+
+        #check if core is in any profile
+        if "core" not in self:
+            self.find_key(self, target_key="core", target=None)
+
+
         if old_format := self["default"].get("format"):
             self["format"] = old_format
             del self["default"]["format"]
@@ -159,10 +185,11 @@ class ProjectConfig(dict):
             )
 
             if response == "yes":
-                del self["default"]["builds"]["vi"]
+                self["default"]["builds"].pop("vi", None)
+                echo_info("You are using the ViUR Admin")
             elif response == "no":
-                del self["default"]["builds"]["admin"]
-
+                self["default"]["builds"].pop("admin", None)
+                echo_info("You are using the Vi Administration")
         """
              Fetch the version of the 'viur-core' package.
 
@@ -174,10 +201,10 @@ class ProjectConfig(dict):
         try:
             result = os.popen('pip list --format=json').read()
             core_version = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
-            self["default"]["core"] = core_version
+            self["core"] = core_version
 
         except:
-            self["default"]["core"] = "submodule"
+            self["core"] = "submodule"
 
         # conf updates must increase format version
         self.save()
