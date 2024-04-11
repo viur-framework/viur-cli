@@ -1,4 +1,6 @@
 import json
+from pprint import pprint
+
 import click
 import requests
 import difflib
@@ -89,13 +91,13 @@ class ProjectConfig(dict):
 
     def find_key(self, dictionary, target_key, target):
         if target_key in dictionary:
-            value = dictionary[target_key]
+            value = dictionary.pop(target_key)
             if not target:
                 self[target_key] = value
             else:
                 self.setdefault(target, {})[target_key] = value
         else:
-            for value in dictionary.values():
+            for value in list(dictionary.values()):
                 if isinstance(value, dict):
                     self.find_key(value, target_key, target)
 
@@ -108,7 +110,7 @@ class ProjectConfig(dict):
 
         #check if core is in any profile
         if "core" not in self:
-            self.find_key(self, target_key="core", target="default", )
+            self.find_key(self, target_key="core", target=None)
 
 
         if old_format := self["default"].get("format"):
@@ -199,10 +201,10 @@ class ProjectConfig(dict):
         try:
             result = os.popen('pip list --format=json').read()
             core_version = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
-            self["default"]["core"] = core_version
+            self["core"] = core_version
 
         except:
-            self["default"]["core"] = "submodule"
+            self["core"] = "submodule"
 
         # conf updates must increase format version
         self.save()
