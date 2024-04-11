@@ -4,18 +4,20 @@ Performs build steps configured within the project, or creates any necessary ste
 
 import click
 import os
-from . import cli, conf, utils
+from .conf import config
+from . import cli, utils
 
 
-def _build(cfg, name, build_cfg, additional_args):
-    """Internal function to perform steps required for a given build configuration.
+def _build(conf, name, build_cfg, additional_args):
+    """
+    Internal function to perform steps required for a given build configuration.
 
     This internal function is responsible for building an application according to the specified build configuration.
     It can handle two types of builds:
         - npm: For building Node.js applications using npm package manager.
         - exec: For executing custom commands specified in the build configuration.
 
-    :param cfg: dict
+    :param conf: dict
         The project configuration, which can be either the default configuration or project-specific configuration.
     :param name: str
         The name of the application to build.
@@ -40,13 +42,12 @@ def _build(cfg, name, build_cfg, additional_args):
     """
 
     utils.echo_info(f"""- {build_cfg["kind"]} {name}""")
-
     match build_cfg["kind"]:
         case "npm":
             utils.system(
                 " && ".join(
                     (
-                        f'cd {os.path.join(cfg["sources_folder"], build_cfg["source"])}',
+                        f'cd {os.path.join(conf["sources_folder"], build_cfg["source"])}',
                         "npm install",
                         f'npm run {build_cfg["command"]}'
                     )
@@ -60,15 +61,16 @@ def _build(cfg, name, build_cfg, additional_args):
             utils.echo_fatal(f"Unknown build kind {other!r}")
 
 
-def _clean(cfg, name, build_cfg):
-    """Perform steps required to clean a given build configuration.
+def _clean(conf, name, build_cfg):
+    """
+    Perform steps required to clean a given build configuration.
 
     This internal function is responsible for cleaning the artifacts and files generated during the build process
     for a specified application. It supports two types of cleaning methods:
         - npm: For cleaning Node.js applications built with npm package manager.
         - exec: For executing custom clean commands specified in the build configuration.
 
-    :param cfg: dict
+    :param conf: dict
         The project configuration, which can be either the default configuration or a
         project-specific configuration.
 
@@ -100,14 +102,14 @@ def _clean(cfg, name, build_cfg):
         # for npm, drop the target folder and node_modules (npm)
         case "npm":
             if target_dir := build_cfg.get("target"):
-                target_dir = os.path.join(cfg["distribution_folder"], target_dir)
+                target_dir = os.path.join(conf["distribution_folder"], target_dir)
                 utils.echo_info(f"  - dropping {target_dir}")
                 utils.rmdir(target_dir)
 
             if build_cfg["kind"] == "npm":
                 # todo: Later, call "npm run clean" or a similar command when it exists
 
-                node_modules = os.path.join(cfg["sources_folder"], build_cfg["source"], "node_modules")
+                node_modules = os.path.join(conf["sources_folder"], build_cfg["source"], "node_modules")
                 utils.echo_info(f"  - dropping {node_modules}")
                 utils.rmdir(os.path.join(node_modules))
 
@@ -129,46 +131,31 @@ def build():
 
 
 @build.command(context_settings={"ignore_unknown_options": True})
-@click.argument("name", default='develop')
+@click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
-def release(name, additional_args):
+def release(profile, additional_args):
     """
     Build all relevant applications to deploy this project.
 
     This command is used to build all relevant applications necessary for deploying the project. It allows you to
     specify the project configuration to use and any additional arguments to pass to the build process.
 
-    :param name: str, default: 'develop'
-        The name of the project configuration to use for building. This configuration can be either 'default' or a
-        project-specific configuration.
-
-    :param additional_args: tuple
-        Additional arguments that can be passed to the build process. These arguments are passed to the underlying
-        build functions.
-
     The `release` command loads the specified project configuration, which includes build configurations for
     individual applications. It then iterates through the applications and executes the build process for each one
     using the `_build` function.
 
     Note:
-    - Ensure that the specified project configuration exists.
-    - Additional arguments can be used to customize the build process.
 
-    :return: None
+        - Ensure that the specified project configuration exists.
+
+        - Additional arguments can be used to customize the build process.
+
     """
-
-    projectConfig = conf.get_config()
-
-    if name not in projectConfig:
-        utils.echo_fatal(f"{name} is not a valid config name.")
-
-    cfg = projectConfig["default"].copy()
-    cfg.update(projectConfig[name])
-
+    conf = config.get_profile(profile)
     utils.echo_info("building started...")
 
-    for build_name, build_cfg in cfg.get("builds", {}).items():
-        _build(cfg, build_name, build_cfg, additional_args)
+    for build_name, build_cfg in conf.get("builds", {}).items():
+        _build(conf, build_name, build_cfg, additional_args)
 
     utils.echo_info("building finished!")
 
@@ -176,80 +163,70 @@ def release(name, additional_args):
 @build.command(context_settings={"ignore_unknown_options": True})
 @click.argument("appname")
 @click.argument("additional_args", nargs=-1)
-def app(appname, additional_args):
+@click.argument("profile", default="default")
+def app(appname, profile, additional_args):
     """
     Build a specific application.
 
     This function is used to build a specific application as defined in your project's configuration. It allows you to
     specify the name of the application to build and any additional arguments to pass to the build process.
 
-    :param appname: str
-        The name of the application to build. It should correspond to an application defined in your project's
-        configuration.
-
-    :param additional_args: tuple
-        Additional arguments that can be passed to the build process for the specified application.
-
     The `app` function loads the default project configuration, selects the specified application's build configuration,
     and then executes the build process using the `_build` function.
 
     Note:
-    - Ensure that the specified application name is valid and defined in your project's configuration.
-    - Additional arguments can be used to customize the build process for this specific application.
 
-    :return: None
+        - Ensure that the specified application name is valid and defined in your project's configuration.
+
+        - Additional arguments can be used to customize the build process for this specific application.
     """
 
-    projectConfig = conf.get_config()
+    conf = config.get_profile(profile)
 
-    cfg = projectConfig["default"].copy()
-
-    if not (build_cfg := cfg.get("builds").get(appname)):
-        utils.echo_fatal(f"""{appname=} must be one of these options: {", ".join(cfg["builds"].keys())}""")
+    if not (build_cfg := conf.get("builds").get(appname)):
+        utils.echo_fatal(f"""{appname=} must be one of these options: {", ".join(conf["builds"].keys())}""")
 
     utils.echo_info("building started...")
-    _build(cfg, appname, build_cfg, additional_args)
+    _build(conf, appname, build_cfg, additional_args)
     utils.echo_info("building finished!")
 
 
 @build.command
 @click.argument("target", default="")
-def clean(target):
+@click.argument("profile", default="default")
+def clean(target, profile):
     """
     Clean up build artifacts.
 
     This command is used to clean up build artifacts and files generated during the build process for one or more
     specific applications. It allows you to specify a target application or clean all applications in the project.
 
-    :param target: str, default: ""
-        The name of the target application to clean. If not provided, it will clean all applications defined in your
-        project's configuration.
-
-
     The `clean` command performs the following actions:
-    - If a specific 'target' is provided, it cleans the build artifacts for that application.
-    - If 'target' is not provided, it cleans the build artifacts for all applications defined in your project's
-      configuration.
+
+        - If a specific 'target' is provided, it cleans the build artifacts for that application.
+
+        - If 'target' is not provided, it cleans the build artifacts for all applications defined in your project's
+        configuration.
 
     Note:
-    - When specifying a 'target,' ensure that it corresponds to a valid application defined in your project.
-    - Running the command without a 'target' will clean all applications.
 
-    :return: None
+        - When specifying a 'target,' ensure that it corresponds to a valid application defined in your project.
+
+        - Running the command without a 'target' will clean all applications.
     """
-    projectConfig = conf.get_config()
-    cfg = projectConfig["default"].copy()
 
-    builds = cfg.get("builds", {})
+    conf = config.get_profile(profile)
+
+    builds = conf.get("builds", {})
     if target:
         if not (build_cfg := builds.get(target)):
-            utils.echo_fatal(f"""{target=} must be one of these options: {", ".join(cfg["builds"].keys())}""")
+            utils.echo_fatal(f"""{target=} must be one of these options: {", ".join(conf["builds"].keys())}""")
 
         builds = {target: build_cfg}
 
     utils.echo_info("clean started...")
 
     for build_name, build_cfg in builds.items():
-        _clean(cfg, build_name, build_cfg)
+        _clean(conf, build_name, build_cfg)
 
     utils.echo_info("clean finished!")

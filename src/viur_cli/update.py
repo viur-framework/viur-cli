@@ -2,47 +2,39 @@ import click
 import os
 import sys
 import re
-from . import cli, echo_error, get_config, echo_info, utils
+from .conf import config
+from . import cli, echo_error, echo_positive, echo_info, utils
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["requirements"]))
-@click.argument("name", default='develop')
+@click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
-def update(action, name, additional_args):
+def update(action, profile, additional_args):
     """
     Update project-specific files and dependencies.
 
     This command allows you to update project-specific files and dependencies for a specified project configuration.
     Currently, it supports the 'requirements' action, which is used to update the requirements.
-
-    :param action: str
-        The action to perform. Currently, only 'requirements' is supported for updating requirements or dependencies.
-    :param name: str, default: 'develop'
-        The name of the project configuration to update. It should correspond to a valid project configuration.
-    :param additional_args: tuple
-        Additional arguments that can be passed to the update process.
-
     The `update` command performs the specified 'action' to update project-specific files or dependencies. It ensures
     that the specified project configuration exists.
 
     Note:
-    - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
-    - Additional arguments can be used to customize the update process if supported by the action.
 
-    :return: None
+        - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
+
+        - Additional arguments can be used to customize the update process if supported by the action.
+
     """
-    project_config = get_config()
-
-    if name not in project_config:
-        echo_error(f"{name} is not a valid config name.")
-        return
+    conf = config.get_profile(profile)
 
     if action == "requirements":
-        create_req()
+        create_req(True, profile)
 
 
-def create_req(confirm_value=True):
+
+
+def create_req(yes, profile, confirm_value=True):
     """
     Load project's pipenv and build a requirements.txt.
 
@@ -59,12 +51,12 @@ def create_req(confirm_value=True):
 
     :return: None
     """
-    project_config = get_config()
-    dist_folder = project_config["default"]["distribution_folder"]
-    if project_config["default"]["core"] != "submodule":
-
-        if click.confirm(text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
-                         default=confirm_value):
+    conf = config.get_profile(profile)
+    dist_folder = conf["distribution_folder"]
+    if conf["core"] != "submodule":
+        if yes or click.confirm(
+                text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
+                default=confirm_value):
             os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
             file_object = open(f"{dist_folder}/requirements.txt", 'r')
             generated_requirements = file_object.read()

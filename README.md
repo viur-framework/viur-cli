@@ -12,7 +12,8 @@
 </div>
 
 ## What does it do?
-`viur-cli` allows to control, maintain and develop a ViUR project from one central location by using the `viur` command.
+`viur-cli` allows to control, maintain, develop and deploy a ViUR project from one central 
+location by using the `viur` command.
 
 
 ## Installation
@@ -26,9 +27,15 @@ $ pipenv install --dev viur-cli
 ## Usage
 
 ```sh
-$ viur --help
+$ viur -h
 ```
 will show all the commands that are currently supported by viur-cli
+
+```sh
+$ viur --version 
+```
+will show your current viur-cli version
+
 
 ```sh
 $ viur create myapp
@@ -37,65 +44,164 @@ this will create a new project folder, clone the base project and then call `viu
 you can use this to get started quickly with a new viur project from scratch.
 
 ```sh
-$ viur init
+$ viur run [profile]
 ```
-this will initialize a new project in the current folder, you will be asked a couple of questions like if 
-you would like to create a new project.json file, what components should be preinstalled and what the 
-projectID of your application will be.
+run the appserver and start your app locally. You may specify a target profile. 
+
 
 ```sh
-$ viur run [target]
-```
-run the appserver and start your app locally. You may specify a target projectID.
-
-```sh
-$ viur check {npm|--dev|--autofix}
+$ viur check [--dev]
 ```
 Runs a security check for the python environment and for each npm project registered under builds.
 
 ```sh
-$ viur deploy {app|index} [target]
+$ viur package {install|update} {vi|scriptor|admin|all} 
 ```
-you can deploy the app or the index.yaml to a google cloud project target of your choice, though the target is optional.
-By default this would be the projectID you gave when initializing the project, but you can add targets to the project.json
-if you would like to have an additional system for testing for example.
+handles ViUR ecosystem package operations
+
+Commands:
+- `install`  installs a ViUR package (in a specific version)
+- `update`   updates a ViUR package to the newest version
+
+Arguments:
+- `profile`  profile to install to
+- `version`  version to install
 
 ```sh
-$ viur enable {backup}
+$ viur build {app|clean|release} [option]
 ```
-create a backup bucket and enable the gcloud service worker account to access it.
+Builds ViUR Project or specific apps
+Commands:
+- `app` Build a specific application
+- `clean` Clean up Build Artifacts
+- `release` Build all relevant applications to deploy the project 
+
+```sh
+$ viur cloud deploy {app|index|cloudfunction} {profile} {--ext|--yes|--name}
+```
+This Function deploys the Google Cloud application and / or different .yaml files
+Scripts:
+- `app`           Deploy application to the Google Appengine
+  - `index`         Deploy index.yaml to Google Appenginge
+  - `cloudfunction` Deploy Cloudfunction to Google Appengine
+  Commands:
+  - `profile`       The project.json profile you want to Work from
+
+```sh
+$ viur cloud init {service} {profile} 
+```
+This Function makes the init deployment for a ViUR project.
+This Function needs to be called so that the development server works locally.
 
 
 ```sh
-$ viur install {vi|scriptor}
+$ viur cloud {enable|disable} backup
 ```
-ask viur-cli to install either vi or the scriptor into your project
+Enable/ Disable the Backup buckets you need to Backup a cloud project in the Google Cloud Console
 
 ```sh
-$ viur build release
+$ viur cloud setup {gcloud|gcroles} 
 ```
-build all npm apps and produce a release that can be deployed
+Scripts:
+- `gcloud`    This Function setups your project to work on the gcloud plattform
+  - `gcroles`   This function lets you set up Roles for your google appengine Workspace
+
 
 ```sh
-$ viur build app [appname]
+$ viur cloud get {gcroles} 
 ```
-build a specific app
+Scripts:
+- `gcroles`   This function lets you get Roles for your google appengine Workspace in a readable .json Format
+
+```sh
+$ viur package {update|install} {vi|admin|scriptor|all} [profile] [version]
+```
+Performs operations on packages
+
+Scripts:
+- `update` Updates an installed package
+- `install` Installs a declared package
+
+Options:
+- `vi`
+- `admin` 
+- `scriptor` 
+- `all`
 
 ```sh
 $ viur env
 ```
-check the environment you are in right now, show versions of viur-cli, viur-core and vi etc.
+Show information about your current environment.
 
 ```sh
-$ viur project {add|remove|list}
+$ viur project list
 ```
-with this you can manage your project.json or generate a new one. You can add or remove targets to/from the 
-project.json, list what has been added to the project.json, to be built when running `viur build release`.
+Pretty prints your `project.json` file on the console.
 
 ```sh
 $ viur update {requirements}
 ```
 with this you can update your project specific requirements.txt file automatically
+
+## The project.json
+The `project.json` is your core project configuration file for every viur related operation.
+It contains the default viur project profile and it can be expanded with several individual project profiles.
+
+### Example project.json
+```json lines
+{
+    /* 
+      The format Key, Value pair defines the project json format, the viur-cli uses
+    */
+    "format": "2.0.0",
+    /*
+      The first level contains of your profiles
+      "default" is a profile, which is inherited by "develop" and "live" and can be customized for particular versions 
+      and/or GAE projects. Therefore, every profile can contain all keys from the "default" profile.*/
+    "default": {
+        /*
+          The builds level declares steps for the `viur build` command.
+          It can contain viur components and other components that need to be build before project deployment
+        */
+        "builds": { 
+            "admin": {
+                "command": "viur install admin",
+                "kind": "exec",
+                "version": "4.0.8"
+            },
+            "npm": {
+                "command": "build",
+                "kind": "npm",
+                "source": ""
+            }
+        },
+        "gcloud": {
+            "functions": { //Declarations for a cloud function
+                "testfunction1": {
+                    "entry-point": "main",
+                    "env-vars-file": "env.yaml",
+                    "memory": "512MB",
+                    "runtime": "python311",
+                    "source": "deploy/cloudfunction/function1",
+                    "trigger": "http"
+                }
+            },
+            "max-instances": "1",
+            "region": "europe-west3"
+        },
+        "core": "3.5.1",  // viur-core version of your project
+        "distribution_folder": "./deploy", // Deploy folder uploaded to GAE
+        "sources_folder": "./sources",
+        "version": "live-$(year)-$(month)-$(day)", // Version string; Variables can be used here.
+        "application_name": "my-live-app-viur3" // Name of the GAE project *4
+    },
+    "develop": {  
+        "application_name": "my-dev-app-viur3", 
+        "version": "dev-$(user)"  
+    }
+}
+
+```
 
 ## Viur scripting interface
 
@@ -105,6 +211,7 @@ The GUI version is called scriptor and can be accessed via a webinterface, but v
 ```sh
 $ viur script {configure|pull|push|run|setup}
 ```
+Manage your ViUR Scriptor Scripts via the CLI
 Commands:
 - `configure`  Manage configuration settings.
 - `pull`       Pull contents from server to working_dir.
@@ -161,11 +268,10 @@ viur-cli depends on
 * [app_server](https://github.com/XeoN-GHMB/app_server)
 * [pipfile-requirements](https://github.com/frostming/pipfile-requirements)
 * [watchgod](https://github.com/samuelcolvin/watchgod)
-* [python-minifier](https://github.com/dflook/python-minifier)
 
 ## License
 
-Copyright © 2023 by Mausbrand Informationssysteme GmbH.<br>
+Copyright © 2024 by Mausbrand Informationssysteme GmbH.<br>
 Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
 
 This project is free software under the MIT license.<br>
