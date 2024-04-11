@@ -7,7 +7,7 @@ import subprocess
 
 from viur_cli import echo_info, echo_warning
 from .conf import config
-from . import cli, echo_error, utils
+from . import cli, echo_error, utils, echo_fatal
 from requests import get
 from .package import vi as vi_install
 from types import SimpleNamespace
@@ -37,11 +37,19 @@ def run(profile, additional_args):
     """
         Start your application locally.
         The 'run' command launches your ViUR application locally specified configuration and optional arguments.
-    """
-    echo_warning(f"You are using the development Server with your default account: {get_user_info()['email']}")
-    conf = config.get_profile(profile)
 
-    utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
+        This Enforces the Usage of gcloud tool
+    """
+    try:
+        echo_warning(f"You are using the development Server with your default account: {get_user_info()['email']}")
+        conf = config.get_profile(profile)
+        utils.system(f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
+
+    except:
+        echo_fatal(f"It seems you are not Using an appropriate account. "
+                   f"Please Install the 'gcloud' tool or Log in with an appropriate account.")
+
+
 
 @cli.command()
 @click.argument("profile", default="default")
