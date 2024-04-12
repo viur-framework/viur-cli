@@ -1,5 +1,32 @@
 # Changelog
 
+This file documents any relevant changes.
+
+## [2.0.0] 2024-04-11git 
+- chore: added deprecation warnings
+- feature: Enforcing gcloud tool usage for ViUR Projects
+- feature: `viur gcloud init` command
+- feature: deployment of gcloud functions
+- feature: show logged in gcloud account on `viur run`
+- fix: format in project.json
+- feature: shows CHANGELOG.md on first start
+- feature: added gcloud initiation deployment
+- fix: format in project.json
+- fix: deployment issues
+- chore: added default gcloud account information in env
+- chore: update dependencies
+- docs: updated documentation and Helptexts
+- chore: updated Github workflows
+- feature: Appengine Setup can now be done via CLI
+- feature: Appengine Roles can now be managed via CLI
+- feature: `viur package install` and `viur package update` functions
+- refactor: enabled profile support for all viur-cli functions
+- fix: `viur env` now runs without errors
+- refactor: project.json functionalities
+- feature: cloudfunctions creation and deployment via ClI
+- feature: backup disabling/ enabling via CLI
+- refactor: `viur deploy` is now `viur cloud deploy`
+
 ## [1.1.2] 2024-01-26:
 - chore: removed python-minifier
 - chore: updated appserver
