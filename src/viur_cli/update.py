@@ -105,6 +105,7 @@ def check_req(projects_requirements_path):
 
     if not core_requirements:
         echo_error("could now find core package, please update the core to validate the requirements.txt")
+        return
 
     core_requirements_obj = utils.requirements_to_dict(parse_requirements(core_requirements, session=PipSession()))
 
