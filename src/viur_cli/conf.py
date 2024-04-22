@@ -113,6 +113,7 @@ class ProjectConfig(dict):
                 del self["application_name"]
 
         #check if core is in any profile
+        # if yes, remove it from the profile an move it up to the first level.
         if "core" not in self:
             self.find_key(self, target_key="core", target=None)
 
