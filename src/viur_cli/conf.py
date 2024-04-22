@@ -89,9 +89,12 @@ class ProjectConfig(dict):
         except:
             raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
-    def find_key(self, dictionary, target_key, target):
+    def find_key(self, dictionary, target_key, target, keep=False):
         if target_key in dictionary:
-            value = dictionary.pop(target_key)
+            if keep:
+                value = dictionary[target_key]
+            else:
+                value = dictionary.pop(target_key)
             if not target:
                 self[target_key] = value
             else:
@@ -99,12 +102,13 @@ class ProjectConfig(dict):
         else:
             for value in list(dictionary.values()):
                 if isinstance(value, dict):
-                    self.find_key(value, target_key, target)
+
+                    self.find_key(value, target_key, target, keep=keep)
 
     def migrate(self):
 
         if "application_name" not in self["default"]:
-            self.find_key(self, target_key="application_name", target="default")
+            self.find_key(self, target_key="application_name", target="default", keep=True)
             if "application_name" in self:
                 del self["application_name"]
 
