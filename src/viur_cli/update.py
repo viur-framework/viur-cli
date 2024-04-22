@@ -3,14 +3,14 @@ import os
 import sys
 import re
 from .conf import config
-from . import cli, echo_error, echo_positive, echo_info, utils
+from . import cli, echo_error, echo_info, utils
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["requirements"]))
 @click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
-def update(action, profile, additional_args):
+def update(action, profile):
     """
     Update project-specific files and dependencies.
 
@@ -26,7 +26,6 @@ def update(action, profile, additional_args):
         - Additional arguments can be used to customize the update process if supported by the action.
 
     """
-    #conf = config.get_profile(profile)
 
     if action == "requirements":
         create_req(True, profile)
