@@ -105,6 +105,14 @@ class ProjectConfig(dict):
                 if isinstance(value, dict):
                     self.find_key(value, target_key, target, keep=keep)
 
+    def remove_key(self, dictionary, target_key):
+        if target_key in dictionary:
+            del dictionary[target_key]
+
+        for value in list(dictionary.values()):
+            if isinstance(value, dict):
+                self.remove_key(value, target_key)
+
     def migrate(self):
 
         if "application_name" not in self["default"]:
@@ -112,10 +120,10 @@ class ProjectConfig(dict):
             if "application_name" in self:
                 del self["application_name"]
 
-        #check if core is in any profile
-        # if yes, remove it from the profile an move it up to the first level.
-        if "core" not in self:
-            self.find_key(self, target_key="core", target=None)
+        # Check if Core is in Any Profile and then Delete every entry
+        #if "core" not in self:
+        #    self.find_key(self, target_key="core", target=None)
+        self.remove_key(self, target_key="core")
 
 
         if old_format := self["default"].get("format"):
@@ -203,13 +211,13 @@ class ProjectConfig(dict):
 
              :return: None
         """
-        try:
-            result = os.popen('pip list --format=json').read()
-            core_version = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
-            self["core"] = core_version
+        #try:
+        #    result = os.popen('pip list --format=json').read()
+        #    core_version = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
+        #    self["core"] = core_version
 
-        except:
-            self["core"] = "submodule"
+        #except:
+        #    self["core"] = "submodule"
 
         # conf updates must increase format version
         self.save()
