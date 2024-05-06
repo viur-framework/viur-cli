@@ -95,7 +95,6 @@ class ProjectConfig(dict):
                 value = dictionary[target_key]
             else:
                 value = dictionary.pop(target_key)
-
             if not target:
                 self[target_key] = value
             else:
@@ -103,7 +102,16 @@ class ProjectConfig(dict):
         else:
             for value in list(dictionary.values()):
                 if isinstance(value, dict):
+
                     self.find_key(value, target_key, target, keep=keep)
+
+    def remove_key(self, dictionary, target_key):
+        if target_key in dictionary:
+            del dictionary[target_key]
+
+        for value in list(dictionary.values()):
+            if isinstance(value, dict):
+                self.remove_key(value, target_key)
 
     def migrate(self):
 
@@ -112,9 +120,7 @@ class ProjectConfig(dict):
             if "application_name" in self:
                 del self["application_name"]
 
-        #check if core is in any profile
-        if "core" not in self:
-            self.find_key(self, target_key="core", target=None)
+        self.remove_key(self, target_key="core")
 
 
         if old_format := self["default"].get("format"):
@@ -202,15 +208,7 @@ class ProjectConfig(dict):
 
              :return: None
         """
-        try:
-            result = os.popen('pip list --format=json').read()
-            core_version = [x for x in json.loads(result) if x["name"] == "viur-core"][0]["version"]
-            self["core"] = core_version
 
-        except:
-            self["core"] = "submodule"
-
-        # conf updates must increase format version
         self.save()
 
 
