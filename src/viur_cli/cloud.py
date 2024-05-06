@@ -87,6 +87,14 @@ def enable_gcp_backup():
 @click.argument("service", type=click.Choice(["gcloud"]), default="gcloud")
 @click.argument("profile", default="default")
 def init(service, profile):
+    """
+    Initializes the cloud service deployment.
+
+    Parameters:
+        - service (str): The cloud service to be initialized. Expected values are 'gcloud'.
+        - profile (str): The profile name to be used for initialization. Default value is 'default'.
+
+    """
     deployments = ["cron", "queue", "cron"]
     if service == "gcloud":
         for element in deployments:
@@ -97,6 +105,15 @@ def init(service, profile):
 @click.argument("option", type=click.Choice(["datastore"]), default="datastore")
 @click.argument("profile", default="default")
 def cleanup(service, option, profile):
+    """
+    Cleans up the indexes in the specified service and option.
+
+    Parameters:
+    - service (str): The service to clean up the indexes for.
+    - option (str): The option to clean up the indexes for.
+    - profile (str): The profile to use for configuration.
+
+    """
     conf = config.get_profile(profile)
 
     if service == "gcloud" and option == "datastore":

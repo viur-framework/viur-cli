@@ -156,7 +156,7 @@ def env(profile):
     else:
         click.echo(f"{failed_icon} gcloud")
 
-    click.echo(f"Your default gcloud user Info:")
+    click.echo(f"\nYour default gcloud user Info:\n--------------------------------")
     for k, v in get_user_info().items():
         click.echo(f"{k}: {v}")
 
