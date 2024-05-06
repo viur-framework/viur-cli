@@ -112,6 +112,12 @@ class ProjectConfig(dict):
             if "application_name" in self:
                 del self["application_name"]
 
+        if "version" not in self["default"]:
+            self.find_key(self, target_key="version", target="default", keep=True)
+            # Fail Safe
+            if "version" in self:
+                del self["version"]
+
         #check if core is in any profile
         if "core" not in self:
             self.find_key(self, target_key="core", target=None)
