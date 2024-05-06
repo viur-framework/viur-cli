@@ -1,6 +1,11 @@
 # Changelog
 
 This file documents any relevant changes.
+## [2.0.1-dev1] 2024-05-06
+- bugfix: removed project.json profile "core" validation throughout the project
+- chore: bumped cryptography from 41.0.7 to 42.0.4
+- chore: Added hints to several commands
+- chore: bumped idnafrom 3.6 to 3.7
 
 ## [2.0.0] 2024-04-11:
 - chore: added deprecation warnings
