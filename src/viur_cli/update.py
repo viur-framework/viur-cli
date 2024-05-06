@@ -3,7 +3,7 @@ import os
 import sys
 import re
 from .conf import config
-from . import cli, echo_error, echo_positive, echo_info, utils
+from . import cli, echo_error, echo_info, utils
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
@@ -20,18 +20,12 @@ def update(action, profile, additional_args):
     that the specified project configuration exists.
 
     Note:
-
         - Ensure that the specified project configuration ('name') is valid and defined in your project's configuration.
-
         - Additional arguments can be used to customize the update process if supported by the action.
-
     """
-    conf = config.get_profile(profile)
 
     if action == "requirements":
         create_req(True, profile)
-
-
 
 
 def create_req(yes, profile, confirm_value=True):
@@ -53,27 +47,28 @@ def create_req(yes, profile, confirm_value=True):
     """
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
-    if conf["core"] != "submodule":
-        if yes or click.confirm(
-                text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
-                default=confirm_value):
-            os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
-            file_object = open(f"{dist_folder}/requirements.txt", 'r')
-            generated_requirements = file_object.read()
-            for line in generated_requirements.splitlines():
-                if "]==" in line:
-                    # we got a dependency with extras
-                    generated_requirements += re.sub(r"\[.*?\]", "", line) + "\n"
-            file_object.close()
 
-            file_obj = open(f"{dist_folder}/requirements.txt", 'w')
-            file_obj.write(generated_requirements)
-            file_obj.close()
-            echo_info("requirements.txt successfully generated")
+    if yes or click.confirm( text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
+                             default=confirm_value):
+        os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
+        file_object = open(f"{dist_folder}/requirements.txt", 'r')
+        generated_requirements = file_object.read()
 
-        if check_req(f"{dist_folder}/requirements.txt"):
-            if not click.confirm(f"There are some depencency errors, are you sure you want to continue?"):
-                sys.exit(0)
+        for line in generated_requirements.splitlines():
+            if "]==" in line:
+                # we got a dependency with extras
+                generated_requirements += re.sub(r"\[.*?\]", "", line) + "\n"
+        file_object.close()
+
+
+        file_obj = open(f"{dist_folder}/requirements.txt", 'w')
+        file_obj.write(generated_requirements)
+        file_obj.close()
+        echo_info("requirements.txt successfully generated")
+
+    if check_req(f"{dist_folder}/requirements.txt"):
+        if not click.confirm(f"There are some depencency errors, are you sure you want to continue?"):
+            sys.exit(0)
 
 
 def check_req(projects_requirements_path):
