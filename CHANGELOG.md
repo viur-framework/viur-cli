@@ -2,7 +2,7 @@
 
 This file documents any relevant changes.
 
-## [2.0.0] 2024-04-11git 
+## [2.0.0] 2024-04-11:
 - chore: added deprecation warnings
 - feature: Enforcing gcloud tool usage for ViUR Projects
 - feature: `viur gcloud init` command
