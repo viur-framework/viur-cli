@@ -1,6 +1,4 @@
 import json
-from pprint import pprint
-
 import click
 import requests
 import difflib
@@ -119,14 +117,15 @@ class ProjectConfig(dict):
             self.find_key(self, target_key="application_name", target="default", keep=True)
             if "application_name" in self:
                 del self["application_name"]
-                
+
         if "version" not in self["default"]:
             self.find_key(self, target_key="version", target="default", keep=True)
             # Fail Safe
             if "version" in self:
                 del self["version"]
-              
+
         self.remove_key(self, target_key="core")
+
 
         if old_format := self["default"].get("format"):
             self["format"] = old_format
@@ -194,6 +193,7 @@ class ProjectConfig(dict):
             elif response == "no":
                 self["default"]["builds"].pop("admin", None)
                 echo_info("You are using the Vi Administration")
+
 
         self.save()
 
