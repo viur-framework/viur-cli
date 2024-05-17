@@ -1,6 +1,9 @@
 # Changelog
 
 This file documents any relevant changes.
+## [2.1.0] 
+- feature: added pep8 check
+
 ## [2.0.1] 2024-05-06
 - bugfix: removed project.json profile "core" validation throughout the project
 - chore: bumped version numbers in setup.cfg
