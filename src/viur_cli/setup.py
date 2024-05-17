@@ -30,7 +30,7 @@ def create(ctx, name):
 
     """
     if os.path.exists(f'./{name}'):
-        echo_error(f'"{name}" Folder exispme or remove this folder ./{name}')
+        echo_error(f'"{name}" Folder exists. Please use a different name or remove this folder ./{name}')
         return
 
     # fetch base project
