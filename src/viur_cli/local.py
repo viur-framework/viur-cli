@@ -8,9 +8,7 @@ import subprocess
 from viur_cli import echo_info, echo_warning
 from .conf import config
 from . import cli, echo_error, utils, echo_fatal
-from requests import get
-from .package import vi as vi_install
-from types import SimpleNamespace
+import pycodestyle
 
 
 def get_user_info():
@@ -162,15 +160,34 @@ def env(profile):
 
 
 @cli.command()
-@click.option('--dev', '-d', is_flag=True, default=False)
-def check(dev):
-    """
-    Perform security checks for vulnerabilities.
-    The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
-    """
+@click.argument("action", type=click.Choice(["dev", "pep", "all"]), default="all")
+@click.option("--path", "-p", default="deploy")
+def check(action, path):
+    utils.echo_positive(action)
+    if action == "all":
+        checkpep8(path)
+        if do_checks(True):
+            utils.echo_positive("\U00002714 No vulnerabilities found.")
 
-    if do_checks(dev):
-        utils.echo_info("\U00002714 No vulnerabilities found.")
+    if action == "dev":
+        if do_checks(True):
+            utils.echo_positive("\U00002714 No vulnerabilities found.")
+
+    if action == "pep":
+        checkpep8(path)
+
+        pass
+
+
+def checkpep8(path):
+    ignore_list = ["E121", "E123", "E126", "E133", "E226", "E241", "E242", "E704", "W503", "W504", "W505"]
+    style_guide = pycodestyle.StyleGuide(format="pylint", ignore=ignore_list)
+    report = style_guide.check_files([path])
+
+    if report.total_errors:
+        click.echo(f'Found {report.total_errors} PEP8 violation(s)')
+    else:
+        click.echo('No PEP8 violations found')
 
 
 def do_checks(dev=True):

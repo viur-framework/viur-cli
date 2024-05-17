@@ -26,18 +26,16 @@ def create(ctx, name):
     Note:
 
         - This command initializes the new ViUR project based on the ViUR base project.
-
         - Make sure to provide a unique project name to avoid conflicts with existing folders.
 
     """
     if os.path.exists(f'./{name}'):
-        echo_error(f'"{name}" Folder exists. Please use a different name or remove this folder ./{name}')
+        echo_error(f'"{name}" Folder exispme or remove this folder ./{name}')
         return
 
     # fetch base project
     os.system(
         f'git clone https://github.com/viur-framework/viur-base.git {name}')
-    project_json_path = f'./{name}/project.json'
 
     # collect project info
     conf = config.get_profile("default")
