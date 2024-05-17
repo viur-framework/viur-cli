@@ -126,7 +126,6 @@ class ProjectConfig(dict):
 
         self.remove_key(self, target_key="core")
 
-
         if old_format := self["default"].get("format"):
             self["format"] = old_format
             del self["default"]["format"]
@@ -193,7 +192,8 @@ class ProjectConfig(dict):
             elif response == "no":
                 self["default"]["builds"].pop("admin", None)
                 echo_info("You are using the Vi Administration")
-
+                
+             :return: None
 
         self.save()
 
