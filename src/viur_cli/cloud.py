@@ -2,6 +2,8 @@ import json
 import subprocess
 import os
 import string
+from pprint import pprint
+
 import click
 import yaml
 from viur_cli import echo_positive, echo_warning, echo_fatal
@@ -83,6 +85,7 @@ def enable_gcp_backup():
 
     print('Success! It may take a while until you can use Gcloud Backups')
 
+
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("service", type=click.Choice(["gcloud"]), default="gcloud")
 @click.argument("profile", default="default")
@@ -99,6 +102,7 @@ def init(service, profile):
     if service == "gcloud":
         for element in deployments:
             os.system(f"viur cloud deploy {element} {profile} -y")
+
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("service", type=click.Choice(["gcloud"]), default="gcloud")
@@ -533,7 +537,7 @@ def deploy(action, profile, name, ext, yes, additional_args):
         )
 
     elif action == "cloudfunction":
-        os.system(build_deploy_command(name, conf))
+        os.system(build_deploy_command(name, conf["gcloud"]))
 
     else:
         if action not in ["index", "queue", "cron"]:
@@ -592,7 +596,6 @@ def deploy(action, profile, name, ext, yes, additional_args):
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file} {"-q" if yes else ""}')
 
 
-
 def build_deploy_command(name, conf):
     """
 
@@ -625,6 +628,7 @@ def build_deploy_command(name, conf):
         echo_fatal(f"The cloudfunction {name} was not found your project.json\n "
                    f"You can create a cloudfunction entry by calling 'viur cloud create function'")
 
+
     command = (
         f"gcloud functions deploy "
         f"{name} "
@@ -633,7 +637,9 @@ def build_deploy_command(name, conf):
     )
 
     for k, v in conf["functions"][name].items():
-        if k in ["trigger", "update", "set", "remove"]:
+        if k == "gen":
+            command += f" --{k}{v}"
+        elif k in ["trigger", "update", "set", "remove"]:
             command += f"--{k}-{v}"
         else:
             command += f" --{k}='{str(v)}'"
@@ -644,51 +650,77 @@ def build_deploy_command(name, conf):
 @cloud.command()
 @click.argument("action", type=click.Choice(['function']))
 @click.argument("profile", default="default")
+@click.option("--gen", "-g")
 @click.option("--source", "-src")
-@click.option("--name", "-n", default=None)
+@click.option("--name", "-n")
 @click.option("--entrypoint", "-ep")
 @click.option("--env-vars-file", "-ev")
 @click.option("--memory", "-mem")
 @click.option("--runtime", "-rt")
 @click.option("--trigger", "-tr")
-def create(profile, action, source, name, entrypoint, env_vars_file, memory, runtime, trigger):
+def create(profile, action, gen, source, name, entrypoint, env_vars_file, memory, runtime, trigger):
     """Creates a cloud function based on the provided parameters."""
     if action == "function":
         conf = config.get_profile(profile)
         # First layer initialization:
         conf["gcloud"] = conf.get("gcloud", {})
         conf["gcloud"]["functions"] = conf["gcloud"].get("functions", {})
+
         conf["gcloud"]["max-instances"] = conf["gcloud"].get("max-instances", click.prompt(
-            "Please input the Max Instances your cloud functions should run on"))
+            "Please input the Max Instances your cloud functions should run on", default="1"))
+
         conf["gcloud"]["region"] = conf["gcloud"].get("region", click.prompt(
-            "Please enter your default cloudfunction region (europe-west3)"))
+            "Please enter your default cloud function region", default="europe-west3"))
 
         # function layer
-        function_name = name if name else click.prompt("Please enter the Name of your cloudfunction")
+        function_name = name if name else click.prompt("Please enter the Name of your cloud function")
         function_dict = conf["gcloud"]["functions"].get(function_name, {})
 
-        function_dict["entry-point"] = function_dict.get("entry-point", entrypoint if entrypoint else click.prompt(
-            "Please enter your cloudfunction entrypoint (main)"))
+        function_dict["gen"] = function_dict.get("gen",
+                                                        gen if gen else click.prompt(
+                                                            "Please enter your cloud function generation",
+                                                            default="2")
+                                                        )
+
+        function_dict["entry-point"] = function_dict.get("entry-point",
+                                                         entrypoint if entrypoint else click.prompt(
+                                                             "Please enter your cloud function entrypoint ",
+                                                             default="main")
+                                                         )
 
         function_dict["env-vars-file"] = function_dict.get("env-vars-file",
                                                            env_vars_file if env_vars_file else click.prompt(
-                                                               "Enter the name of your environment variables file"))
+                                                               "Enter the name of your environment variables file",
+                                                               default="env.yaml")
+                                                           )
 
-        function_dict["memory"] = function_dict.get("memory", memory if memory else click.prompt(
-            "Please enter your cloudfunction memory usage (512MB)"))
+        function_dict["memory"] = function_dict.get("memory",
+                                                    memory if memory else click.prompt(
+                                                        "Please enter your cloud function memory usage",
+                                                        default="512MB")
+                                                    )
 
-        function_dict["runtime"] = function_dict.get("runtime", runtime if runtime else click.prompt(
-            "Please enter your cloudfunction runtime (python311)"))
+        function_dict["runtime"] = function_dict.get("runtime",
+                                                     runtime if runtime else click.prompt(
+                                                         "Please enter your cloud function runtime",
+                                                         default="python312")
+                                                     )
 
-        function_dict["trigger"] = function_dict.get("trigger", trigger if trigger else click.prompt(
-            "Please enter your cloudfunction trigger type (http)"))
-        function_dict["source"] = function_dict.get("source", source if source else click.prompt(
-            "Enter the directory of your cloudfuntion"))
+        function_dict["trigger"] = function_dict.get("trigger",
+                                                     trigger if trigger else click.prompt(
+                                                         "Please enter your cloud function trigger type",
+                                                         default="http")
+                                                     )
+
+        function_dict["source"] = function_dict.get("source",
+                                                    source if source else click.prompt(
+                                                        "Enter the directory of your cloud functio"
+                                                        "(deploy/cloudfunction/{FileName})")
+                                                    )
 
         conf["gcloud"]["functions"][function_name] = function_dict
 
         config[profile] = conf
         config.migrate()
-        echo_positive("Your cloudfunction creation was succesfull, if you want to add more flags, "
+        echo_positive("Your cloud function creation was successful, if you want to add more flags, "
                       "add them in your project.json under")
-
