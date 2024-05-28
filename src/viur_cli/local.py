@@ -1,13 +1,15 @@
 import json
+from pprint import pprint
 
 import click
 import os
 import shutil
 import subprocess
 
+import pipenv
 from viur_cli import echo_info, echo_warning
 from .conf import config
-from . import cli, echo_error, utils, echo_fatal
+from . import cli, echo_error, utils, echo_fatal, update
 from requests import get
 from .package import vi as vi_install
 from types import SimpleNamespace
@@ -29,6 +31,31 @@ def get_user_info():
 
     return user_info
 
+# name -> name of the package
+def get_package_version(name):
+    # Check if requirements.txt exists
+    if not os.path.isfile("deploy/requirements.txt"):
+        echo_warning("Your project does not contain a requirements.txt file in the deploy folder.")
+        if click.confirm("Do you want to generate a requirements.txt now?"):
+            update.create_req(True, "default", True)
+        else:
+            echo_warning("To Create a requirements.txt run 'viur update requirements'")
+            return
+
+    else:
+    # go through all lines of requirements.txt
+        with open("deploy/requirements.txt", "r") as requirements:
+            for line in requirements:
+                print(line)
+    # check if core version is in tere somehow
+    pass
+
+
+@cli.command()
+@click.argument("name", default='core')
+def testcore(name):
+    get_package_version(name)
+    pass
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("profile", default='default')
