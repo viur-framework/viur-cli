@@ -31,31 +31,49 @@ def get_user_info():
 
     return user_info
 
-# name -> name of the package
-def get_package_version(name):
-    # Check if requirements.txt exists
-    if not os.path.isfile("deploy/requirements.txt"):
-        echo_warning("Your project does not contain a requirements.txt file in the deploy folder.")
-        if click.confirm("Do you want to generate a requirements.txt now?"):
-            update.create_req(True, "default", True)
-        else:
-            echo_warning("To Create a requirements.txt run 'viur update requirements'")
-            return
 
-    else:
-    # go through all lines of requirements.txt
-        with open("deploy/requirements.txt", "r") as requirements:
-            for line in requirements:
-                print(line)
-    # check if core version is in tere somehow
-    pass
+def get_package_version(name):
+    # Check if requiremenpts.txt exists
+ #   if not os.path.isfile("deploy/requirements.txt"):
+ #       echo_warning("Your project does not contain a requirements.txt file in the deploy folder.")
+ #       if click.confirm("Do you want to generate a requirements.txt now?"):
+ #           update.create_req(True, "default", True)
+ #       else:
+ #           echo_warning("To Create a requirements.txt run 'viur update requirements'")
+ #           return
+
+    process = subprocess.run(["pip", "show", name], capture_output= True, check=True)
+    output = process.stdout.decode("utf-8")
+    for line in output.splitlines():
+        if line.startswith("Version:"):
+            return line.split()[1].strip()
+
+
+def get_latest_version(name):
+    all_versions = subprocess.run(
+        ["pip", "index", "versions", name], capture_output=True, check=True
+    ).stdout.decode()
+    latest_version = all_versions.split("LATEST")[1].split(":")[1].strip()
+    return latest_version
+
+
+def update_pipfile(name, version):
+    command = f"{name}=={version}"
+    subprocess.run(["pipenv", "install", command], capture_output=True, check=True).stdout.decode()
 
 
 @cli.command()
-@click.argument("name", default='core')
+@click.argument("name", default='viur-core')
 def testcore(name):
-    get_package_version(name)
-    pass
+    actual = get_package_version(name)
+    latest = get_latest_version(name)
+
+    if actual != latest:
+        if click.confirm(f"It seems like you have not installed the latest {name} version.\n "
+                         f"Do you want to update it now?", default=True):
+            update_pipfile(name, latest)
+            return
+
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("profile", default='default')
