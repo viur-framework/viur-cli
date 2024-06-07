@@ -33,16 +33,7 @@ def get_user_info():
 
 
 def get_package_version(name):
-    # Check if requiremenpts.txt exists
- #   if not os.path.isfile("deploy/requirements.txt"):
- #       echo_warning("Your project does not contain a requirements.txt file in the deploy folder.")
- #       if click.confirm("Do you want to generate a requirements.txt now?"):
- #           update.create_req(True, "default", True)
- #       else:
- #           echo_warning("To Create a requirements.txt run 'viur update requirements'")
- #           return
-
-    process = subprocess.run(["pip", "show", name], capture_output= True, check=True)
+    process = subprocess.run(["pip", "show", name], capture_output=True, check=True)
     output = process.stdout.decode("utf-8")
     for line in output.splitlines():
         if line.startswith("Version:"):
