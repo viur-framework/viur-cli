@@ -40,6 +40,7 @@ def cli(ctx):
             f"Your Version: {sys_pipenv}\n"
             f"Recommended Version: {MINIMAL_PIPENV}"
         )
+    #local.checkversion("viur-core")
 
 
 @cli.command()

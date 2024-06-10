@@ -55,7 +55,7 @@ def update_pipfile(name, version):
 
 @cli.command()
 @click.argument("name", default='viur-core')
-def testcore(name):
+def checkversion(name):
     actual = get_package_version(name)
     latest = get_latest_version(name)
 
