@@ -50,10 +50,9 @@ run the appserver and start your app locally. You may specify a target profile.
 
 
 ```sh
-$ viur check [--dev]
+$ viur check {pep|dev|all} [--path]
 ```
-Runs a security check for the python environment and for each npm project registered under builds.
-
+Runs a security check for the python environment and for each npm project registered under builds and for pep8 conformity.
 ```sh
 $ viur package {install|update} {vi|scriptor|admin|all} 
 ```
