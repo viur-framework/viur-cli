@@ -14,16 +14,11 @@ def has_reached_code():
     temp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False, prefix='viur_cli_', dir='/tmp')
     unique_filename = os.path.basename(re.sub(r'[^\w\s]', '_', os.getcwd()).strip())
     temp_file.name = os.path.join(os.path.dirname(temp_file.name), unique_filename)
-    print(f"Temporary file created: {temp_file.name}")
-    # Write content to the temporary file
     temp_file.write("This is a temp file created by viur-cli!")
-    echo_error("I AM HERE")
-
-    # Check if the file already exists
 
     try:
         with open(temp_file.name, 'r') as f:
-            f.read()  # Attempt to read, any content means reached before
+            f.read()
             return True
     except FileNotFoundError:
         pass  # File not found, haven't reached this point yet
@@ -94,7 +89,6 @@ def update_pipfile(name, version):
 
 
 def check_version(name):
-    echo_positive("I AM CALLED")
     actual = get_package_version(name)
     latest = get_latest_version(name)
 
