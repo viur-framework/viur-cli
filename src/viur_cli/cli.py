@@ -21,11 +21,10 @@ def has_reached_code():
             f.read()
             return True
     except FileNotFoundError:
-        pass  # File not found, haven't reached this point yet
+        pass
 
-    # No existing file, create it to mark reaching this point
     with open(temp_file.name, 'w') as f:
-        f.write("Reached code")  # Write some content
+        f.write("Reached code")
     return False
 
 
@@ -46,13 +45,11 @@ def cli(ctx):
 
         - Run the 'project' command to manage 'project.json' and project configuration settings.
     """
-    # Get the systems pipenv Version Number
     pipenv_version = subprocess.check_output(['pipenv', '--version']).decode("utf-8")
     version_pattern = r'\b(\d+\.\d+\.\d+)\b'
     match = re.search(version_pattern, pipenv_version)
     sys_pipenv = match.group(1)
 
-    # sys kleiner min
     if semver.compare(sys_pipenv, MINIMAL_PIPENV) < 0:
         echo_warning(
             f"Your pipenv Version does not match the recommended pipenv version. \n"
