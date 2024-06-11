@@ -24,46 +24,10 @@ def get_user_info():
 
     curl_command = f'curl -X GET -H "Authorization: Bearer {auth_token}" "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"'
 
-    curl_process = subprocess.run(curl_command,
-                                  capture_output=True, shell=True,
-                                  text=True)
+    curl_process = subprocess.run(curl_command, capture_output=True, shell=True, text=True)
     user_info = json.loads(curl_process.stdout)
 
     return user_info
-
-
-def get_package_version(name):
-    process = subprocess.run(["pip", "show", name], capture_output=True, check=True)
-    output = process.stdout.decode("utf-8")
-    for line in output.splitlines():
-        if line.startswith("Version:"):
-            return line.split()[1].strip()
-
-
-def get_latest_version(name):
-    all_versions = subprocess.run(
-        ["pip", "index", "versions", name], capture_output=True, check=True
-    ).stdout.decode()
-    latest_version = all_versions.split("LATEST")[1].split(":")[1].strip()
-    return latest_version
-
-
-def update_pipfile(name, version):
-    command = f"{name}=={version}"
-    subprocess.run(["pipenv", "install", command], capture_output=True, check=True).stdout.decode()
-
-
-@cli.command()
-@click.argument("name", default='viur-core')
-def checkversion(name):
-    actual = get_package_version(name)
-    latest = get_latest_version(name)
-
-    if actual != latest:
-        if click.confirm(f"It seems like you have not installed the latest {name} version.\n "
-                         f"Do you want to update it now?", default=True):
-            update_pipfile(name, latest)
-            return
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
