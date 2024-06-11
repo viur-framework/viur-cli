@@ -167,16 +167,11 @@ def env(profile):
 @click.option("--path", "-p", default="deploy")
 def check(action, path):
     utils.echo_positive(action)
-    if action == "all":
-        checkpep8(path)
+    if action == "dev" or action == "all":
         if do_checks(True):
             utils.echo_positive("\U00002714 No vulnerabilities found.")
 
-    if action == "dev":
-        if do_checks(True):
-            utils.echo_positive("\U00002714 No vulnerabilities found.")
-
-    if action == "pep":
+    if action == "pep" or action == "all":
         checkpep8(path)
 
 
