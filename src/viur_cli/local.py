@@ -1,13 +1,15 @@
 import json
+from pprint import pprint
 
 import click
 import os
 import shutil
 import subprocess
 
+import pipenv
 from viur_cli import echo_info, echo_warning
 from .conf import config
-from . import cli, echo_error, utils, echo_fatal
+from . import cli, echo_error, utils, echo_fatal, update
 from requests import get
 from .package import vi as vi_install
 from types import SimpleNamespace
@@ -22,9 +24,7 @@ def get_user_info():
 
     curl_command = f'curl -X GET -H "Authorization: Bearer {auth_token}" "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"'
 
-    curl_process = subprocess.run(curl_command,
-                                  capture_output=True, shell=True,
-                                  text=True)
+    curl_process = subprocess.run(curl_command, capture_output=True, shell=True, text=True)
     user_info = json.loads(curl_process.stdout)
 
     return user_info
