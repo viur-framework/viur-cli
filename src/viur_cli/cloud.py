@@ -596,6 +596,7 @@ def deploy(action, profile, name, ext, yes, additional_args):
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file} {"-q" if yes else ""}')
 
 
+
 def build_deploy_command(name, conf):
     """
 

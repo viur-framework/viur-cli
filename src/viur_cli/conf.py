@@ -1,6 +1,4 @@
 import json
-from pprint import pprint
-
 import click
 import requests
 import difflib
@@ -119,13 +117,13 @@ class ProjectConfig(dict):
             self.find_key(self, target_key="application_name", target="default", keep=True)
             if "application_name" in self:
                 del self["application_name"]
-                
+
         if "version" not in self["default"]:
             self.find_key(self, target_key="version", target="default", keep=True)
             # Fail Safe
             if "version" in self:
                 del self["version"]
-              
+
         self.remove_key(self, target_key="core")
 
         if old_format := self["default"].get("format"):
@@ -159,17 +157,6 @@ class ProjectConfig(dict):
                     builds[k]["kind"] = "exec"
             self["default"]["builds"] = builds
 
-        # Version 1.2.0
-        """
-            Convert versions in the configuration to builds.
-
-            This method iterates through the provided version list and updates the project configuration
-            by converting versions to builds.
-
-            :param version_list: list
-                List of versions to convert to builds.
-            :return: None
-        """
         # Check if Builds is in the project.json
         if "builds" not in self["default"].keys():
             self["default"]["builds"] = {}
@@ -205,14 +192,6 @@ class ProjectConfig(dict):
             elif response == "no":
                 self["default"]["builds"].pop("admin", None)
                 echo_info("You are using the Vi Administration")
-        """
-             Fetch the version of the 'viur-core' package.
-
-             This method is responsible for fetching the version of the 'viur-core' package using 'pip list' and updating
-             the project configuration accordingly.
-
-             :return: None
-        """
 
         self.save()
 
