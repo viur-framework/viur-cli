@@ -2,9 +2,11 @@
 
 This file documents any relevant changes.
 
-## [2.0.2] 2024-07-29
-- chore: added support for gcloudfunctions gen2
+## [2.0.3] 2024-07-29
 - fix: breaking typo
+
+## [2.0.2] 2024-07-26
+- chore: added support for gcloudfunctions gen2
 
 
 ## [2.0.1] 2024-05-06
