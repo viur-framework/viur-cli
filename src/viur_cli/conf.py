@@ -122,7 +122,7 @@ class ProjectConfig(dict):
             self.find_key(self, target_key="version", target="default", keep=True)
             # Fail Safe
             if "version" in self:
-                del self["version"]  4
+                del self["version"]
         self.remove_key(self, target_key="core")
 
         if old_format := self["default"].get("format"):
