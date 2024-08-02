@@ -176,7 +176,6 @@ def check(dev):
 @cli.command()
 @click.option("--directory", "-d", default="deploy")
 def excheck(directory):
-
     for root, _, files in os.walk(directory):
         for file in files:
             if file.endswith(".py"):
