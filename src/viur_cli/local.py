@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 
+import pycodestyle
 from viur_cli import echo_info, echo_warning
 from .conf import config
 from . import cli, echo_error, utils, echo_fatal
@@ -162,15 +163,25 @@ def env(profile):
 
 
 @cli.command()
-@click.option('--dev', '-d', is_flag=True, default=False)
-def check(dev):
-    """
-    Perform security checks for vulnerabilities.
-    The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
-    """
+@click.argument("action", type=click.Choice(["dev", "pep", "all"]), default="all")
+@click.option("--path", "-p", default="deploy")
+def check(action, path):
+    utils.echo_positive(action)
+    if action == "dev" or action == "all":
+        if do_checks(True):
+            utils.echo_positive("\U00002714 No vulnerabilities found.")
 
-    if do_checks(dev):
-        utils.echo_info("\U00002714 No vulnerabilities found.")
+    if action == "pep" or action == "all":
+        checkpep8(path)
+
+
+def checkpep8(path):
+    style_guide = pycodestyle.StyleGuide(format="pylint", config_file='./tox.ini')
+    report = style_guide.check_files([path])
+    if report.total_errors:
+        click.echo(f'Found {report.total_errors} PEP8 violation(s)')
+    else:
+        click.echo('No PEP8 violations found')
 
 
 def do_checks(dev=True):
