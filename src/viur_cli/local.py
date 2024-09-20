@@ -176,10 +176,8 @@ def check(action, path):
 
 
 def checkpep8(path):
-    ignore_list = ["E121", "E123", "E126", "E133", "E226", "E241", "E242", "E704", "W503", "W504", "W505"]
-    style_guide = pycodestyle.StyleGuide(format="pylint", ignore=ignore_list)
+    style_guide = pycodestyle.StyleGuide(format="pylint", config_file='./tox.ini')
     report = style_guide.check_files([path])
-
     if report.total_errors:
         click.echo(f'Found {report.total_errors} PEP8 violation(s)')
     else:
