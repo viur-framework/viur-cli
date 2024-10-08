@@ -17,7 +17,7 @@ class ProjectConfig(dict):
         super().__init__()
         self["default"] = {}
         self["format"] = PROJECT_CONFIG_VERSION
-        self.load()
+        self.initial_load = False
 
     def load(self):
         """
@@ -72,20 +72,15 @@ class ProjectConfig(dict):
 
     def get_profile(self, profile):
         """Get profile configuration"""
+        if not self.initial_load:
+            self.load()
+            self.initial_load = True
+
         if profile == "format":
             echo_fatal("Your profile can not be named 'Format' ")
         if profile not in self:
             echo_fatal(f"{profile!r} is not a valid profile name")
         return self["default"].copy() | self[profile]
-
-    def delete(self):
-        """Delete profile cofniguration"""
-        configname = click.prompt('name')
-        try:
-            del self[configname]
-            self.save()
-        except:
-            raise click.ClickException(click.style(f"{configname} not found", fg="red"))
 
     def find_key(self, dictionary, target_key, target, keep=False):
         if target_key in dictionary:
