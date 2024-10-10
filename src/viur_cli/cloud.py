@@ -366,7 +366,7 @@ def transform_dict_to_yaml(transformed_data):
     return original_data
 
 
-def gcloud_setup():
+def gcloud_setup(project=None):
     """
     Set up the Google Cloud Platform (GCP) environment for a ViUR project.
 
@@ -385,7 +385,8 @@ def gcloud_setup():
 
     Note: This method does not return anything.
     """
-    project = input("Enter PROJECT_ID: ").strip()
+    if not project:
+        project = input("Enter PROJECT_ID: ").strip()
 
     if not project:
         echo_fatal("Usage: viur setup gcloud PROJECT_ID")
