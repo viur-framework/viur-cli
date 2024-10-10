@@ -162,8 +162,6 @@ class ProjectConfig(dict):
             format_version_updated = False
 
         for entry in ("admin", "scriptor", "vi"):
-            if not self["default"]["builds"]:
-                self["default"]["builds"]
             if entry in self["default"]:
                 version_value = self["default"][entry].lstrip("v")
                 self["default"]["builds"][entry] = {
