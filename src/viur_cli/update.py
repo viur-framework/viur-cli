@@ -48,7 +48,7 @@ def create_req(yes, profile, confirm_value=True):
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
-    if yes or click.confirm( text=f"Do you want to regenerate the requirements.txt located in the {dist_folder}?",
+    if yes or click.confirm( text=f"Would you like to regenerate {dist_folder}/requirements.txt ?",
                              default=confirm_value):
         os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
         file_object = open(f"{dist_folder}/requirements.txt", 'r')
@@ -66,6 +66,7 @@ def create_req(yes, profile, confirm_value=True):
         file_obj.close()
         echo_info("requirements.txt successfully generated")
 
+    # DEPRECATED: This check is only required prior viur-core 3.6.13
     if check_req(f"{dist_folder}/requirements.txt"):
         if not click.confirm(f"There are some depencency errors, are you sure you want to continue?"):
             sys.exit(0)
@@ -74,6 +75,7 @@ def create_req(yes, profile, confirm_value=True):
 def check_req(projects_requirements_path):
     """
     Check project's requirements against core requirements.
+    This check is only possible prior viur-core 3.6.13, the function is deprecated.
 
     This function checks the project's requirements to validate package versions and hashes.
     It identifies and reports errors if there are discrepancies.
@@ -98,36 +100,34 @@ def check_req(projects_requirements_path):
             core_requirements = req
             break
 
-    if not core_requirements:
-        echo_error("could now find core package, please update the core to validate the requirements.txt")
-        return
-
-    core_requirements_obj = utils.requirements_to_dict(parse_requirements(core_requirements, session=PipSession()))
-
-    projects_requirements_obj = utils.requirements_to_dict(
-        parse_requirements(projects_requirements_path, session=PipSession())
-    )
-
     errors = []
-    for package, options in core_requirements_obj.items():
-        if package not in projects_requirements_obj:
-            errors.append(f"missing package: {package} with version {options['version']}")
-            continue
-        elif options["version"] != projects_requirements_obj[package]["version"]:
-            errors.append(
-                f"version mismatch: expected {options['version']} "
-                f"got {projects_requirements_obj[package]['version']}: {package}"
-            )
-            continue
-        else:
-            # package exists, test hash
-            project_hashes = projects_requirements_obj[package]["hashes"]["sha256"]
-            core_hashes = options["hashes"]["sha256"]
 
-            if not set(core_hashes).issubset(set(project_hashes)):
-                errors.append(f"package hash mismatch: {package}")
+    if core_requirements:
+        core_requirements_obj = utils.requirements_to_dict(parse_requirements(core_requirements, session=PipSession()))
 
-    for error in errors:
-        echo_error(error)
+        projects_requirements_obj = utils.requirements_to_dict(
+            parse_requirements(projects_requirements_path, session=PipSession())
+        )
+
+        for package, options in core_requirements_obj.items():
+            if package not in projects_requirements_obj:
+                errors.append(f"missing package: {package} with version {options['version']}")
+                continue
+            elif options["version"] != projects_requirements_obj[package]["version"]:
+                errors.append(
+                    f"version mismatch: expected {options['version']} "
+                    f"got {projects_requirements_obj[package]['version']}: {package}"
+                )
+                continue
+            else:
+                # package exists, test hash
+                project_hashes = projects_requirements_obj[package]["hashes"]["sha256"]
+                core_hashes = options["hashes"]["sha256"]
+
+                if not set(core_hashes).issubset(set(project_hashes)):
+                    errors.append(f"package hash mismatch: {package}")
+
+        for error in errors:
+            echo_error(error)
 
     return errors
