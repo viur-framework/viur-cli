@@ -1,4 +1,7 @@
+import os
 import subprocess
+from pprint import pprint
+
 import click
 from .conf import config
 from .cli import cli
@@ -21,15 +24,11 @@ def clean_base(app_id, author=None):
         whoami = "viur"
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    echo_info(os.getcwd())
-    echo_info(app_id)
-
     os.chdir(app_id)
-    echo_info(os.getcwd())
 
     file_list = ["viur-project.md"]
     replacements = {"{{app_id}}": app_id, "{{whoami}}": whoami, "{{timestamp}}": timestamp}
+
 
     for subdir, dirs, files in os.walk("."):
         for file in files:
@@ -39,17 +38,15 @@ def clean_base(app_id, author=None):
                 file_list.append(filepath)
 
     for file_obj in file_list:
+        lines = []
         with open(file_obj, "r") as infile:
-            lines = infile.readlines()
-
-        for i, line in enumerate(lines):
-            for src, target in replacements.items():
-                lines[i] = line.replace(src, target)
-
+            for line in infile:
+                for src, target in replacements.items():
+                    line = line.replace(src, target)
+                lines.append(line)
         with open(file_obj, "w") as outfile:
-            outfile.writelines(lines)
-
-    echo_info(os.getcwd())
+            for line in lines:
+                outfile.write(line)
 
     if os.path.exists(".git"):
         echo_info("Cleaning git history")
@@ -58,7 +55,7 @@ def clean_base(app_id, author=None):
 
         subprocess.check_output("git branch -m main", shell=True)
         echo_info(
-            f"Current branch is:, {subprocess.check_output("git branch --show-current", shell=True)
+            f"Current branch is: {subprocess.check_output("git branch --show-current", shell=True)
             .decode().rstrip("\n")}")
         echo_info("---")
 
@@ -103,10 +100,6 @@ def create(ctx, name):
 
     # fetch base project
     os.system(f'git clone https://github.com/viur-framework/viur-base.git {name}')
-
-    # collect project info
-    conf = config.get_profile("default")
-    conf['application_name'] = name
 
     # run clean-base
     clean_base(app_id=name)
