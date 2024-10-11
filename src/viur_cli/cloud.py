@@ -196,15 +196,12 @@ def disable_gcp_backup():
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action", type=click.Choice(["gcloud", "gcroles"]))
+@click.argument("action", type=click.Choice(["gcroles"]))
 @click.argument("profile", default="default")
 def setup(action, profile):
     """
     Set up the specified action for the given profile.
     """
-    if action == "gcloud":
-        gcloud_setup()
-
     if action == "gcroles":
         gcloud_setup_roles(profile)
 
@@ -364,122 +361,6 @@ def transform_dict_to_yaml(transformed_data):
     original_data.update({"etag": transformed_data["etag"], "version": transformed_data["version"]})
 
     return original_data
-
-
-def gcloud_setup(project=None):
-    """
-    Set up the Google Cloud Platform (GCP) environment for a ViUR project.
-
-    This method performs the following steps:
-    1. Prompts the user to enter the GCP project ID.
-    2. Checks if the user is authorized with gcloud.
-       - If not authorized, prompts the user to authenticate with gcloud and login.
-    3. Checks if the GCP App Engine app already exists.
-       - If not, prompts the user to create the app and confirm the project is connected to a billing account.
-    4. Enables necessary APIs and services for the project.
-    5. Configures Google Cloud Storage for the project.
-    6. Deploys necessary deployment files (cron.yaml, queue.yaml, index.yaml) to the project.
-    7. Checks if the app engine default credentials are set.
-       - If not set, prompts the user to authenticate and set the application default user.
-    8. Prints a success message with instructions on how to run the project locally.
-
-    Note: This method does not return anything.
-    """
-    if not project:
-        project = input("Enter PROJECT_ID: ").strip()
-
-    if not project:
-        echo_fatal("Usage: viur setup gcloud PROJECT_ID")
-        return
-
-    echo_info("Check if user is authorized with gcloud....")
-
-    try:
-        run_command("gcloud auth print-access-token")
-    except subprocess.CalledProcessError:
-        echo_warning(
-            "##############################################################\n"
-            "# Please authenticate your Google user with gcloud SDK to    #\n"
-            "# execute administrative commands.                           #\n"
-            "# In this step, a separate browser window opens to           #\n"
-            "# authenticate.                                              #\n"
-            "# This step is only required once on this computer.          #\n"
-            "##############################################################\n"
-        )
-        response = input("Are you ready?[Y/n]")
-        if not response.lower() in ("y", ""):
-            echo_fatal("User aborted")
-            return
-
-        run_command("gcloud auth login --no-ptomote")
-
-    # Check if App already exists
-    try:
-        run_command(f"gcloud app describe --project={project}")
-    except subprocess.CalledProcessError:
-        echo_warning(
-            "##############################################################\n"
-            "# Please check and confirm that your project is created and  #\n"
-            "# connected with a billing account in Google Cloud console.  #\n"
-            "# Otherwise, some of the following calls may fail.           #\n"
-            "##############################################################"
-        )
-        response = input("Continue? [Y/n] ")
-        if not response.lower() in ("y", ""):
-            echo_error("User aborted.")
-            return
-
-        # Create the Appengine app
-        run_command(f"gcloud app create --project={project} --region=europe-west3")
-
-    # Activate APIs and Services
-    services = [
-        "datastore.googleapis.com",
-        "firestore.googleapis.com",
-        "iamcredentials.googleapis.com",
-        "cloudbuild.googleapis.com",
-        "cloudtasks.googleapis.com",
-        "cloudscheduler.googleapis.com",
-        "secretmanager.googleapis.com"
-    ]
-
-    for service in services:
-        run_command(f"gcloud services enable --project={project} {service}")
-
-        # Configure Google Cloud Storage
-    run_command(f"gsutil uniformbucketlevelaccess set on gs://{project}.appspot.com/")
-
-    for yaml in ["cron.yaml", "queue.yaml", "index.yaml"]:
-        run_command(f"cd deploy && gcloud app deploy -q --project={project} {yaml}")
-
-    echo_info("Check if app engine default credentials are set...")
-    try:
-        run_command("gcloud auth application-default print-access-token")
-
-    except subprocess.CalledProcessError:
-        echo_warning(
-            "##############################################################\n"
-            "# Please authenticate your Google user with gcloud SDK now   #\n"
-            "# to set the application default user. This step is required #\n"
-            "# to run ViUR applications locally without further           #\n"
-            "# credentials that must be supplied from a file.             #\n"
-            "# This step is only required once on this computer.          #\n"
-            "##############################################################")
-        response = input("Are you ready? [Y/n] ")
-        if not response.lower() in ("y", ""):
-            echo_fatal("User aborted.")
-            return
-
-        run_command("gcloud auth application-default login")
-
-    echo_positive(
-        "All done!\n"
-        "You should now be able to run your project locally with\n"
-        "   viur run \n"
-        "At the first run, it might happen that some functions are\n"
-        "causing error 500 because indexes are not immediately\n"
-        "served. Therefore, maybe wait a few minutes.\n"
-        "Have a nice day.\n")
 
 
 # Helper function for running Commands in subprocess and getting the Output

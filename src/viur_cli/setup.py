@@ -1,11 +1,6 @@
-import os
 import subprocess
-from pprint import pprint
-
 import click
-from .conf import config
 from .cli import cli
-from .cloud import gcloud_setup
 from .utils import *
 
 def clean_base(app_id, author=None):
@@ -102,8 +97,8 @@ def create(ctx, name):
     os.system(f'git clone https://github.com/viur-framework/viur-base.git {name}')
 
     # run clean-base
-    clean_base(app_id=name)
+    os.system(f'cd ./{name} && python3 clean-base.py -A={name}')
 
     # run gcloud config
     if click.confirm(f'Do you want to configure "{name}" as a new gcloud project?'):
-        gcloud_setup()
+        os.system(f'cd ./{name} && ./viur-gcloud-setup.sh {name}')
