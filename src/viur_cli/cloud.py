@@ -2,8 +2,6 @@ import json
 import subprocess
 import os
 import string
-from pprint import pprint
-
 import click
 import yaml
 from viur_cli import echo_positive, echo_warning, echo_fatal
