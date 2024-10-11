@@ -14,45 +14,11 @@ def tool():
 
     Available Commands:
 
-        - '2to3': ViUR porting script.
-
         - 'pyodide': Run the get_pyodide command.
 
         - 'ssl_fix': SSL certificate fix for macOS.
     """
 
-
-@tool.command(name="2to3")
-@click.argument("path")
-@click.option('--dryrun', '-d', is_flag=True, default=False)
-@click.option('--daredevil', '-x', is_flag=True, default=False)
-def two_to_three(path, *args, **kwargs):
-    """
-    ViUR2 to ViUR3 porting script.
-
-    The '2to3' command allows you to port an existing ViUR2 project to ViUR3. This script is used for
-    migrating projects from Python 2 to Python 3.
-
-    :param path: str
-        The path to the project to be ported.
-    :param dryrun: bool, optional
-        Perform a dry run to test the porting process (default: False).
-    :param daredevil: bool, optional
-        Use the daredevil mode for porting (default: False).
-
-    Example Usage:
-    ```
-    viur tool 2to3 /path/to/project
-    ```
-
-    :return: None
-    """
-    command = f"viur-2to3 {path}"
-    for option, value in kwargs.items():
-        if value:
-            command += f" --{option}"
-
-    os.system(command)
 
 @tool.command()
 @click.option('--version', '-v')
