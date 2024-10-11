@@ -118,6 +118,7 @@ class ProjectConfig(dict):
             # Fail Safe
             if "version" in self:
                 del self["version"]
+
         self.remove_key(self, target_key="core")
 
         if old_format := self["default"].get("format"):
