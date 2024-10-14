@@ -16,11 +16,48 @@ def cloud():
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
-@click.argument("action", type=click.Choice(["backup"]))
-def enable(action):
+@click.argument("action", type=click.Choice(["backup","api"]))
+@click.argument("profile", default="default")
+def enable(action, profile):
     """Enable a specific action based on the provided parameter."""
     if action == "backup":
         enable_gcp_backup()
+
+    if action == "api":
+        enable_api(profile)
+
+
+def enable_api(profile):
+    """Enables a Google Cloud Service/API.
+
+    Args:
+        project_id (str, optional): The Google Cloud project ID. Defaults to None.
+
+    Raises:
+        click.ClickException: If an error occurs during project setup or service enablement.
+    """
+    project_id = config.get_profile(profile)["application_name"]
+    if not project_id:
+        project_id = click.prompt("Please enter your Google Cloud project ID")
+
+    project_setup_command = f"gcloud config set project {project_id}"
+
+    try:
+        result = subprocess.run(project_setup_command.split(), capture_output=True, check=True)
+        echo_info(f"{result.stderr.decode('utf-8')}")
+    except Exception as e:
+        echo_fatal(f"An Error Occured:\n {e}")
+
+    service = click.prompt("Please enter the name of the service/API you want to Enable.")
+    enable_service_command = f"gcloud config enable {service}"
+
+    try:
+        # Execute command without shell=True for security
+        result = subprocess.run(enable_service_command.split(), capture_output=True, check=True)
+    except Exception as e:
+        echo_fatal(f"An Error Occured during Service enablement:\n {e}")
+
+    click.echo(f"Successfully enabled service/API: {service} for project: {project_id}")
 
 
 def enable_gcp_backup():
