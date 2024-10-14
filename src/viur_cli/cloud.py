@@ -16,6 +16,53 @@ def cloud():
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
+@click.argument("action", type=click.Choice(["bucket2bucket", "bucket2local", "local2bucket"]))
+@click.argument("profile", default="default")
+def copy(action, profile):
+    if action == "bucket2bucket":
+        if user_check_login():
+            storage_copy()
+
+    if action == "bucket2local":
+        if user_check_login():
+            datastore_import(profile)
+
+    if action == "local2bucket":
+        if user_check_login():
+            datastore_export(profile)
+
+
+def user_check_login():
+    return click.confirm("Are you logged in with your gcloud admin account?", default=False, show_default=True)
+
+
+def storage_copy():
+    # https://console.cloud.google.com/transfer/jobs
+    source = click.prompt('Source bucketname')
+    target = click.prompt('Target bucketname')
+    if not click.confirm(text=f"Copy from {source} to {target}", default=True):
+        print("Abort ...")
+        return 0
+    print(f"gsutil -m cp -r gs://{source}/ gs://{target}/")
+    os.system(f"gsutil -m cp -r gs://{source} gs://{target}")
+
+
+def datastore_import(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('path to overall_export_metadata')
+    os.system(f"gcloud datastore import gs://{target} --project={conf['application_name']}")
+
+
+def datastore_export(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('bucketname')
+    timestamp = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-manual'
+    format = "default"
+    os.system(
+        f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={conf['application_name']} ")
+
+
+@cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["backup"]))
 def enable(action):
     """Enable a specific action based on the provided parameter."""
@@ -594,7 +641,6 @@ def deploy(action, profile, name, ext, yes, additional_args):
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file} {"-q" if yes else ""}')
 
 
-
 def build_deploy_command(name, conf):
     """
 
@@ -626,7 +672,6 @@ def build_deploy_command(name, conf):
     if name not in conf["functions"]:
         echo_fatal(f"The cloudfunction {name} was not found your project.json\n "
                    f"You can create a cloudfunction entry by calling 'viur cloud create function'")
-
 
     command = (
         f"gcloud functions deploy "
@@ -676,10 +721,10 @@ def create(profile, action, gen, source, name, entrypoint, env_vars_file, memory
         function_dict = conf["gcloud"]["functions"].get(function_name, {})
 
         function_dict["gen"] = function_dict.get("gen",
-                                                        gen if gen else click.prompt(
-                                                            "Please enter your cloud function generation",
-                                                            default="2")
-                                                        )
+                                                 gen if gen else click.prompt(
+                                                     "Please enter your cloud function generation",
+                                                     default="2")
+                                                 )
 
         function_dict["entry-point"] = function_dict.get("entry-point",
                                                          entrypoint if entrypoint else click.prompt(
