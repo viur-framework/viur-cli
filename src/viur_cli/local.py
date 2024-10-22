@@ -182,7 +182,7 @@ def excheck(directory):
                 file_path = os.path.join(root, file)
                 with open(file_path, "r", encoding="utf-8") as f:
                      for i, line in enumerate(f,start=1):
-                         if "exposed" in line:
+                         if "@exposed" in line:
                              print(f"We found an @exposed function in file: {file_path} in line: {i}")
                              print("Please check the function for unwanted Exposed\n")
 
