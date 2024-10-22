@@ -49,9 +49,9 @@ def run(profile, additional_args):
     conf = config.get_profile(profile)
     additional_args = list(additional_args)
 
-    if conf["port"]:
+    if conf.get("port"):
         additional_args.append(f"--port={conf['port']}")
-    if conf["gunicorn_port"]:
+    if conf.get("gunicorn_port"):
         additional_args.append(f"--gunicorn_port={conf['gunicorn_port']}")
 
     utils.system(
