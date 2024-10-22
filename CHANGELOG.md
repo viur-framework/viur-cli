@@ -1,10 +1,6 @@
 # Changelog
 
 This file documents any relevant changes.
-## [2.0.2] 2024-05-06
-- bugfix: removed project.json profile "core" validation throughout the project
-- chore: bumped version numbers in setup.cfg
-- chore: Added hints to several commands
 
 ## [2.0.3] 2024-07-29
 - fix: breaking typo
