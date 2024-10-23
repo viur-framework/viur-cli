@@ -174,6 +174,12 @@ It contains the default viur project profile and it can be expanded with several
                 "kind": "npm",
                 "source": ""
             }
+            /* OPTIONAL arguments, can be put in default or in a specific profile */
+            "appyaml": "app_stub.yaml",  // Use an other name as "app.yaml"
+            "appyaml_substitition": true,  // Set to true to substitute only default variables in app.yaml
+            "appyaml_substitition": {  // Set to an object to substitute these additionally to default variables in app.yaml
+                "$REGION": "europe-west3"
+            }
         },
         "gcloud": {
             "functions": { //Declarations for a cloud function
