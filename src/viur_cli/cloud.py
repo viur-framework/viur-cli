@@ -531,9 +531,9 @@ def deploy(action, profile, name, ext, yes, additional_args):
         # rebuild requirements.txt
         create_req(yes, profile, confirm_value=False)
 
+        app_yaml = Path(conf["distribution_folder"]) / conf.get("appyaml", "app.yaml")
         app_yaml_tmp = app_yaml_hidden = None
         if appyaml_substitition := conf.get("appyaml_substitition"):
-            app_yaml = Path(conf["distribution_folder"]) / conf.get("appyaml", "app.yaml")
             app_yaml_tmp = app_yaml.with_stem(f"app{time.time_ns()}.tmp")
 
             susbtitutions = {
@@ -556,6 +556,10 @@ def deploy(action, profile, name, ext, yes, additional_args):
             if app_yaml.name == "app.yaml":
                 app_yaml_hidden = app_yaml.with_stem(f".{app_yaml.stem}")
                 app_yaml.rename(app_yaml_hidden)
+
+        elif app_yaml.name != "app.yaml":
+            # No substitution is used, but an different app.yaml name
+            additional_args = [f"--appyaml={app_yaml_tmp.resolve()}", *additional_args]
 
         try:
             os.system(
