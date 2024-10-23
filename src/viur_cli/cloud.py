@@ -531,7 +531,7 @@ def deploy(action, profile, name, ext, yes, additional_args):
         # rebuild requirements.txt
         create_req(yes, profile, confirm_value=False)
 
-        app_yaml_tmp = None
+        app_yaml_tmp = app_yaml_hidden = None
         if appyaml_substitition := conf.get("appyaml_substitition"):
             app_yaml = Path(conf["distribution_folder"]) / conf.get("appyaml", "app.yaml")
             app_yaml_tmp = app_yaml.with_stem(f"app{time.time_ns()}.tmp")
@@ -551,9 +551,11 @@ def deploy(action, profile, name, ext, yes, additional_args):
             additional_args = [f"--appyaml={app_yaml_tmp.resolve()}", *additional_args]
 
             # Sadly the --appyaml does only work if the deploy dir does not contain an app.yaml,
-            # thefore we make it "hidden" for the gcloud CLI
-            app_yaml_hidden = app_yaml.with_stem(f".{app_yaml.stem}")
-            app_yaml.rename(app_yaml_hidden)
+            # thefore we make it "hidden" for the gcloud CLI if there is "app.yaml" is not
+            # named differently
+            if app_yaml.name == "app.yaml":
+                app_yaml_hidden = app_yaml.with_stem(f".{app_yaml.stem}")
+                app_yaml.rename(app_yaml_hidden)
 
         try:
             os.system(
@@ -563,6 +565,7 @@ def deploy(action, profile, name, ext, yes, additional_args):
         finally:
             if app_yaml_tmp is not None:
                 app_yaml_tmp.unlink()
+            if app_yaml_hidden is not None:
                 app_yaml_hidden.rename(app_yaml)
 
     elif action == "cloudfunction":
