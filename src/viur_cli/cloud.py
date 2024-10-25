@@ -503,20 +503,23 @@ def run_command(command):
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
 @click.option("--yes", "-y", is_flag=True, default=False)
+@click.option("--skip_checks", is_flag=True, help="Skip the security checks before the deployment")
 @click.option("--name", "-n", default=None)
-def deploy(action, profile, name, ext, yes, additional_args):
-    """ Deploy the specified action to a cloud service."""
+def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
+    """Deploy the specified action to a cloud"""
 
     conf = config.get_profile(profile)
 
     if action == "app":
-        from . import do_checks
-        if not do_checks(dev=False):
-            # --yes will not be implemented here because deploying security issues should be an explicit decission
-            if not click.confirm(f"The checks were not successful, do you want to continue?"):
-                return
-        else:
-            echo_info("\U00002714 No vulnerabilities found.")
+        if not skip_checks:
+            from . import do_checks
+            if not do_checks(dev=False):
+                # --yes will not be implemented here because deploying security issues should be an explicit decission
+                if not click.confirm(f"The checks were not successful, do you want to continue?"):
+                    return
+            else:
+                echo_info("\U00002714 No vulnerabilities found.")
+
         version = replace_vars(
             conf["version"],
             {k: v for k, v in conf.items() if k not in ["version"]}
