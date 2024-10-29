@@ -512,8 +512,9 @@ def deploy(action, profile, name, ext, yes, additional_args):
     if action == "app":
         from . import do_checks
         if not do_checks(dev=False):
+        if not do_checks(dev=False):
             # --yes will not be implemented here because deploying security issues should be an explicit decission
-            if not click.confirm(f"The checks were not successful, do you want to continue?"):
+            if not click.confirm("The checks were not successful, do you want to continue?"):
                 return
         else:
             echo_info("\U00002714 No vulnerabilities found.")
@@ -630,7 +631,7 @@ def build_deploy_command(name, conf):
 
 
     command = (
-        f"gcloud functions deploy "
+        f"gcloud run deploy "
         f"{name} "
         f"--region='{conf['region']}'"
         f"--max-instances={conf['max-instances']}"
@@ -709,18 +710,19 @@ def create(profile, action, gen, source, name, entrypoint, env_vars_file, memory
         function_dict["trigger"] = function_dict.get("trigger",
                                                      trigger if trigger else click.prompt(
                                                          "Please enter your cloud function trigger type",
-                                                         default="http")
+                                                         default="https")
                                                      )
 
         function_dict["source"] = function_dict.get("source",
                                                     source if source else click.prompt(
-                                                        "Enter the directory of your cloud functio"
+                                                        "Enter the directory of your cloud function"
                                                         "(deploy/cloudfunction/{FileName})")
                                                     )
+
 
         conf["gcloud"]["functions"][function_name] = function_dict
 
         config[profile] = conf
         config.migrate()
         echo_positive("Your cloud function creation was successful, if you want to add more flags, "
-                      "add them in your project.json under")
+                      "add them in your project.json")
