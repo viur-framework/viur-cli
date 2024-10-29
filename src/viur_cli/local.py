@@ -46,6 +46,10 @@ def run(profile, additional_args):
                    f"Please install the 'gcloud' tool or Log in with an appropriate account.")
 
     conf = config.get_profile(profile)
+
+    if appyaml := conf.get("appyaml"):
+        additional_args = [f"--appyaml={appyaml}", *additional_args]
+
     utils.system(
         f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
