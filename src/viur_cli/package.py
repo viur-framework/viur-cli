@@ -85,8 +85,8 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 @cli.command()
 @click.argument('operation', type=click.Choice(['update', 'install']))
 @click.argument('component', type=click.Choice(['vi', 'admin', 'scriptor', 'all']))
-@click.argument('profile', default='default')
 @click.argument("version", default="latest")
+@click.argument('profile', default='default')
 def package(operation, component, profile, version):
     """
     Performs installements and updates of ViUR Ecosystem packages
