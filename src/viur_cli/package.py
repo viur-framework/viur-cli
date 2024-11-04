@@ -236,7 +236,7 @@ def vi(version, target, profile):
     old_version = conf.get("builds.vi.version")
 
     if old_version == real_version.strip("v"):
-        if not click.confirm(f"You have already installed the latest version {old_version} of vi.\n"
+        if not click.confirm(f"You have already installed the version {old_version} of vi.\n"
                              f"Do you want to continue and install it again?"):
             return
 
