@@ -1,7 +1,9 @@
+import os
 import subprocess
 import click
 from .cli import cli
 from .utils import *
+
 
 def clean_base(app_id, author=None):
     """
@@ -24,12 +26,12 @@ def clean_base(app_id, author=None):
     file_list = ["viur-project.md"]
     replacements = {"{{app_id}}": app_id, "{{whoami}}": whoami, "{{timestamp}}": timestamp}
 
-
     for subdir, dirs, files in os.walk("."):
         for file in files:
             filepath = subdir + os.sep + file
 
-            if any([filepath.endswith(ext) for ext in [".py", ".yaml", ".html", ".md", ".sh", ".json", ".js", ".less"]]):
+            if any([filepath.endswith(ext) for ext in
+                    [".py", ".yaml", ".html", ".md", ".sh", ".json", ".js", ".less"]]):
                 file_list.append(filepath)
 
     for file_obj in file_list:
@@ -95,10 +97,11 @@ def create(ctx, name):
 
     # fetch base project
     os.system(f'git clone https://github.com/viur-framework/viur-base.git {name}')
-
+    os.chdir(f"./{name}")
     # run clean-base
-    os.system(f'cd ./{name} && python3 clean-base.py -A={name}')
+    os.system(f'python3 clean-base.py -A={name}')
 
     # run gcloud config
     if click.confirm(f'Do you want to configure "{name}" as a new gcloud project?'):
-        os.system(f'cd ./{name} && ./viur-gcloud-setup.sh {name}')
+        os.system(f'./viur-gcloud-setup.sh {name}')
+    os.chdir('..')
