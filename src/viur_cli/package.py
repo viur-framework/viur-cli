@@ -8,6 +8,7 @@ from .conf import config
 from pathlib import Path
 from urllib.request import urlretrieve
 from . import cli, echo_error, echo_info
+from operator import itemgetter
 
 REPOS = {
     "vi": ("viur-framework/viur-vi", "viur-vi.zip"),
@@ -142,7 +143,7 @@ def scriptor(version, target, profile):
 
     real_version, download_url = get_version_info("scriptor", version)
 
-    old_version = conf.get("builds.scriptor.version")
+    old_version=conf.get('builds').get('scriptor').get('version')
 
     if old_version == real_version.strip("v"):
         if not click.confirm(f"You have already installed version {old_version} of scriptor.\n"
@@ -185,7 +186,7 @@ def admin(version: str, target: str, profile):
 
     real_version, download_url = get_version_info("admin", version)
 
-    old_version = conf.get("builds.admin.version")
+    old_version=conf.get('builds').get('admin').get('version')
 
     if old_version == real_version.strip("v"):
         if not click.confirm(f"You have already installed the version {old_version} of admin.\n"
@@ -233,7 +234,7 @@ def vi(version, target, profile):
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
-    old_version = conf.get("builds.vi.version")
+    old_version = conf.get('builds').get('vi').get('version')
 
     if old_version == real_version.strip("v"):
         if not click.confirm(f"You have already installed the version {old_version} of vi.\n"
