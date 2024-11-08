@@ -101,6 +101,7 @@ def create(ctx, name):
 
     wdir = f"{os.getcwd()}/{name}"
 
+    echo_info(f"DAS IST DEIN WDIR{wdir}")
     # Run clean-base.py
     clean_base_cmd = ['python3', 'clean-base.py', '-A', f'{name}']
     subprocess.run(clean_base_cmd, check=True, cwd=wdir)
