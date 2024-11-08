@@ -252,7 +252,12 @@ def setup(action, profile):
     Set up the specified action for the given profile.
     """
     if action == "gcloud":
-        gcloud_setup()
+        if os.path.exists('deploy'):
+            gcloud_setup()
+        else:
+            echo_error("No 'deploy' directory found in your current working directory."
+                       "\n Please make sure you are in the correct directory."
+                       "\n If you want to create a new ViUR Project use 'viur create {name}'")
 
     if action == "gcroles":
         gcloud_setup_roles(profile)
