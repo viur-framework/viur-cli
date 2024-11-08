@@ -1,7 +1,9 @@
 import json
+from pathlib import Path
 import subprocess
 import os
 import string
+import time
 import click
 import yaml
 from viur_cli import echo_positive, echo_warning, echo_fatal
@@ -13,6 +15,53 @@ from .update import create_req
 @cli.group()
 def cloud():
     """This method defines a command group for working with cloud resources."""
+
+
+@cloud.command(context_settings={"ignore_unknown_options": True})
+@click.argument("action", type=click.Choice(["bucket2bucket", "bucket2local", "local2bucket"]))
+@click.argument("profile", default="default")
+def copy(action, profile):
+    if action == "bucket2bucket":
+        if user_check_login():
+            storage_copy()
+
+    if action == "bucket2local":
+        if user_check_login():
+            datastore_import(profile)
+
+    if action == "local2bucket":
+        if user_check_login():
+            datastore_export(profile)
+
+
+def user_check_login():
+    return click.confirm("Are you logged in with your gcloud admin account?", default=False, show_default=True)
+
+
+def storage_copy():
+    # https://console.cloud.google.com/transfer/jobs
+    source = click.prompt('Source bucketname')
+    target = click.prompt('Target bucketname')
+    if not click.confirm(text=f"Copy from {source} to {target}", default=True):
+        print("Abort ...")
+        return 0
+    print(f"gsutil -m cp -r gs://{source}/ gs://{target}/")
+    os.system(f"gsutil -m cp -r gs://{source} gs://{target}")
+
+
+def datastore_import(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('path to overall_export_metadata')
+    os.system(f"gcloud datastore import gs://{target} --project={conf['application_name']}")
+
+
+def datastore_export(profile):
+    conf = config.get_profile(profile)
+    target = click.prompt('bucketname')
+    timestamp = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-manual'
+    format = "default"
+    os.system(
+        f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={conf['application_name']} ")
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
@@ -202,6 +251,13 @@ def setup(action, profile):
     """
     Set up the specified action for the given profile.
     """
+    if action == "gcloud":
+        if os.path.exists('deploy'):
+            gcloud_setup()
+        else:
+            echo_error("No 'deploy' directory found in your current working directory."
+                       "\n Please make sure you are in the correct directory."
+                       "\n If you want to create a new ViUR Project use 'viur create {name}'")
     if action == "gcroles":
         gcloud_setup_roles(profile)
 
@@ -383,20 +439,23 @@ def run_command(command):
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
 @click.option("--yes", "-y", is_flag=True, default=False)
+@click.option("--skip_checks", is_flag=True, help="Skip the security checks before the deployment")
 @click.option("--name", "-n", default=None)
-def deploy(action, profile, name, ext, yes, additional_args):
-    """ Deploy the specified action to a cloud service."""
+def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
+    """Deploy the specified action to a cloud"""
 
     conf = config.get_profile(profile)
 
     if action == "app":
-        from . import do_checks
-        if not do_checks(dev=False):
-            # --yes will not be implemented here because deploying security issues should be an explicit decission
-            if not click.confirm(f"The checks were not successful, do you want to continue?"):
-                return
-        else:
-            echo_info("\U00002714 No vulnerabilities found.")
+        if not skip_checks:
+            from . import do_checks
+            if not do_checks(dev=False):
+                # --yes will not be implemented here because deploying security issues should be an explicit decission
+                if not click.confirm(f"The checks were not successful, do you want to continue?"):
+                    return
+            else:
+                echo_info("\U00002714 No vulnerabilities found.")
+
         version = replace_vars(
             conf["version"],
             {k: v for k, v in conf.items() if k not in ["version"]}
@@ -411,10 +470,46 @@ def deploy(action, profile, name, ext, yes, additional_args):
         # rebuild requirements.txt
         create_req(yes, profile, confirm_value=False)
 
-        os.system(
-            f'gcloud app deploy --project={conf["application_name"]} --version={version} '
-            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}'
-        )
+        app_yaml = Path(conf["distribution_folder"]) / conf.get("appyaml", "app.yaml")
+        app_yaml_tmp = app_yaml_hidden = None
+        if appyaml_substitition := conf.get("appyaml_substitition"):
+            app_yaml_tmp = app_yaml.with_stem(f"app{time.time_ns()}.tmp")
+
+            susbtitutions = {
+                "$PROJECT_ID": conf["application_name"],
+                "$PROJECT_VERSION": version,
+                "$CLI_PROFILE": profile,
+            }
+            if isinstance(appyaml_substitition, dict):
+                susbtitutions |= appyaml_substitition
+
+            new_content = app_yaml.read_text()
+            for pattern, replacment in susbtitutions.items():
+                new_content = new_content.replace(pattern, replacment)
+            app_yaml_tmp.write_text(new_content)
+            additional_args = [f"--appyaml={app_yaml_tmp.resolve()}", *additional_args]
+
+            # Sadly the --appyaml does only work if the deploy dir does not contain an app.yaml,
+            # thefore we make it "hidden" for the gcloud CLI if there is "app.yaml" is not
+            # named differently
+            if app_yaml.name == "app.yaml":
+                app_yaml_hidden = app_yaml.with_stem(f".{app_yaml.stem}")
+                app_yaml.rename(app_yaml_hidden)
+
+        elif app_yaml.name != "app.yaml":
+            # No substitution is used, but an different app.yaml name
+            additional_args = [f"--appyaml={app_yaml_tmp.resolve()}", *additional_args]
+
+        try:
+            os.system(
+                f'gcloud app deploy --project={conf["application_name"]} --version={version} '
+                f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}'
+            )
+        finally:
+            if app_yaml_tmp is not None:
+                app_yaml_tmp.unlink()
+            if app_yaml_hidden is not None:
+                app_yaml_hidden.rename(app_yaml)
 
     elif action == "cloudfunction":
         os.system(build_deploy_command(name, conf["gcloud"]))
@@ -476,7 +571,6 @@ def deploy(action, profile, name, ext, yes, additional_args):
             f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file} {"-q" if yes else ""}')
 
 
-
 def build_deploy_command(name, conf):
     """
 
@@ -508,7 +602,6 @@ def build_deploy_command(name, conf):
     if name not in conf["functions"]:
         echo_fatal(f"The cloudfunction {name} was not found your project.json\n "
                    f"You can create a cloudfunction entry by calling 'viur cloud create function'")
-
 
     command = (
         f"gcloud functions deploy "
@@ -558,10 +651,10 @@ def create(profile, action, gen, source, name, entrypoint, env_vars_file, memory
         function_dict = conf["gcloud"]["functions"].get(function_name, {})
 
         function_dict["gen"] = function_dict.get("gen",
-                                                        gen if gen else click.prompt(
-                                                            "Please enter your cloud function generation",
-                                                            default="2")
-                                                        )
+                                                 gen if gen else click.prompt(
+                                                     "Please enter your cloud function generation",
+                                                     default="2")
+                                                 )
 
         function_dict["entry-point"] = function_dict.get("entry-point",
                                                          entrypoint if entrypoint else click.prompt(

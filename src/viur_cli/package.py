@@ -85,12 +85,13 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
 @cli.command()
 @click.argument('operation', type=click.Choice(['update', 'install']))
 @click.argument('component', type=click.Choice(['vi', 'admin', 'scriptor', 'all']))
-@click.argument('profile', default='default')
 @click.argument("version", default="latest")
+@click.argument('profile', default='default')
 def package(operation, component, profile, version):
     """
     Performs installements and updates of ViUR Ecosystem packages
     """
+
     conf = config.get_profile(profile)
     operations_links = {
         'vi': vi,
@@ -141,6 +142,13 @@ def scriptor(version, target, profile):
 
     real_version, download_url = get_version_info("scriptor", version)
 
+    old_version = conf.get("builds.scriptor.version")
+
+    if old_version == real_version.strip("v"):
+        if not click.confirm(f"You have already installed version {old_version} of scriptor.\n"
+                             f"Do you want to continue and install it again?"):
+            return
+
     scriptor_path = Path(dist_folder, target)
     tmp_zip_file = Path("scriptor.zip")
 
@@ -168,6 +176,7 @@ def scriptor(version, target, profile):
                     tmp_zip_file.unlink()
                     bar.label = "updated successful"
 
+    echo_positive(f"Updated scriptor from {old_version} to {real_version}")
 
 def admin(version: str, target: str, profile):
     """Update the admin to a specific version."""
@@ -175,6 +184,13 @@ def admin(version: str, target: str, profile):
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("admin", version)
+
+    old_version = conf.get("builds.admin.version")
+
+    if old_version == real_version.strip("v"):
+        if not click.confirm(f"You have already installed the version {old_version} of admin.\n"
+                             f"Do you want to continue and install it again?"):
+            return
 
     admin_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi-admin.zip")
@@ -207,6 +223,8 @@ def admin(version: str, target: str, profile):
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
+    echo_positive(f"Updated admin from {old_version} to {real_version}")
+
 
 def vi(version, target, profile):
     """Updates Vi to the specified version."""
@@ -215,6 +233,12 @@ def vi(version, target, profile):
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
+    old_version = conf.get("builds.vi.version")
+
+    if old_version == real_version.strip("v"):
+        if not click.confirm(f"You have already installed the version {old_version} of vi.\n"
+                             f"Do you want to continue and install it again?"):
+            return
 
     vi_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi.zip")
@@ -246,3 +270,5 @@ def vi(version, target, profile):
             elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
+
+    echo_positive(f"Updated Vi from {old_version} to {real_version}")
