@@ -96,12 +96,16 @@ def create(ctx, name):
         return
 
     # fetch base project
-    os.system(f'git clone https://github.com/viur-framework/viur-base.git {name}')
-    os.chdir(f"./{name}")
-    # run clean-base
-    os.system(f'python3 clean-base.py -A={name}')
+    git_clonne_cmd = ['git', 'clone', f'https://github.com/viur-framework/viur-base.git', name]
+    subprocess.run(git_clonne_cmd, check=True)
 
-    # run gcloud config
+    wdir = f"{os.getcwd()}/{name}"
+
+    # Run clean-base.py
+    clean_base_cmd = ['python3', 'clean-base.py', '-A', f'{name}']
+    subprocess.run(clean_base_cmd, check=True, cwd=wdir)
+
+    # Run gcloud config (if confirmed)
     if click.confirm(f'Do you want to configure "{name}" as a new gcloud project?'):
-        os.system(f'./viur-gcloud-setup.sh {name}')
-    os.chdir('..')
+        gcloud_setup_cmd = ['./viur-gcloud-setup.sh', name]
+        subprocess.run(gcloud_setup_cmd, check=True, cwd=wdir)
