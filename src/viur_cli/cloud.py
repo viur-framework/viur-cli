@@ -1,7 +1,9 @@
 import json
+from pathlib import Path
 import subprocess
 import os
 import string
+import time
 import click
 import yaml
 from viur_cli import echo_positive, echo_warning, echo_fatal
@@ -501,20 +503,23 @@ def run_command(command):
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
 @click.option("--yes", "-y", is_flag=True, default=False)
+@click.option("--skip_checks", is_flag=True, help="Skip the security checks before the deployment")
 @click.option("--name", "-n", default=None)
-def deploy(action, profile, name, ext, yes, additional_args):
-    """ Deploy the specified action to a cloud service."""
+def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
+    """Deploy the specified action to a cloud"""
 
     conf = config.get_profile(profile)
 
     if action == "app":
-        from . import do_checks
-        if not do_checks(dev=False):
-            # --yes will not be implemented here because deploying security issues should be an explicit decission
-            if not click.confirm(f"The checks were not successful, do you want to continue?"):
-                return
-        else:
-            echo_info("\U00002714 No vulnerabilities found.")
+        if not skip_checks:
+            from . import do_checks
+            if not do_checks(dev=False):
+                # --yes will not be implemented here because deploying security issues should be an explicit decission
+                if not click.confirm(f"The checks were not successful, do you want to continue?"):
+                    return
+            else:
+                echo_info("\U00002714 No vulnerabilities found.")
+
         version = replace_vars(
             conf["version"],
             {k: v for k, v in conf.items() if k not in ["version"]}
@@ -529,10 +534,46 @@ def deploy(action, profile, name, ext, yes, additional_args):
         # rebuild requirements.txt
         create_req(yes, profile, confirm_value=False)
 
-        os.system(
-            f'gcloud app deploy --project={conf["application_name"]} --version={version} '
-            f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}'
-        )
+        app_yaml = Path(conf["distribution_folder"]) / conf.get("appyaml", "app.yaml")
+        app_yaml_tmp = app_yaml_hidden = None
+        if appyaml_substitition := conf.get("appyaml_substitition"):
+            app_yaml_tmp = app_yaml.with_stem(f"app{time.time_ns()}.tmp")
+
+            susbtitutions = {
+                "$PROJECT_ID": conf["application_name"],
+                "$PROJECT_VERSION": version,
+                "$CLI_PROFILE": profile,
+            }
+            if isinstance(appyaml_substitition, dict):
+                susbtitutions |= appyaml_substitition
+
+            new_content = app_yaml.read_text()
+            for pattern, replacment in susbtitutions.items():
+                new_content = new_content.replace(pattern, replacment)
+            app_yaml_tmp.write_text(new_content)
+            additional_args = [f"--appyaml={app_yaml_tmp.resolve()}", *additional_args]
+
+            # Sadly the --appyaml does only work if the deploy dir does not contain an app.yaml,
+            # thefore we make it "hidden" for the gcloud CLI if there is "app.yaml" is not
+            # named differently
+            if app_yaml.name == "app.yaml":
+                app_yaml_hidden = app_yaml.with_stem(f".{app_yaml.stem}")
+                app_yaml.rename(app_yaml_hidden)
+
+        elif app_yaml.name != "app.yaml":
+            # No substitution is used, but an different app.yaml name
+            additional_args = [f"--appyaml={app_yaml_tmp.resolve()}", *additional_args]
+
+        try:
+            os.system(
+                f'gcloud app deploy --project={conf["application_name"]} --version={version} '
+                f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}'
+            )
+        finally:
+            if app_yaml_tmp is not None:
+                app_yaml_tmp.unlink()
+            if app_yaml_hidden is not None:
+                app_yaml_hidden.rename(app_yaml)
 
     elif action == "cloudfunction":
         os.system(build_deploy_command(name, conf["gcloud"]))
