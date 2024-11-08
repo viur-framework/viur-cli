@@ -51,8 +51,8 @@ def clean_base(app_id, author=None):
         echo_info(subprocess.check_output("git branch -D main", shell=True).decode().rstrip("\n"))
 
         subprocess.check_output("git branch -m main", shell=True)
-        echo_info(f"Current branch is: {subprocess.check_output(
-            'git branch --show-current', shell=True).decode().rstrip('\n')}")
+        echo_info(f"Current branch is: "
+                  f"{subprocess.check_output('git branch --show-current', shell=True).decode().rstrip('\n')}")
         echo_info("---")
 
     echo_info("Generating project documentation...")
