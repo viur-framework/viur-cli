@@ -145,11 +145,6 @@ def scriptor(version, target, profile):
 
     old_version=conf.get('builds').get('scriptor').get('version')
 
-    if old_version == real_version.strip("v"):
-        if not click.confirm(f"You have already installed version {old_version} of scriptor.\n"
-                             f"Do you want to continue and install it again?"):
-            return
-
     scriptor_path = Path(dist_folder, target)
     tmp_zip_file = Path("scriptor.zip")
 
@@ -187,11 +182,6 @@ def admin(version: str, target: str, profile):
     real_version, download_url = get_version_info("admin", version)
 
     old_version=conf.get('builds').get('admin').get('version')
-
-    if old_version == real_version.strip("v"):
-        if not click.confirm(f"You have already installed the version {old_version} of admin.\n"
-                             f"Do you want to continue and install it again?"):
-            return
 
     admin_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi-admin.zip")
@@ -235,11 +225,6 @@ def vi(version, target, profile):
 
     real_version, download_url = get_version_info("vi", version)
     old_version = conf.get('builds').get('vi').get('version')
-
-    if old_version == real_version.strip("v"):
-        if not click.confirm(f"You have already installed the version {old_version} of vi.\n"
-                             f"Do you want to continue and install it again?"):
-            return
 
     vi_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi.zip")

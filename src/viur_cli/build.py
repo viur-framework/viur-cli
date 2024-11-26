@@ -55,7 +55,10 @@ def _build(conf, name, build_cfg, additional_args):
             )
 
         case "exec":
-            utils.system(build_cfg["command"])
+            if "." in build_cfg["command"]:
+                utils.system(build_cfg["command"])
+            else:
+                utils.system(build_cfg["command"] + " " + build_cfg["version"])
 
         case other:
             utils.echo_fatal(f"Unknown build kind {other!r}")
