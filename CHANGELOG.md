@@ -2,12 +2,24 @@
 
 This file documents any relevant changes.
 
+## [2.1.0-dev1] 2024-11-13
+- fix: project.json load on initialization
+- fix: redid cloud datastore bucket copy branch
+- fix: redid viur create workflow
+- chore: refactoring
+- feature: implement variable substitution for app.yaml
+- feature: implement skip checks flag to viur cloud deploy command
+- feature: make viur package install more handy
+- feature: added version check and more verbosity for viur package command
+- feature: added support for overriding default ports
+- feature: viur cloud setup gcloud now requires deploy diretory in current working directory
+- feature: added support for cloudfunction gen2
+
 ## [2.0.3] 2024-07-29
 - fix: breaking typo
 
 ## [2.0.2] 2024-07-26
 - chore: added support for gcloudfunctions gen2
-
 
 ## [2.0.1] 2024-05-06
 - bugfix: removed project.json profile "core" validation throughout the project
