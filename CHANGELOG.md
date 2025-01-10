@@ -14,6 +14,7 @@ This file documents any relevant changes.
 - feature: added support for overriding default ports
 - feature: viur cloud setup gcloud now requires deploy diretory in current working directory
 - feature: added support for cloudfunction gen2
+- chore: bumped app_server version to ~=1 
 
 ## [2.0.3] 2024-07-29
 - fix: breaking typo
