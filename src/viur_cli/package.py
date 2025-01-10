@@ -8,7 +8,6 @@ from .conf import config
 from pathlib import Path
 from urllib.request import urlretrieve
 from . import cli, echo_error, echo_info
-from operator import itemgetter
 
 REPOS = {
     "vi": ("viur-framework/viur-vi", "viur-vi.zip"),

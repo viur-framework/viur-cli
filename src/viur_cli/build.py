@@ -1,12 +1,42 @@
 """
 Performs build steps configured within the project, or creates any necessary steps for a project deployment build.
 """
-
+import re
 import click
 import os
 from .conf import config
 from . import cli, utils
 
+PEP440_RE = re.compile(r"""
+    v?
+    (?:
+        (?:(?P<epoch>[0-9]+)!)?
+        (?P<release>[0-9]+(?:\.[0-9]+)*)
+        (?P<pre>
+            [-_\.]?
+            (?P<pre_l>(a|b|c|rc|alpha|beta|pre|preview))
+            [-_\.]?
+            (?P<pre_n>[0-9]+)?
+        )?
+        (?P<post>
+            (?:-(?P<post_n1>[0-9]+))
+            |
+            (?:
+                [-_\.]?
+                (?P<post_l>post|rev|r)
+                [-_\.]?
+                (?P<post_n2>[0-9]+)?
+            )
+        )?
+        (?P<dev>
+            [-_\.]?
+            (?P<dev_l>dev)
+            [-_\.]?
+            (?P<dev_n>[0-9]+)?
+        )?
+    )
+    (?:\+(?P<local>[a-z0-9]+(?:[-_\.][a-z0-9]+)*))?
+""", re.VERBOSE)
 
 def _build(conf, name, build_cfg, additional_args):
     """
@@ -41,27 +71,32 @@ def _build(conf, name, build_cfg, additional_args):
     :return: None
     """
 
-    utils.echo_info(f"""- {build_cfg["kind"]} {name}""")
-    match build_cfg["kind"]:
-        case "npm":
-            utils.system(
-                " && ".join(
-                    (
-                        f'cd {os.path.join(conf["sources_folder"], build_cfg["source"])}',
-                        "npm install",
-                        f'npm run {build_cfg["command"]}'
-                    )
-                )
-            )
+    utils.echo_info(f"- {build_cfg['kind']} {name}")
 
-        case "exec":
-            if "." in build_cfg["command"]:
+    if build_cfg["kind"] == "npm":
+        # Handle npm builds
+        source_path = os.path.join(conf["sources_folder"], build_cfg["source"])
+        command = " && ".join([
+            f"cd {source_path}",
+            "npm install",
+            f"npm run {build_cfg['command']}"
+        ])
+        utils.system(command)
+
+    elif build_cfg["kind"] == "exec":
+        viur_pattern = r"viur package"
+        if re.search(viur_pattern, build_cfg["command"]):
+            version_string = PEP440_RE.search(build_cfg["command"])
+            if version_string:
                 utils.system(build_cfg["command"])
-            else:
-                utils.system(build_cfg["command"] + " " + build_cfg["version"])
+            elif "version" in build_cfg:
+                utils.system(f"{build_cfg['command']} {build_cfg['version']}")
+        else:
+            utils.system(build_cfg["command"])
 
-        case other:
-            utils.echo_fatal(f"Unknown build kind {other!r}")
+    else:
+        # Unknown build kind
+        utils.echo_fatal(f"Unknown build kind {build_cfg['kind']!r}")
 
 
 def _clean(conf, name, build_cfg):
