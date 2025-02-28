@@ -63,14 +63,24 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
         url = f"https://api.github.com/repos/{repo}/releases/latest"
     else:
         url = f"https://api.github.com/repos/{repo}/releases/tags/v{version}"
+
     if not (req := requests.get(url)).ok:
         echo_error(f"Error while fetching version info (request failed): {req.status_code} {req.reason}")
         real_version = None  # Unknown
     else:
-        # It's a validated and real existing version, save it to our config
+        # It's a validated and real existing version, so save it the project.json if necessary!
         real_version: str = req.json()["name"]
-        config["default"][software] = real_version.lstrip("v")
-        config.save()
+        version_str = real_version.lstrip("v")
+
+        if software not in config["default"]["builds"]:
+            config["default"]["builds"][software] = {
+                "kind": "exec",
+                "command": f"viur package install {software} {version_str if version != 'latest' else ''}".strip()
+            }
+
+        if config["default"]["builds"].get("version") != version_str:
+            config["default"]["builds"][software]["version"] = version_str
+            config.save()
 
     if not real_version and version == "latest":
         download_url = f"https://github.com/{repo}/releases/latest/download/{download_name}"
@@ -142,23 +152,16 @@ def scriptor(version, target, profile):
 
     real_version, download_url = get_version_info("scriptor", version)
 
-    old_version=conf.get('builds').get('scriptor').get('version')
-
-    if old_version == real_version.strip("v"):
-        if not click.confirm(f"You have already installed version {old_version} of scriptor.\n"
-                             f"Do you want to continue and install it again?"):
-            return
-
     scriptor_path = Path(dist_folder, target)
     tmp_zip_file = Path("scriptor.zip")
 
     def step_label(step: int) -> str:
         if step == 1:
             return f"downloading scriptor..."
+        elif step == 1:
+            return f"clearing scriptor..."
         elif step == 2:
             return f"extracting scriptor..."
-        elif step == 3:
-            return f"Editing Project.json"
         elif step == 4:
             return f"success!"
 
@@ -168,29 +171,24 @@ def scriptor(version, target, profile):
                 case 1:
                     urlretrieve(download_url, tmp_zip_file)
                 case 2:
+                    if os.path.exists(scriptor_path):
+                        shutil.rmtree(scriptor_path)
+                case 3:
                     with zipfile.ZipFile(tmp_zip_file) as zip_f:
                         zip_f.extractall()
-                case 3:
-                    config.migrate()
                 case 4:
                     tmp_zip_file.unlink()
                     bar.label = "updated successful"
 
-    echo_positive(f"Updated scriptor from {old_version} to {real_version}")
+    echo_positive(f"Installed admin {real_version}")
 
-def admin(version: str, target: str, profile):
+
+def admin(version: str, target: str, profile: str = "default"):
     """Update the admin to a specific version."""
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("admin", version)
-
-    old_version=conf.get('builds').get('admin').get('version')
-
-    if old_version == real_version.strip("v"):
-        if not click.confirm(f"You have already installed the version {old_version} of admin.\n"
-                             f"Do you want to continue and install it again?"):
-            return
 
     admin_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi-admin.zip")
@@ -203,11 +201,9 @@ def admin(version: str, target: str, profile):
         elif step == 3:
             return f"extracting new admin..."
         elif step == 4:
-            return f"Editing Project.json"
-        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4, 5], label="updating admin...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4], label="updating admin...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -218,12 +214,10 @@ def admin(version: str, target: str, profile):
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(admin_path)
             elif element == 4:
-                config.migrate()
-            elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
-    echo_positive(f"Updated admin from {old_version} to {real_version}")
+    echo_positive(f"Installed admin {real_version}")
 
 
 def vi(version, target, profile):
@@ -233,12 +227,6 @@ def vi(version, target, profile):
     dist_folder = conf["distribution_folder"]
 
     real_version, download_url = get_version_info("vi", version)
-    old_version = conf.get('builds').get('vi').get('version')
-
-    if old_version == real_version.strip("v"):
-        if not click.confirm(f"You have already installed the version {old_version} of vi.\n"
-                             f"Do you want to continue and install it again?"):
-            return
 
     vi_path = Path(dist_folder, target)
     tmp_zip_file = Path("vi.zip")
@@ -251,11 +239,9 @@ def vi(version, target, profile):
         elif step == 3:
             return f"extracting new vi..."
         elif step == 4:
-            return f"Editing Project.json"
-        elif step == 5:
             return f"success!"
 
-    with click.progressbar([1, 2, 3, 4, 5], label="updating vi...", item_show_func=step_label) as bar:
+    with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
         for element in bar:
             if element == 1:
                 urlretrieve(download_url, tmp_zip_file)
@@ -265,10 +251,8 @@ def vi(version, target, profile):
             elif element == 3:
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
-            elif element == 4:
-                config.migrate()
             elif element == 5:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
-    echo_positive(f"Updated Vi from {old_version} to {real_version}")
+    echo_positive(f"Installed vi {real_version}")

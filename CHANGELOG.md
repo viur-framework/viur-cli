@@ -12,6 +12,7 @@ This file documents any relevant changes.
 - feature: implement variable substitution for app.yaml
 - feature: make viur package install more handy
 - feature: viur cloud setup gcloud now requires deploy diretory in current working directory
+- fix: `viur package` update mechanisms fixed
 - fix: project.json load on initialization
 - fix: redid cloud datastore bucket copy branch
 - fix: redid viur create workflow
