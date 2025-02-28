@@ -2,19 +2,19 @@
 
 This file documents any relevant changes.
 
-## [2.1.0-dev1] 2024-11-13
+## [2.1.0] 2025-02-28
+- chore: bumped app_server version to ~=1
+- chore: refactoring
+- feature: added support for cloudfunction gen2
+- feature: added support for overriding default ports
+- feature: added version check and more verbosity for viur package command
+- feature: implement skip checks flag to viur cloud deploy command
+- feature: implement variable substitution for app.yaml
+- feature: make viur package install more handy
+- feature: viur cloud setup gcloud now requires deploy diretory in current working directory
 - fix: project.json load on initialization
 - fix: redid cloud datastore bucket copy branch
 - fix: redid viur create workflow
-- chore: refactoring
-- feature: implement variable substitution for app.yaml
-- feature: implement skip checks flag to viur cloud deploy command
-- feature: make viur package install more handy
-- feature: added version check and more verbosity for viur package command
-- feature: added support for overriding default ports
-- feature: viur cloud setup gcloud now requires deploy diretory in current working directory
-- feature: added support for cloudfunction gen2
-- chore: bumped app_server version to ~=1 
 
 ## [2.0.3] 2024-07-29
 - fix: breaking typo
@@ -59,7 +59,7 @@ This file documents any relevant changes.
 ## [1.1.1] 2023-11-28
 - chore: updated dependencies
 - feat: added npm audit function
- 
+
 ## [1.1.0] 2023-11-23
 - chore: added more `viur2to3` replacements
 - fix: fixed `viur script` subdirectory duplicates
@@ -69,8 +69,8 @@ This file documents any relevant changes.
 - refactor: added update command
 - refactor: some PEP8 Changes
 - [BREAKING]: Removed all flare scripts and functionality
-- [BREAKING]: Removed `scanNPM` function  
-- [BREAKING]: Removed `viur init` 
+- [BREAKING]: Removed `scanNPM` function
+- [BREAKING]: Removed `viur init`
 
 
 ## [1.0.16] 2023-09-29
@@ -105,12 +105,12 @@ This file documents any relevant changes.
 - refactor: `viur build` now more generalized
 
 ## [1.0.6] 2023-06-28
-- fix: viur check:  dont kill the command on error 
+- fix: viur check:  dont kill the command on error
 - chore: added requests as dependency
 
 ## [1.0.5] 2023-06-28
 - chore: updated python-minifier to support python 3.11
-- feat: added `viur check [--dev]` to do a pipenv check and npm audit. 
+- feat: added `viur check [--dev]` to do a pipenv check and npm audit.
 - feat: before deployment the cli runs the check command
 
 ## [1.0.4] 2023-05-04
@@ -125,12 +125,12 @@ This file documents any relevant changes.
 
 ## [1.0.1] 2023-04-17
 - fix: renamed app kind from `script` to `exec`
-- fix: scriptor cli 
+- fix: scriptor cli
 
 ## [1.0.0] 2023-04-13
 - feat: added `viur build app [NAME]` command which build a specific app
 - feat: new app type `script`
-- feat: `viur install vi` can now have an optional --target parameter 
+- feat: `viur install vi` can now have an optional --target parameter
 
 ## [1.0.0-rc2] 2023-03-31
 - fix: renamed `viur script` to `viur tool`
@@ -165,7 +165,7 @@ This file documents any relevant changes.
 - feat: 2-to-3 can be applied to a single file
 
 ## [0.7.4] - 2022-09-23
-- fix: 2-to-3 script was broken 
+- fix: 2-to-3 script was broken
 
 ## [0.7.3] - 2022-09-16
 - feat: added 2-to-3 script
@@ -247,7 +247,7 @@ This file documents any relevant changes.
 - added: release command
 - [BREAKING]: vue command removed, use npm instead
 - [BREAKING]: assets command removed, use npm instead
-- 
+-
 ## [0.6.4] - 2022-02-21
 - fix: get-pyodide now uses 0.19
 

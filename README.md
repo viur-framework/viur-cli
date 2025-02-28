@@ -12,7 +12,7 @@
 </div>
 
 ## What does it do?
-`viur-cli` allows to control, maintain, develop and deploy a ViUR project from one central 
+`viur-cli` allows to control, maintain, develop and deploy a ViUR project from one central
 location by using the `viur` command.
 
 
@@ -32,7 +32,7 @@ $ viur -h
 will show all the commands that are currently supported by viur-cli
 
 ```sh
-$ viur --version 
+$ viur --version
 ```
 will show your current viur-cli version
 
@@ -46,7 +46,7 @@ you can use this to get started quickly with a new viur project from scratch.
 ```sh
 $ viur run [profile]
 ```
-run the appserver and start your app locally. You may specify a target profile. 
+run the appserver and start your app locally. You may specify a target profile.
 
 
 ```sh
@@ -55,7 +55,7 @@ $ viur check [--dev]
 Runs a security check for the python environment and for each npm project registered under builds.
 
 ```sh
-$ viur package {install|update} {vi|scriptor|admin|all} 
+$ viur package {install|update} {vi|scriptor|admin|all}
 ```
 handles ViUR ecosystem package operations
 
@@ -74,7 +74,7 @@ Builds ViUR Project or specific apps
 Commands:
 - `app` Build a specific application
 - `clean` Clean up Build Artifacts
-- `release` Build all relevant applications to deploy the project 
+- `release` Build all relevant applications to deploy the project
 
 ```sh
 $ viur cloud deploy {app|index|cloudfunction} {profile} {--ext|--yes|--name}
@@ -88,7 +88,7 @@ Scripts:
   - `profile`       The project.json profile you want to Work from
 
 ```sh
-$ viur cloud init {service} {profile} 
+$ viur cloud init {service} {profile}
 ```
 This Function makes the init deployment for a ViUR project.
 This Function needs to be called so that the development server works locally.
@@ -100,7 +100,7 @@ $ viur cloud {enable|disable} backup
 Enable/ Disable the Backup buckets you need to Backup a cloud project in the Google Cloud Console
 
 ```sh
-$ viur cloud setup {gcloud|gcroles} 
+$ viur cloud setup {gcloud|gcroles}
 ```
 Scripts:
 - `gcloud`    This Function setups your project to work on the gcloud plattform
@@ -108,7 +108,7 @@ Scripts:
 
 
 ```sh
-$ viur cloud get {gcroles} 
+$ viur cloud get {gcroles}
 ```
 Scripts:
 - `gcroles`   This function lets you get Roles for your google appengine Workspace in a readable .json Format
@@ -124,8 +124,8 @@ Scripts:
 
 Options:
 - `vi`
-- `admin` 
-- `scriptor` 
+- `admin`
+- `scriptor`
 - `all`
 
 ```sh
@@ -150,20 +150,20 @@ It contains the default viur project profile and it can be expanded with several
 ### Example project.json
 ```json lines
 {
-    /* 
+    /*
       The format Key, Value pair defines the project json format, the viur-cli uses
     */
     "format": "2.0.0",
     /*
       The first level contains of your profiles
-      "default" is a profile, which is inherited by "develop" and "live" and can be customized for particular versions 
+      "default" is a profile, which is inherited by "develop" and "live" and can be customized for particular versions
       and/or GAE projects. Therefore, every profile can contain all keys from the "default" profile.*/
     "default": {
         /*
           The builds level declares steps for the `viur build` command.
           It can contain viur components and other components that need to be build before project deployment
         */
-        "builds": { 
+        "builds": {
             "admin": {
                 "command": "viur install admin",
                 "kind": "exec",
@@ -201,9 +201,9 @@ It contains the default viur project profile and it can be expanded with several
         "version": "live-$(year)-$(month)-$(day)", // Version string; Variables can be used here.
         "application_name": "my-live-app-viur3" // Name of the GAE project *4
     },
-    "develop": {  
-        "application_name": "my-dev-app-viur3", 
-        "version": "dev-$(user)"  
+    "develop": {
+        "application_name": "my-dev-app-viur3",
+        "version": "dev-$(user)"
     }
 }
 
@@ -238,14 +238,14 @@ Scripts:
 - `pyodide`  run the get_pyodide command
 - `ssl-fix`  ssl fix for MacOS
 
-for example the 2to3 script helps porting viur2 project to viur3, it can be used to automatically rename some things that are deprecated 
+for example the 2to3 script helps porting viur2 project to viur3, it can be used to automatically rename some things that are deprecated
 in viur3 as well, so you can use it whenever a new core version is released for viur3 projects as well:
 
 ```sh
 $ viur tool 2to3 -d .
 ```
-will dry-run the script in the current directory and not make any changes, only suggestions. If you want to make the changes, 
-leave out the -d argument and if you are a daring go-getter and like to live dangerously, replace the -d with -x, 
+will dry-run the script in the current directory and not make any changes, only suggestions. If you want to make the changes,
+leave out the -d argument and if you are a daring go-getter and like to live dangerously, replace the -d with -x,
 which will write the suggested changes without making a backup of the changed files.
 
 ## Development
@@ -277,7 +277,7 @@ viur-cli depends on
 
 ## License
 
-Copyright © 2024 by Mausbrand Informationssysteme GmbH.<br>
+Copyright © 2025 by Mausbrand Informationssysteme GmbH.<br>
 Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
 
 This project is free software under the MIT license.<br>
