@@ -5,6 +5,7 @@ import sys
 import typing
 import datetime
 import getpass
+import subprocess
 
 
 def rmdir(dir):
@@ -95,7 +96,9 @@ def replace_vars(string: str, vars: typing.Optional[typing.Dict[str, str]] = Non
         old_string = string
         for var, content in vars.items():
             string = string.replace(f"$({var})", str(content))
-
+    if "$(ref)" in string:
+        ref = subprocess.check_output("git rev-parse --short HEAD", shell=True)
+        string = string.replace(f"$(ref)", str(ref))
     return string
 
 
