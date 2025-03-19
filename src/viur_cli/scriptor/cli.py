@@ -1,3 +1,4 @@
+import datetime
 import click
 import json
 import requests
@@ -233,7 +234,8 @@ def push(ctx: click.Context, force: bool, watch: bool):
                                 can_push = click.confirm(f"Content of {file} changed. Overwrite?")
 
                             if can_push:
-                                click.echo(f"Push {_real_file}")
+                                date = datetime.datetime.now().strftime("%H:%M:%S")
+                                click.echo(f"{date if watch else ""} Push {_real_file}")
                                 await tree.edit(_type, entry["key"], {
                                     "script": file_content
                                 })
@@ -299,15 +301,18 @@ def push(ctx: click.Context, force: bool, watch: bool):
             import time
             modified_files = {}
             def on_modified(event):
-                # check for tmp file
-                if event.src_path.endswith("~"):
-                    return
-                if event.src_path not in modified_files:
+                try:
+                    # check for tmp file
+                    if event.src_path.endswith("~"):
+                        return
+                    if event.src_path not in modified_files:
+                        modified_files[event.src_path] = os.path.getmtime(event.src_path)
+                    elif os.path.getmtime(event.src_path) == modified_files[event.src_path]:
+                        return
                     modified_files[event.src_path] = os.path.getmtime(event.src_path)
-                elif os.path.getmtime(event.src_path) == modified_files[event.src_path]:
-                    return
-                modified_files[event.src_path] = os.path.getmtime(event.src_path)
-                asyncio.new_event_loop().run_until_complete(main(event.src_path))
+                    asyncio.new_event_loop().run_until_complete(main(event.src_path))
+                except Exception as e:
+                    print(f"Error: on file {event.src_path} {e}")
 
 
             regexes = [r".*\.py"]
