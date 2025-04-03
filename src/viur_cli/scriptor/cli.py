@@ -1,3 +1,4 @@
+import datetime
 import click
 import json
 import requests
@@ -180,25 +181,29 @@ def pull(ctx: click.Context, force: bool):
 @script.command()
 @click.option('--force', '-f', is_flag=True, default=False,
               help='Force push files from the local working directory onto the server')
+@click.option('--watch', '-w', is_flag=True, default=False,
+              help="Watch for file changes in the script folder and push them to the server")
 @click.pass_context
-def push(ctx: click.Context, force: bool):
+def push(ctx: click.Context, force: bool, watch: bool):
     """
     Push contents of working_dir to server.
     """
+
     check_session(ctx)
     Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
 
     from .scriptor.module import TreeModule
     tree = TreeModule("script")
 
-    async def main():
+    async def main(file_path: str=None):
         await tree.structure("node")
-
         working_dir = Config().get("working_dir")
         _files = glob.glob(f"{working_dir}/**/*", recursive=True)
-
         for file in _files:
             _real_file = file
+            if file_path and file_path != _real_file:
+                # only push a single file
+                continue
             parent = os.path.dirname(file)
             _type = "leaf"
             if os.path.isdir(file):
@@ -224,27 +229,27 @@ def push(ctx: click.Context, force: bool):
 
                         if hashlib.sha256(entry["script"].encode("utf-8")).digest() \
                                 != hashlib.sha256(file_content.encode("utf-8")).digest():
-                            _state = force
-                            if not _state:
-                                _state = click.confirm(f"Content of {file} changed. Overwrite?")
+                            can_push = force
+                            if not can_push:
+                                can_push = click.confirm(f"Content of {file} changed. Overwrite?")
 
-                            if _state:
-                                click.echo(f"Push {_real_file}")
+                            if can_push:
+                                date = datetime.datetime.now().strftime("%H:%M:%S")
+                                click.echo(f"{date if watch else ""} Push {_real_file}")
                                 await tree.edit(_type, entry["key"], {
                                     "script": file_content
                                 })
 
             except StopAsyncIteration:
-                _state = False
                 text = "folder"
                 if _type == "leaf":
                     text = "file"
 
-                _state = force
-                if not _state:
-                    _state = click.confirm(f"There is no {text} named {file}. Create it?")
+                can_push = force
+                if not can_push:
+                    can_push = click.confirm(f"There is no {text} named {file}. Create it?")
 
-                if _state:
+                if can_push:
                     root_node_entry = (await tree.list_root_nodes())[0]
 
                     if not parent.endswith("/"):
@@ -286,6 +291,56 @@ def push(ctx: click.Context, force: bool):
                     click.echo(f"Push {_real_file}")
                     await tree.add(_type, args)
 
+
+
+    if watch:
+        print("Watching...")
+        def watch_loop():
+            from watchdog.events import RegexMatchingEventHandler
+            from watchdog.observers import Observer
+            import time
+            modified_files = {}
+            def on_modified(event):
+                try:
+                    # check for tmp file
+                    if event.src_path.endswith("~"):
+                        return
+                    if event.src_path not in modified_files:
+                        modified_files[event.src_path] = os.path.getmtime(event.src_path)
+                    elif os.path.getmtime(event.src_path) == modified_files[event.src_path]:
+                        return
+                    modified_files[event.src_path] = os.path.getmtime(event.src_path)
+                    asyncio.new_event_loop().run_until_complete(main(event.src_path))
+                except Exception as e:
+                    print(f"Error: on file {event.src_path} {e}")
+
+
+            regexes = [r".*\.py"]
+            ignore_regexes = []
+            ignore_directories = True
+            case_sensitive = False
+            event_handler = RegexMatchingEventHandler(
+                regexes=regexes,
+                ignore_regexes=ignore_regexes,
+                ignore_directories=ignore_directories,
+                case_sensitive=case_sensitive
+            )
+            event_handler.on_modified = on_modified
+
+
+
+            observer = Observer()
+            observer.schedule(event_handler, Config().get("working_dir"), recursive=True)
+            observer.start()
+            try:
+                while True:
+                    time.sleep(1)
+            finally:
+                observer.stop()
+                observer.join()
+
+        asyncio.new_event_loop().run_until_complete(watch_loop())
+        return
     asyncio.new_event_loop().run_until_complete(main())
 
 
