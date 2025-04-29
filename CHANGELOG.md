@@ -2,6 +2,11 @@
 
 This file documents any relevant changes.
 
+## [2.2.0] 2025-04-29
+
+- feat: Add `$(ref)`-variable for version string (#194)
+- feat: Add file watcher as `viur script push -w` (#193)
+
 ## [2.1.0] 2025-02-28
 - chore: bumped app_server version to ~=1
 - chore: refactoring
