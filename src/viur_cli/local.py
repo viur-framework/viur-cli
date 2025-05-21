@@ -48,11 +48,13 @@ def run(profile, additional_args):
     conf = config.get_profile(profile)
     additional_args = list(additional_args)
 
+    if appyaml := conf.get("appyaml"):
+        additional_args.append(f"--appyaml={appyaml}")
     if conf.get("port"):
         additional_args.append(f"--port={conf['port']}")
     if conf.get("gunicorn_port"):
         additional_args.append(f"--gunicorn_port={conf['gunicorn_port']}")
-        
+
     utils.system(
         f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
 
