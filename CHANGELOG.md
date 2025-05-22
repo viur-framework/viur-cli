@@ -2,6 +2,11 @@
 
 This file documents any relevant changes.
 
+## [2.2.1] 2025-05-22
+
+- chore: Added safety as dependency
+- fix: Re-Add `--appyaml` argument for app_server (#195)
+
 ## [2.2.0] 2025-04-29
 
 - feat: Add `$(ref)`-variable for version string (#194)
