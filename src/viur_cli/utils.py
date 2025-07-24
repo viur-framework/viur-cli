@@ -34,17 +34,17 @@ def system(cmd):
 
 
 def echo_error(msg):
-    """colored cli feedback"""
+    """colored cli feedback for error messages"""
     click.echo(click.style("ERROR: " + msg, fg="red"))
 
 
-def echo_positive(msg):
-    """colored cli feedback"""
-    click.echo(click.style("INFO: " + msg, fg="green"))
+def echo_success(msg):
+    """colored cli feedback for success messages"""
+    click.echo(click.style("SUCCESS: " + msg, fg="green"))
 
 
 def echo_warning(msg):
-    """colored cli feedback"""
+    """colored cli feedback for warnings"""
     click.echo(click.style("WARNING: " + msg, fg=(255, 231, 0)))
 
 
@@ -54,7 +54,7 @@ def echo_fatal(msg):
 
 
 def echo_info(msg):
-    """colored cli feedback"""
+    """colored cli feedback for information"""
     click.echo(click.style(msg, fg="cyan"))
 
 

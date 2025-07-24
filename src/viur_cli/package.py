@@ -3,7 +3,7 @@ import shutil
 import zipfile
 import click
 import requests
-from viur_cli import echo_positive, echo_fatal
+from viur_cli import echo_success, echo_fatal
 from .conf import config
 from pathlib import Path
 from urllib.request import urlretrieve
@@ -138,7 +138,7 @@ def checkreturncode(output):
     Check the return code of a process output.
     """
     if output.returncode == 0:
-        echo_positive("update was successful")
+        echo_success("update was successful")
     else:
         echo_fatal("update exited with a non zero success code")
 
@@ -180,7 +180,7 @@ def scriptor(version, target, profile):
                     tmp_zip_file.unlink()
                     bar.label = "updated successful"
 
-    echo_positive(f"Installed admin {real_version}")
+    echo_success(f"Installed admin {real_version}")
 
 
 def admin(version: str, target: str, profile: str = "default"):
@@ -217,7 +217,7 @@ def admin(version: str, target: str, profile: str = "default"):
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
-    echo_positive(f"Installed admin {real_version}")
+    echo_success(f"Installed admin {real_version}")
 
 
 def vi(version, target, profile):
@@ -255,4 +255,4 @@ def vi(version, target, profile):
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
-    echo_positive(f"Installed vi {real_version}")
+    echo_success(f"Installed vi {real_version}")

@@ -24,6 +24,52 @@ To use `viur-cli` in your ViUR projects, install the [PyPI package `viur-cli`](h
 $ pipenv install --dev viur-cli
 ```
 
+## Shell Autocompletion
+
+`viur-cli` supports shell autocompletion for bash, zsh, and fish shells. This makes it easier to use the CLI by providing tab-completion for commands and options.
+
+### Installing Autocompletion
+
+To install autocompletion for your shell, run:
+
+```bash
+$ viur setup-autocomplete
+```
+
+This will automatically detect your shell and set up the appropriate completion script. You can also specify a shell explicitly:
+
+```bash
+$ viur setup-autocomplete --shell=bash  # For bash
+$ viur setup-autocomplete --shell=zsh   # For zsh
+$ viur setup-autocomplete --shell=fish  # For fish
+```
+
+After installation, restart your shell or source your shell configuration file:
+
+```bash
+# For bash
+$ source ~/.bashrc
+
+# For zsh
+$ source ~/.zshrc
+```
+
+### Checking Autocompletion Status
+
+To see if autocompletion is installed and get more information:
+
+```bash
+$ viur autocomplete-info
+```
+
+### Uninstalling Autocompletion
+
+To remove the autocompletion setup:
+
+```bash
+$ viur uninstall-autocomplete
+```
+
 ## Usage
 
 ```sh
