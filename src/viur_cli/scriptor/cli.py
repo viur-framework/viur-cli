@@ -9,7 +9,7 @@ import sys
 import glob
 from requests.sessions import cookiejar_from_dict
 from weakref import proxy
-from .scriptor import Request, init, viur
+from viur.scriptor import Modules
 from ..cli import cli
 
 
@@ -50,10 +50,15 @@ class Config(dict):
         self.dump()
 
 
-def build_url(url: str):
-    return Config()["base_url"] + "/" + url
+# Global modules instance that will be initialized when needed
+_modules = None
 
-viur.request.build_url = staticmethod(build_url)
+def get_modules():
+    """Get or create the global Modules instance"""
+    global _modules
+    if _modules is None:
+        _modules = Modules(Config()["base_url"])
+    return _modules
 
 
 @cli.group()
@@ -128,6 +133,10 @@ def check_session(ctx: click.Context):
         ctx.invoke(setup)
         ctx.close()
 
+    # Update modules with cookies
+    modules = get_modules()
+    modules.request.cookies = cookiejar_from_dict(Config().get("cookies", {}))
+
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
 @click.pass_context
@@ -136,21 +145,19 @@ def pull(ctx: click.Context, force: bool):
     Pull contents from server to working_dir.
     """
     check_session(ctx)
-    Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
-    from .scriptor.module import TreeModule
-    tree = TreeModule("script")
+    modules = get_modules()
+    tree = modules.script
 
     async def main():
-        await tree.structure("node")
-
+        # In the new API, we don't need to call structure
         working_dir = Config().get("working_dir")
-        async def for_each(group: str, entry: object):
+
+        async def process_entry(entry: dict, is_node: bool):
             _path = os.path.join(working_dir, entry["path"])
 
-            if group == "node":
+            if is_node:
                 if not os.path.exists(_path):
                     os.makedirs(_path)
-
             else:
                 def create_file():
                     with open(_path, "a+") as f:
@@ -173,7 +180,13 @@ def pull(ctx: click.Context, force: bool):
                 else:
                     create_file()
 
-        await tree.for_each(for_each)
+        # Process nodes first
+        async for node in tree.list("node"):
+            await process_entry(node, True)
+
+        # Then process leaves
+        async for leaf in tree.list("leaf"):
+            await process_entry(leaf, False)
 
     asyncio.new_event_loop().run_until_complete(main())
 
@@ -190,13 +203,11 @@ def push(ctx: click.Context, force: bool, watch: bool):
     """
 
     check_session(ctx)
-    Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
+    modules = get_modules()
+    tree = modules.script
 
-    from .scriptor.module import TreeModule
-    tree = TreeModule("script")
-
-    async def main(file_path: str=None):
-        await tree.structure("node")
+    async def main(file_path: str = None):
+        # In the new API, we don't need to call structure
         working_dir = Config().get("working_dir")
         _files = glob.glob(f"{working_dir}/**/*", recursive=True)
         for file in _files:
@@ -222,7 +233,15 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 is_root = True
 
             try:
-                entry = await anext(tree.list(_type, {"path": file}))
+                # Search for the entry with the given path
+                entry = None
+                async for item in tree.list(_type):
+                    if item.get("path") == file:
+                        entry = item
+                        break
+
+                if not entry:
+                    raise StopAsyncIteration
                 if _type == "leaf":
                     with open(_real_file, "r") as f:
                         file_content = f.read()
@@ -250,14 +269,24 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     can_push = click.confirm(f"There is no {text} named {file}. Create it?")
 
                 if can_push:
-                    root_node_entry = (await tree.list_root_nodes())[0]
+                    # Get the root node
+                    root_node_entry = None
+                    async for node in tree.list("node"):
+                        if node.get("parententry") is None:
+                            root_node_entry = node
+                            break
 
                     if not parent.endswith("/"):
                         parent += "/"
 
                     parent_entry = root_node_entry
                     if not is_root:
-                        parent_entry = await anext(tree.list("node", {"path": parent}))
+                        # Find parent entry
+                        parent_entry = None
+                        async for node in tree.list("node"):
+                            if node.get("path") == parent:
+                                parent_entry = node
+                                break
 
                     last = file
                     if file.count("/") > 0:
@@ -352,14 +381,14 @@ def run(ctx: click.Context, path: str):
     Locally run a script located in the working_dir.
     """
     check_session(ctx)
-    Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
+    modules = get_modules()
 
     for dir in (os.path.dirname(os.path.realpath(__file__)), Config().get("working_dir")):
         if dir not in sys.path:
             sys.path.insert(0, dir)
 
     async def main():
-        await init()
+        # The new API doesn't need explicit init
         import logging
         import importlib
         logging.getLogger().setLevel(logging.INFO)
