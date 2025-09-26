@@ -11,44 +11,7 @@ from requests.sessions import cookiejar_from_dict
 from weakref import proxy
 from viur.scriptor import Modules
 from ..cli import cli
-
-
-class Config(dict):
-    """
-    Manage scriptor configuration.
-    """
-    CONFIG_FILE_NAME = "viur_scriptor_config.json"
-    DEFAULT_BASE_URL = "http://localhost:8080"
-    DEFAULT_WORKING_DIR = "scripts/"
-
-    def __new__(cls):
-        if not getattr(cls, "_instance", None):
-            cls._instance = super().__new__(cls)
-
-            # use defaults in config
-            cls._instance |= {
-                "base_url": cls.DEFAULT_BASE_URL,
-                "working_dir": cls.DEFAULT_WORKING_DIR,
-            }
-
-            if os.path.exists(cls.CONFIG_FILE_NAME):
-                with open(cls.CONFIG_FILE_NAME, "r") as f:
-                    cls._instance |= json.load(f)
-
-        return proxy(cls._instance)
-
-    def dump(self):
-        with open(self.CONFIG_FILE_NAME, "w") as f:
-            json.dump(self, f)
-
-    def __setitem__(self, __key: str, __value: object) -> None:
-        super().__setitem__(__key, __value)
-        self.dump()
-
-    def __delitem__(self, __key: str) -> None:
-        super().__delitem__(__key)
-        self.dump()
-
+from ..cli import scriptor_config
 
 # Global modules instance that will be initialized when needed
 _modules = None
@@ -58,7 +21,7 @@ def get_modules():
     """Get or create the global Modules instance"""
     global _modules
     if _modules is None:
-        _modules = Modules(Config()["base_url"], cookies=Config()["cookies"])
+        _modules = Modules(scriptor_config["base_url"], cookies=scriptor_config["cookies"])
         asyncio.new_event_loop().run_until_complete(_modules.init())
 
     return _modules
@@ -79,16 +42,16 @@ def configure(url: str, username: str, working_dir: str):
     """
     Manage configuration settings.
     """
-    conf = Config()
+
 
     if url:
-        conf["base_url"] = url
+        scriptor_config["base_url"] = url
 
     if username:
-        conf["username"] = username
+        scriptor_config["username"] = username
 
     if working_dir:
-        conf["working_dir"] = working_dir.replace("\\", "/")
+        scriptor_config["working_dir"] = working_dir.replace("\\", "/")
 
 
 @script.command()
@@ -96,12 +59,12 @@ def setup():
     """
     Setup user session with a given username and password.
     """
-    config = Config()
-    base_url = config.get("base_url")
+
+    base_url = scriptor_config.get("base_url")
     try:
         session = requests.session()
         skey = session.get(base_url + "/json/skey")
-        username: str = config.get("username", "")
+        username: str = scriptor_config.get("username", "")
         if not username:
             username = click.prompt("Enter the username")
 
@@ -114,31 +77,31 @@ def setup():
         })
 
         if response.json() != "FAILURE":
-            config["cookies"] = session.cookies.get_dict()
+            scriptor_config["cookies"] = session.cookies.get_dict()
             click.echo("Setup done")
         else:
-            if "cookies" in config:
-                del config["cookies"]
+            if "cookies" in scriptor_config:
+                del scriptor_config["cookies"]
             click.echo("Failed to login. Did you maybe entered the wrong password?")
     except KeyboardInterrupt:
         pass
 
 
 def check_session(ctx: click.Context):
-    base_url = Config().get("base_url")
+    base_url = scriptor_config.get("base_url")
 
     s = requests.Session()
-    s.cookies = cookiejar_from_dict(Config().get("cookies", {}))
+    s.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
 
-    response = s.get(base_url + "/vi/user/view/self", cookies=Config().get("cookies", {}))
+    response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config.get("cookies", {}))
     if not response.ok:
         click.echo("Invalid session, please run `viur script setup` again.")
         ctx.invoke(setup)
         ctx.close()
-
+    #FIXME We need this ?
     # Update modules with cookies
     modules = get_modules()
-    # modules.request.cookies = cookiejar_from_dict(Config().get("cookies", {}))
+    # modules.request.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
 
 
 @script.command()
@@ -154,7 +117,7 @@ def pull(ctx: click.Context, force: bool):
 
     async def main():
         # In the new API, we don't need to call structure
-        working_dir = Config().get("working_dir")
+        working_dir = scriptor_config.get("working_dir")
 
         async def process_entry(entry: dict, is_node: bool):
             _path = os.path.join(working_dir, entry["path"])
@@ -212,7 +175,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
     async def main(file_path: str = None):
         # In the new API, we don't need to call structure
-        working_dir = Config().get("working_dir")
+        working_dir = scriptor_config.get("working_dir")
         _files = glob.glob(f"{working_dir}/**/*", recursive=True)
         for file in _files:
             _real_file = file
@@ -362,7 +325,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
             event_handler.on_modified = on_modified
 
             observer = Observer()
-            observer.schedule(event_handler, Config().get("working_dir"), recursive=True)
+            observer.schedule(event_handler, scriptor_config.get("working_dir"), recursive=True)
             observer.start()
             try:
                 while True:
@@ -388,7 +351,7 @@ def run(ctx: click.Context, path: str, args=None):
     # modules = get_modules()
     # todo get cookies
 
-    for dir in (os.path.dirname(os.path.realpath(__file__)), Config().get("working_dir")):
+    for dir in (os.path.dirname(os.path.realpath(__file__)), scriptor_config.get("working_dir")):
         if dir not in sys.path:
             sys.path.insert(0, dir)
 
@@ -400,8 +363,8 @@ def run(ctx: click.Context, path: str, args=None):
         import viur.scriptor
         await viur.scriptor._init_modules(
             script_params=args,
-            base_url=Config()["base_url"],
-            cookies=Config()["cookies"]
+            base_url=scriptor_config["base_url"],
+            cookies=scriptor_config["cookies"]
         )
         # fixme: there should be a better method than this below
         module = importlib.import_module(path.replace("/", ".").removesuffix(".py"))
