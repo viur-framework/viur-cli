@@ -261,7 +261,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                                 click.echo(f"{date if watch else ""} Push {_real_file}")
                                 await tree.edit(entry["key"], {
                                     "script": file_content
-                                },skel_type = _type)
+                                }, skel_type=_type)
 
             except StopAsyncIteration:
                 text = "folder"
@@ -348,6 +348,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     import traceback
                     print(f"Error: on file {event.src_path} {e}")
                     traceback.print_exc()
+
             regexes = [r".*\.py"]
             ignore_regexes = []
             ignore_directories = True
@@ -377,16 +378,16 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
 @script.command()
 @click.argument('path', required=True)
+@click.argument("args", nargs=-1)
 @click.pass_context
-def run(ctx: click.Context, path: str):
+def run(ctx: click.Context, path: str, args=None):
     """
     Locally run a script located in the working_dir.
     """
     check_session(ctx)
     # modules = get_modules()
     # todo get cookies
-    import viur.scriptor
-    viur.scriptor._init_modules()
+
     for dir in (os.path.dirname(os.path.realpath(__file__)), Config().get("working_dir")):
         if dir not in sys.path:
             sys.path.insert(0, dir)
@@ -396,7 +397,12 @@ def run(ctx: click.Context, path: str):
         import logging
         import importlib
         logging.getLogger().setLevel(logging.INFO)
-
+        import viur.scriptor
+        await viur.scriptor._init_modules(
+            script_params=args,
+            base_url=Config()["base_url"],
+            cookies=Config()["cookies"]
+        )
         # fixme: there should be a better method than this below
         module = importlib.import_module(path.replace("/", ".").removesuffix(".py"))
 
