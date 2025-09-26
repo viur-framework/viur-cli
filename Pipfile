@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 build = "*"
 twine = "*"
-viur-scriptor-api = "~=1.2.0"
+viur-scriptor-api = "~=2"
 
 [requires]
 python_version = "3"
