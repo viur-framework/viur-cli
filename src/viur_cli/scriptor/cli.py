@@ -53,11 +53,14 @@ class Config(dict):
 # Global modules instance that will be initialized when needed
 _modules = None
 
+
 def get_modules():
     """Get or create the global Modules instance"""
     global _modules
     if _modules is None:
-        _modules = Modules(Config()["base_url"])
+        _modules = Modules(Config()["base_url"], cookies=Config()["cookies"])
+        asyncio.new_event_loop().run_until_complete(_modules.init())
+
     return _modules
 
 
@@ -127,7 +130,7 @@ def check_session(ctx: click.Context):
     s = requests.Session()
     s.cookies = cookiejar_from_dict(Config().get("cookies", {}))
 
-    response = s.get(base_url+"/vi/user/view/self", cookies=Config().get("cookies", {}))
+    response = s.get(base_url + "/vi/user/view/self", cookies=Config().get("cookies", {}))
     if not response.ok:
         click.echo("Invalid session, please run `viur script setup` again.")
         ctx.invoke(setup)
@@ -135,7 +138,8 @@ def check_session(ctx: click.Context):
 
     # Update modules with cookies
     modules = get_modules()
-    modules.request.cookies = cookiejar_from_dict(Config().get("cookies", {}))
+    # modules.request.cookies = cookiejar_from_dict(Config().get("cookies", {}))
+
 
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
@@ -146,7 +150,7 @@ def pull(ctx: click.Context, force: bool):
     """
     check_session(ctx)
     modules = get_modules()
-    tree = modules.script
+    tree = modules.get_module("script")
 
     async def main():
         # In the new API, we don't need to call structure
@@ -181,11 +185,11 @@ def pull(ctx: click.Context, force: bool):
                     create_file()
 
         # Process nodes first
-        async for node in tree.list("node"):
+        async for node in tree.list(skel_type="node"):
             await process_entry(node, True)
 
         # Then process leaves
-        async for leaf in tree.list("leaf"):
+        async for leaf in tree.list(skel_type="leaf"):
             await process_entry(leaf, False)
 
     asyncio.new_event_loop().run_until_complete(main())
@@ -204,7 +208,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
     check_session(ctx)
     modules = get_modules()
-    tree = modules.script
+    tree = modules.get_module("script")
 
     async def main(file_path: str = None):
         # In the new API, we don't need to call structure
@@ -235,7 +239,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
             try:
                 # Search for the entry with the given path
                 entry = None
-                async for item in tree.list(_type):
+                async for item in tree.list(skel_type=_type):
                     if item.get("path") == file:
                         entry = item
                         break
@@ -255,9 +259,9 @@ def push(ctx: click.Context, force: bool, watch: bool):
                             if can_push:
                                 date = datetime.datetime.now().strftime("%H:%M:%S")
                                 click.echo(f"{date if watch else ""} Push {_real_file}")
-                                await tree.edit(_type, entry["key"], {
+                                await tree.edit(entry["key"], {
                                     "script": file_content
-                                })
+                                },skel_type = _type)
 
             except StopAsyncIteration:
                 text = "folder"
@@ -271,7 +275,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 if can_push:
                     # Get the root node
                     root_node_entry = None
-                    async for node in tree.list("node"):
+                    async for node in tree.list(skel_type="node"):
                         if node.get("parententry") is None:
                             root_node_entry = node
                             break
@@ -283,7 +287,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     if not is_root:
                         # Find parent entry
                         parent_entry = None
-                        async for node in tree.list("node"):
+                        async for node in tree.list(skel_type="node"):
                             if node.get("path") == parent:
                                 parent_entry = node
                                 break
@@ -295,8 +299,8 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
                     args = {
                         "name": last,
-                        #"parentrepo": root_node_entry["key"],
-                        #"parententry": parent_entry["key"],
+                        # "parentrepo": root_node_entry["key"],
+                        # "parententry": parent_entry["key"],
                         "node": parent_entry["key"],
                         "path": file,
                         "plugin": False
@@ -320,15 +324,15 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     click.echo(f"Push {_real_file}")
                     await tree.add(_type, args)
 
-
-
     if watch:
         print("Watching...")
+
         def watch_loop():
             from watchdog.events import RegexMatchingEventHandler
             from watchdog.observers import Observer
             import time
             modified_files = {}
+
             def on_modified(event):
                 try:
                     # check for tmp file
@@ -341,9 +345,9 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     modified_files[event.src_path] = os.path.getmtime(event.src_path)
                     asyncio.new_event_loop().run_until_complete(main(event.src_path))
                 except Exception as e:
+                    import traceback
                     print(f"Error: on file {event.src_path} {e}")
-
-
+                    traceback.print_exc()
             regexes = [r".*\.py"]
             ignore_regexes = []
             ignore_directories = True
@@ -355,8 +359,6 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 case_sensitive=case_sensitive
             )
             event_handler.on_modified = on_modified
-
-
 
             observer = Observer()
             observer.schedule(event_handler, Config().get("working_dir"), recursive=True)
@@ -381,8 +383,10 @@ def run(ctx: click.Context, path: str):
     Locally run a script located in the working_dir.
     """
     check_session(ctx)
-    modules = get_modules()
-
+    # modules = get_modules()
+    # todo get cookies
+    import viur.scriptor
+    viur.scriptor._init_modules()
     for dir in (os.path.dirname(os.path.realpath(__file__)), Config().get("working_dir")):
         if dir not in sys.path:
             sys.path.insert(0, dir)
