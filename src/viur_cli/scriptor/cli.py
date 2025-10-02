@@ -175,7 +175,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
     async def main(file_path: str = None):
         modules = get_modules()
-        tree = modules.get_module("script")
+        tree = await modules.get_module("script")
 
         # In the new API, we don't need to call structure
         working_dir = scriptor_config.get("working_dir")
