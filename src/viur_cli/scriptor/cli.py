@@ -78,6 +78,7 @@ def setup():
 
         if response.json() != "FAILURE":
             scriptor_config["cookies"] = session.cookies.get_dict()
+            scriptor_config.save()
             click.echo("Setup done")
         else:
             if "cookies" in scriptor_config:
@@ -112,11 +113,12 @@ def pull(ctx: click.Context, force: bool):
     Pull contents from server to working_dir.
     """
     check_session(ctx)
-    modules = get_modules()
-    tree = modules.get_module("script")
+
 
     async def main():
         # In the new API, we don't need to call structure
+        modules = get_modules()
+        tree = await modules.get_module("script")
         working_dir = scriptor_config.get("working_dir")
 
         async def process_entry(entry: dict, is_node: bool):
@@ -170,10 +172,11 @@ def push(ctx: click.Context, force: bool, watch: bool):
     """
 
     check_session(ctx)
-    modules = get_modules()
-    tree = modules.get_module("script")
 
     async def main(file_path: str = None):
+        modules = get_modules()
+        tree = modules.get_module("script")
+
         # In the new API, we don't need to call structure
         working_dir = scriptor_config.get("working_dir")
         _files = glob.glob(f"{working_dir}/**/*", recursive=True)
