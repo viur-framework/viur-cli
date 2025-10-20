@@ -2,6 +2,10 @@
 
 This file documents any relevant changes.
 
+## [2.3.0] 2025-10-20
+
+- refactor: Integrate new `viur-scriptor-api` v1 (#197)
+
 ## [2.2.1] 2025-05-22
 
 - chore: Added safety as dependency
