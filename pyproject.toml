@@ -27,7 +27,7 @@ dependencies = [
     "semver~=3.0",
     "watchdog~=6.0",
     "safety~=3.5",
-    "viur-scriptor-api~=2",
+    "viur-scriptor-api~=1.0",
 ]
 
 [project.urls]
