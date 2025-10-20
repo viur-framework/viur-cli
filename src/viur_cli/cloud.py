@@ -6,7 +6,7 @@ import string
 import time
 import click
 import yaml
-from viur_cli import echo_positive, echo_warning, echo_fatal
+from viur_cli import echo_success, echo_warning, echo_fatal
 from .conf import config
 from . import cli, echo_error, echo_info, replace_vars
 from .update import create_req
@@ -305,7 +305,7 @@ def gcloud_get_roles(profile):
                 with open(json_file_path, 'w') as json_file:
                     json.dump(usable_dict, json_file, indent=4)
 
-                echo_positive(f"You can now watch your gcloud Roles Setup in your '{json_file_path}' file ")
+                echo_success(f"You can now watch your gcloud Roles Setup in your '{json_file_path}' file ")
 
         except yaml.YAMLError as e:
             echo_error(f"An error occurred during YAML to Dictionary transformation: {e}")
@@ -455,7 +455,7 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
                     return
             else:
                 echo_info("\U00002714 No vulnerabilities found.")
-                
+
         version = replace_vars(
             conf["version"],
             {k: v for k, v in conf.items() if k not in ["version"]}
@@ -697,6 +697,5 @@ def create(profile, action, gen, source, name, entrypoint, env_vars_file, memory
 
         config[profile] = conf
         config.migrate()
-        echo_positive("Your cloud function creation was successful, if you want to add more flags, "
+        echo_success("Your cloud function creation was successful, if you want to add more flags, "
                       "add them in your project.json")
-

@@ -62,7 +62,7 @@ def clean_base(app_id, author=None):
     os.rename("viur-project.md", "README.md")
     os.remove(sys.argv[0])  # Remove the script itself
 
-    echo_positive("Project repository has been set-up now.")
+    echo_success("Project repository has been set-up now.")
 
 
 @cli.command()

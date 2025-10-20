@@ -6,18 +6,13 @@ from .utils import *
 from .version import __version__ as cli_version
 
 
-PROJECT_CONFIG_FILE = "project.json"
-PROJECT_CONFIG_VERSION = "2.0.0"
-LAST_VERSION = ""
+class Config(dict):
+    CONFIG_FILE = None
+    PROJECT_CONFIG_VERSION = None
+    LAST_VERSION = None
 
-
-class ProjectConfig(dict):
-
-    def __init__(self):
-        super().__init__()
-        self["default"] = {}
-        self["format"] = PROJECT_CONFIG_VERSION
-        self.initial_load = False
+    def __init__(self, *args, **kwargs):
+        self.load()
 
     def load(self):
         """
@@ -34,48 +29,59 @@ class ProjectConfig(dict):
             :return: dict
                 The project configuration loaded from the project.json file.
         """
-
         # Search in any parent folder for a project.json,
         # change working directory because subsequent commands
         # require for project root folder.
+
         changed = False
-        while not os.path.exists(PROJECT_CONFIG_FILE):
+        while not os.path.exists(self.CONFIG_FILE):
             os.chdir("..")
             changed = True
 
             if os.getcwd() == "/":
-                echo_fatal(f"{PROJECT_CONFIG_FILE} not found - please check if you are in the right folder.")
+                echo_fatal(f"{self.CONFIG_FILE} not found - please check if you are in the right folder.")
 
         if changed:
             echo_info(f"Project root is {os.getcwd()}")
 
         try:
-            f = open(PROJECT_CONFIG_FILE, "r")
+            f = open(self.CONFIG_FILE, "r")
             self.update(json.loads(f.read()))
 
+
         except FileNotFoundError:
-            echo_fatal(f"Can't open {PROJECT_CONFIG_FILE} for reading")
+            echo_fatal(f"Can't open {self.CONFIG_FILE} for reading")
 
         except json.decoder.JSONDecodeError as e:
             echo_fatal(
-                f"The configuration in {PROJECT_CONFIG_FILE} contains invalid JSON: {str(e)}. Please verify right syntax.")
-
+                f"The configuration in {self.CONFIG_FILE} contains invalid JSON: {str(e)}. Please verify right syntax.")
         self.migrate()
+
+    def migrate(self):
+        pass
 
     def save(self):
         """
         Write the current projectConfig dictionary to project.json.
         """
-        with open(PROJECT_CONFIG_FILE, "w") as f:
+        with open(self.CONFIG_FILE, "w") as f:
             json.dump(self, f, indent=4, sort_keys=True)
             f.write('\n')
 
+
+class ProjectConfig(Config):
+    CONFIG_FILE = "project.json"
+    PROJECT_CONFIG_VERSION = "2.0.0"
+    LAST_VERSION = ""
+
+    def __init__(self):
+
+        self["default"] = {}
+        self["format"] = self.PROJECT_CONFIG_VERSION
+        super().__init__()
+
     def get_profile(self, profile):
         """Get profile configuration"""
-        if not self.initial_load:
-            self.load()
-            self.initial_load = True
-
         if profile == "format":
             echo_fatal("Your profile can not be named 'Format' ")
         if profile not in self:
@@ -95,7 +101,6 @@ class ProjectConfig(dict):
         else:
             for value in list(dictionary.values()):
                 if isinstance(value, dict):
-
                     self.find_key(value, target_key, target, keep=keep)
 
     def remove_key(self, dictionary, target_key):
@@ -124,7 +129,7 @@ class ProjectConfig(dict):
             self["format"] = old_format
             del self["default"]["format"]
 
-        assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", PROJECT_CONFIG_VERSION], \
+        assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", self.PROJECT_CONFIG_VERSION], \
             "Invalid formatversion, you have to fix it manually"
 
         # Version 1.0.1
@@ -219,4 +224,23 @@ def get_changelog_difference(response, response1):
         echo_info(line[1:])
 
 
+class ScriptorConfig(Config):
+    """
+    Manage scriptor configuration.
+    TODO miragte with other config
+    """
+    CONFIG_FILE = "viur_scriptor_config.json"
+    DEFAULT_BASE_URL = "http://localhost:8080"
+    DEFAULT_WORKING_DIR = "scripts/"
+    _instance = None
+
+    def __init__(self, *args, **kwargs):
+        self.update({
+            "base_url": self.DEFAULT_BASE_URL,
+            "working_dir": self.DEFAULT_WORKING_DIR,
+        })
+        super().__init__(*args, **kwargs)
+
+
 config = ProjectConfig()
+scriptor_config = ScriptorConfig()

@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 build = "*"
 twine = "*"
+viur-scriptor-api = "~=1.0"
 
 [requires]
 python_version = "3"
@@ -13,3 +14,6 @@ python_version = "3"
 [scripts]
 build_release = "python -m build"
 test_release = "python -m twine upload --repository testpypi dist/*"
+
+[dev-packages]
+build = "*"

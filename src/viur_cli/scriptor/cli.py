@@ -9,51 +9,22 @@ import sys
 import glob
 from requests.sessions import cookiejar_from_dict
 from weakref import proxy
-from .scriptor import Request, init, viur
+from viur.scriptor import Modules
 from ..cli import cli
+from ..cli import scriptor_config
+
+# Global modules instance that will be initialized when needed
+_modules = None
 
 
-class Config(dict):
-    """
-    Manage scriptor configuration.
-    """
-    CONFIG_FILE_NAME = "viur_scriptor_config.json"
-    DEFAULT_BASE_URL = "http://localhost:8080"
-    DEFAULT_WORKING_DIR = "scripts/"
+def get_modules():
+    """Get or create the global Modules instance"""
+    global _modules
+    if _modules is None:
+        _modules = Modules(scriptor_config["base_url"], cookies=scriptor_config["cookies"])
+        asyncio.new_event_loop().run_until_complete(_modules.init())
 
-    def __new__(cls):
-        if not getattr(cls, "_instance", None):
-            cls._instance = super().__new__(cls)
-
-            # use defaults in config
-            cls._instance |= {
-                "base_url": cls.DEFAULT_BASE_URL,
-                "working_dir": cls.DEFAULT_WORKING_DIR,
-            }
-
-            if os.path.exists(cls.CONFIG_FILE_NAME):
-                with open(cls.CONFIG_FILE_NAME, "r") as f:
-                    cls._instance |= json.load(f)
-
-        return proxy(cls._instance)
-
-    def dump(self):
-        with open(self.CONFIG_FILE_NAME, "w") as f:
-            json.dump(self, f)
-
-    def __setitem__(self, __key: str, __value: object) -> None:
-        super().__setitem__(__key, __value)
-        self.dump()
-
-    def __delitem__(self, __key: str) -> None:
-        super().__delitem__(__key)
-        self.dump()
-
-
-def build_url(url: str):
-    return Config()["base_url"] + "/" + url
-
-viur.request.build_url = staticmethod(build_url)
+    return _modules
 
 
 @cli.group()
@@ -71,16 +42,16 @@ def configure(url: str, username: str, working_dir: str):
     """
     Manage configuration settings.
     """
-    conf = Config()
+
 
     if url:
-        conf["base_url"] = url
+        scriptor_config["base_url"] = url
 
     if username:
-        conf["username"] = username
+        scriptor_config["username"] = username
 
     if working_dir:
-        conf["working_dir"] = working_dir.replace("\\", "/")
+        scriptor_config["working_dir"] = working_dir.replace("\\", "/")
 
 
 @script.command()
@@ -88,12 +59,12 @@ def setup():
     """
     Setup user session with a given username and password.
     """
-    config = Config()
-    base_url = config.get("base_url")
+
+    base_url = scriptor_config.get("base_url")
     try:
         session = requests.session()
         skey = session.get(base_url + "/json/skey")
-        username: str = config.get("username", "")
+        username: str = scriptor_config.get("username", "")
         if not username:
             username = click.prompt("Enter the username")
 
@@ -106,27 +77,33 @@ def setup():
         })
 
         if response.json() != "FAILURE":
-            config["cookies"] = session.cookies.get_dict()
+            scriptor_config["cookies"] = session.cookies.get_dict()
+            scriptor_config.save()
             click.echo("Setup done")
         else:
-            if "cookies" in config:
-                del config["cookies"]
+            if "cookies" in scriptor_config:
+                del scriptor_config["cookies"]
             click.echo("Failed to login. Did you maybe entered the wrong password?")
     except KeyboardInterrupt:
         pass
 
 
 def check_session(ctx: click.Context):
-    base_url = Config().get("base_url")
+    base_url = scriptor_config.get("base_url")
 
     s = requests.Session()
-    s.cookies = cookiejar_from_dict(Config().get("cookies", {}))
+    s.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
 
-    response = s.get(base_url+"/vi/user/view/self", cookies=Config().get("cookies", {}))
+    response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config.get("cookies", {}))
     if not response.ok:
         click.echo("Invalid session, please run `viur script setup` again.")
         ctx.invoke(setup)
         ctx.close()
+    #FIXME We need this ?
+    # Update modules with cookies
+    modules = get_modules()
+    # modules.request.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
+
 
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
@@ -136,21 +113,20 @@ def pull(ctx: click.Context, force: bool):
     Pull contents from server to working_dir.
     """
     check_session(ctx)
-    Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
-    from .scriptor.module import TreeModule
-    tree = TreeModule("script")
+
 
     async def main():
-        await tree.structure("node")
+        # In the new API, we don't need to call structure
+        modules = get_modules()
+        tree = await modules.get_module("script")
+        working_dir = scriptor_config.get("working_dir")
 
-        working_dir = Config().get("working_dir")
-        async def for_each(group: str, entry: object):
+        async def process_entry(entry: dict, is_node: bool):
             _path = os.path.join(working_dir, entry["path"])
 
-            if group == "node":
+            if is_node:
                 if not os.path.exists(_path):
                     os.makedirs(_path)
-
             else:
                 def create_file():
                     with open(_path, "a+") as f:
@@ -173,7 +149,13 @@ def pull(ctx: click.Context, force: bool):
                 else:
                     create_file()
 
-        await tree.for_each(for_each)
+        # Process nodes first
+        async for node in tree.list(skel_type="node"):
+            await process_entry(node, True)
+
+        # Then process leaves
+        async for leaf in tree.list(skel_type="leaf"):
+            await process_entry(leaf, False)
 
     asyncio.new_event_loop().run_until_complete(main())
 
@@ -190,14 +172,13 @@ def push(ctx: click.Context, force: bool, watch: bool):
     """
 
     check_session(ctx)
-    Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
 
-    from .scriptor.module import TreeModule
-    tree = TreeModule("script")
+    async def main(file_path: str = None):
+        modules = get_modules()
+        tree = await modules.get_module("script")
 
-    async def main(file_path: str=None):
-        await tree.structure("node")
-        working_dir = Config().get("working_dir")
+        # In the new API, we don't need to call structure
+        working_dir = scriptor_config.get("working_dir")
         _files = glob.glob(f"{working_dir}/**/*", recursive=True)
         for file in _files:
             _real_file = file
@@ -222,7 +203,15 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 is_root = True
 
             try:
-                entry = await anext(tree.list(_type, {"path": file}))
+                # Search for the entry with the given path
+                entry = None
+                async for item in tree.list(skel_type=_type):
+                    if item.get("path") == file:
+                        entry = item
+                        break
+
+                if not entry:
+                    raise StopAsyncIteration
                 if _type == "leaf":
                     with open(_real_file, "r") as f:
                         file_content = f.read()
@@ -236,9 +225,9 @@ def push(ctx: click.Context, force: bool, watch: bool):
                             if can_push:
                                 date = datetime.datetime.now().strftime("%H:%M:%S")
                                 click.echo(f"{date if watch else ""} Push {_real_file}")
-                                await tree.edit(_type, entry["key"], {
+                                await tree.edit(entry["key"], {
                                     "script": file_content
-                                })
+                                }, skel_type=_type)
 
             except StopAsyncIteration:
                 text = "folder"
@@ -250,14 +239,24 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     can_push = click.confirm(f"There is no {text} named {file}. Create it?")
 
                 if can_push:
-                    root_node_entry = (await tree.list_root_nodes())[0]
+                    # Get the root node
+                    root_node_entry = None
+                    async for node in tree.list(skel_type="node"):
+                        if node.get("parententry") is None:
+                            root_node_entry = node
+                            break
 
                     if not parent.endswith("/"):
                         parent += "/"
 
                     parent_entry = root_node_entry
                     if not is_root:
-                        parent_entry = await anext(tree.list("node", {"path": parent}))
+                        # Find parent entry
+                        parent_entry = None
+                        async for node in tree.list(skel_type="node"):
+                            if node.get("path") == parent:
+                                parent_entry = node
+                                break
 
                     last = file
                     if file.count("/") > 0:
@@ -266,8 +265,8 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
                     args = {
                         "name": last,
-                        #"parentrepo": root_node_entry["key"],
-                        #"parententry": parent_entry["key"],
+                        # "parentrepo": root_node_entry["key"],
+                        # "parententry": parent_entry["key"],
                         "node": parent_entry["key"],
                         "path": file,
                         "plugin": False
@@ -291,15 +290,15 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     click.echo(f"Push {_real_file}")
                     await tree.add(_type, args)
 
-
-
     if watch:
         print("Watching...")
+
         def watch_loop():
             from watchdog.events import RegexMatchingEventHandler
             from watchdog.observers import Observer
             import time
             modified_files = {}
+
             def on_modified(event):
                 try:
                     # check for tmp file
@@ -312,8 +311,9 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     modified_files[event.src_path] = os.path.getmtime(event.src_path)
                     asyncio.new_event_loop().run_until_complete(main(event.src_path))
                 except Exception as e:
+                    import traceback
                     print(f"Error: on file {event.src_path} {e}")
-
+                    traceback.print_exc()
 
             regexes = [r".*\.py"]
             ignore_regexes = []
@@ -327,10 +327,8 @@ def push(ctx: click.Context, force: bool, watch: bool):
             )
             event_handler.on_modified = on_modified
 
-
-
             observer = Observer()
-            observer.schedule(event_handler, Config().get("working_dir"), recursive=True)
+            observer.schedule(event_handler, scriptor_config.get("working_dir"), recursive=True)
             observer.start()
             try:
                 while True:
@@ -346,24 +344,29 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
 @script.command()
 @click.argument('path', required=True)
+@click.argument("args", nargs=-1)
 @click.pass_context
-def run(ctx: click.Context, path: str):
+def run(ctx: click.Context, path: str, args=None):
     """
     Locally run a script located in the working_dir.
     """
     check_session(ctx)
-    Request.COOKIES = cookiejar_from_dict(Config().get("cookies", {}))
 
-    for dir in (os.path.dirname(os.path.realpath(__file__)), Config().get("working_dir")):
+    for dir in (os.path.dirname(os.path.realpath(__file__)), scriptor_config.get("working_dir")):
         if dir not in sys.path:
             sys.path.insert(0, dir)
 
     async def main():
-        await init()
+        # The new API doesn't need explicit init
         import logging
         import importlib
         logging.getLogger().setLevel(logging.INFO)
-
+        import viur.scriptor
+        await viur.scriptor._init_modules(
+            script_params=args,
+            base_url=scriptor_config["base_url"],
+            cookies=scriptor_config["cookies"]
+        )
         # fixme: there should be a better method than this below
         module = importlib.import_module(path.replace("/", ".").removesuffix(".py"))
 
