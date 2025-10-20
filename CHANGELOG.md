@@ -4,6 +4,7 @@ This file documents any relevant changes.
 
 ## [2.3.0] 2025-10-20
 
+- cicd: Updated deployment to trusted publisher workflow
 - refactor: Integrate new `viur-scriptor-api` v1 (#197)
 
 ## [2.2.1] 2025-05-22
