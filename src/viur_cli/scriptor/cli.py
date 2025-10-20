@@ -351,8 +351,6 @@ def run(ctx: click.Context, path: str, args=None):
     Locally run a script located in the working_dir.
     """
     check_session(ctx)
-    # modules = get_modules()
-    # todo get cookies
 
     for dir in (os.path.dirname(os.path.realpath(__file__)), scriptor_config.get("working_dir")):
         if dir not in sys.path:
