@@ -2,6 +2,10 @@
 
 This file documents any relevant changes.
 
+## [2.3.1] 2025-10-22
+
+- fix: Create scriptor config when not existing (#199)
+
 ## [2.3.0] 2025-10-20
 
 - cicd: Updated deployment to trusted publisher workflow
