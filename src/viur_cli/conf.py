@@ -10,8 +10,10 @@ class Config(dict):
     CONFIG_FILE = None
     PROJECT_CONFIG_VERSION = None
     LAST_VERSION = None
+    PATH = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, path=None, *args, **kwargs):
+        self.PATH = path
         self.load()
 
     def load(self):
@@ -39,13 +41,20 @@ class Config(dict):
             changed = True
 
             if os.getcwd() == "/":
-                echo_fatal(f"{self.CONFIG_FILE} not found - please check if you are in the right folder.")
+
+                if self.PATH:
+                    self.save()
+                    self.load()
+                    return
+                else:
+                    echo_fatal(f"{self.CONFIG_FILE} not found - please check if you are in the right folder.")
 
         if changed:
             echo_info(f"Project root is {os.getcwd()}")
 
         try:
             f = open(self.CONFIG_FILE, "r")
+            self.PATH = os.getcwd()
             self.update(json.loads(f.read()))
 
 
@@ -64,6 +73,7 @@ class Config(dict):
         """
         Write the current projectConfig dictionary to project.json.
         """
+        os.chdir(self.PATH)
         with open(self.CONFIG_FILE, "w") as f:
             json.dump(self, f, indent=4, sort_keys=True)
             f.write('\n')
@@ -232,7 +242,6 @@ class ScriptorConfig(Config):
     CONFIG_FILE = "viur_scriptor_config.json"
     DEFAULT_BASE_URL = "http://localhost:8080"
     DEFAULT_WORKING_DIR = "scripts/"
-    _instance = None
 
     def __init__(self, *args, **kwargs):
         self.update({
@@ -243,4 +252,4 @@ class ScriptorConfig(Config):
 
 
 config = ProjectConfig()
-scriptor_config = ScriptorConfig()
+scriptor_config = ScriptorConfig(path=config.PATH)
