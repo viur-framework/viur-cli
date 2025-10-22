@@ -2,92 +2,96 @@ import json
 import click
 import requests
 import difflib
+import os
 from .utils import *
 from .version import __version__ as cli_version
 
 
 class Config(dict):
-    CONFIG_FILE = None
-    PROJECT_CONFIG_VERSION = None
-    LAST_VERSION = None
-    PATH = None
+    """
+    Abstraction layer for managing config files.
+    """
 
-    def __init__(self, path=None, *args, **kwargs):
-        self.PATH = path
+    FILENAME = None
+    """
+    The filename used for this configuration file.
+    """
+
+    VERSION = None
+    """
+    The current version for this configuration file, which is tied to the viur-cli package.
+    """
+
+    def __init__(self, *, path=None):
+        self.path = path
+
+        if self.VERSION:
+            self["format"] = self.VERSION
+
         self.load()
 
     def load(self):
         """
-            Load project.json and write to the global projectConfig.
-
-            This function is responsible for loading the project.json configuration file and populating the global
-            projectConfig variable.
-            It handles error checks, such as missing or invalid JSON configuration files, and updates the project
-            configuration.
-
-            :param path: str, optional
-                The path to the project.json file. If not provided, the default projectConfigFilePath is used.
-
-            :return: dict
-                The project configuration loaded from the project.json file.
+            Load configuration from a file into this config object.
         """
         # Search in any parent folder for a project.json,
         # change working directory because subsequent commands
         # require for project root folder.
 
         changed = False
-        while not os.path.exists(self.CONFIG_FILE):
+        while not os.path.exists(self.FILENAME):
             os.chdir("..")
             changed = True
 
             if os.getcwd() == "/":
 
-                if self.PATH:
+                if self.path:
                     self.save()
                     self.load()
                     return
                 else:
-                    echo_fatal(f"{self.CONFIG_FILE} not found - please check if you are in the right folder.")
+                    echo_fatal(f"{self.FILENAME} not found - please check if you are in the right folder.")
 
         if changed:
             echo_info(f"Project root is {os.getcwd()}")
 
         try:
-            f = open(self.CONFIG_FILE, "r")
-            self.PATH = os.getcwd()
+            f = open(self.FILENAME, "r")
+            self.path = os.getcwd()
             self.update(json.loads(f.read()))
 
 
         except FileNotFoundError:
-            echo_fatal(f"Can't open {self.CONFIG_FILE} for reading")
+            echo_fatal(f"Can't open {self.FILENAME} for reading")
 
         except json.decoder.JSONDecodeError as e:
             echo_fatal(
-                f"The configuration in {self.CONFIG_FILE} contains invalid JSON: {str(e)}. Please verify right syntax.")
+                f"The configuration in {self.FILENAME} contains invalid JSON: {str(e)}. Please verify right syntax.")
+
         self.migrate()
 
     def migrate(self):
+        """
+        A hook for migrating a read config.
+        """
         pass
 
     def save(self):
         """
-        Write the current projectConfig dictionary to project.json.
+        Write the current configuration back to the file.
         """
-        os.chdir(self.PATH)
-        with open(self.CONFIG_FILE, "w") as f:
+        os.chdir(self.path)
+        with open(self.FILENAME, "w") as f:
             json.dump(self, f, indent=4, sort_keys=True)
             f.write('\n')
 
 
 class ProjectConfig(Config):
-    CONFIG_FILE = "project.json"
-    PROJECT_CONFIG_VERSION = "2.0.0"
-    LAST_VERSION = ""
+    FILENAME = "project.json"
+    VERSION = "2.0.0"
 
     def __init__(self):
-
         self["default"] = {}
-        self["format"] = self.PROJECT_CONFIG_VERSION
         super().__init__()
 
     def get_profile(self, profile):
@@ -139,7 +143,7 @@ class ProjectConfig(Config):
             self["format"] = old_format
             del self["default"]["format"]
 
-        assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", self.PROJECT_CONFIG_VERSION], \
+        assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", self.VERSION], \
             "Invalid formatversion, you have to fix it manually"
 
         # Version 1.0.1
@@ -239,17 +243,18 @@ class ScriptorConfig(Config):
     Manage scriptor configuration.
     TODO miragte with other config
     """
-    CONFIG_FILE = "viur_scriptor_config.json"
+    FILENAME = "viur_scriptor_config.json"
     DEFAULT_BASE_URL = "http://localhost:8080"
     DEFAULT_WORKING_DIR = "scripts/"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         self.update({
             "base_url": self.DEFAULT_BASE_URL,
             "working_dir": self.DEFAULT_WORKING_DIR,
         })
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
 
+# Create specific configs
 config = ProjectConfig()
-scriptor_config = ScriptorConfig(path=config.PATH)
+scriptor_config = ScriptorConfig(path=config.path)
