@@ -43,7 +43,6 @@ def configure(url: str, username: str, working_dir: str):
     Manage configuration settings.
     """
 
-
     if url:
         scriptor_config["base_url"] = url
 
@@ -99,10 +98,6 @@ def check_session(ctx: click.Context):
         click.echo("Invalid session, please run `viur script setup` again.")
         ctx.invoke(setup)
         ctx.close()
-    #FIXME We need this ?
-    # Update modules with cookies
-    modules = get_modules()
-    # modules.request.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
 
 
 @script.command()
@@ -113,7 +108,6 @@ def pull(ctx: click.Context, force: bool):
     Pull contents from server to working_dir.
     """
     check_session(ctx)
-
 
     async def main():
         # In the new API, we don't need to call structure
@@ -288,7 +282,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                                 f.write(args["script"])
 
                     click.echo(f"Push {_real_file}")
-                    await tree.add(_type, args)
+                    await tree.add(args, skel_type=_type)
 
     if watch:
         print("Watching...")
