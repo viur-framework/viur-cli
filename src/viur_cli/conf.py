@@ -208,11 +208,11 @@ class ProjectConfig(Config):
 
 
 def print_changelog_from_github(user, repo, last_version):
-    version_url = f"https://raw.githubusercontent.com/{user}/{repo}/main/CHANGELOG.md"
+    version_url = f"https://raw.githubusercontent.com/{user}/{repo}/refs/heads/main/CHANGELOG.md"
     response = requests.get(version_url)
 
     if last_version is not None:
-        version_url1 = f"https://raw.githubusercontent.com/{user}/{repo}/{last_version}/CHANGELOG.md"
+        version_url1 = f"https://raw.githubusercontent.com/{user}/{repo}/refs/tags/v{last_version}/CHANGELOG.md"
         echo_warning(version_url1)
         response1 = requests.get(version_url1)
 

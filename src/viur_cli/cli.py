@@ -3,7 +3,7 @@ import subprocess
 import click
 from .conf import *
 from .version import __version__
-from .version import MINIMAL_PIPENV
+from .version import MINIMAL_UV
 import semver
 import pprint
 import os
@@ -29,18 +29,18 @@ def cli(ctx):
     """
 
     # Get the systems pipenv Version Number
-    pipenv_version = subprocess.check_output(['pipenv', '--version']).decode("utf-8")
+    uv_version = subprocess.check_output(['uv', 'self', 'version']).decode("utf-8")
     version_pattern = r'\b(\d+\.\d+\.\d+)\b'
-    match = re.search(version_pattern, pipenv_version)
-    sys_pipenv = match.group(1)
+    match = re.search(version_pattern, uv_version)
+    sys_uv = match.group(1)
 
     # sys kleiner min
-    if semver.compare(sys_pipenv, MINIMAL_PIPENV) < 0:
+    if semver.compare(sys_uv, MINIMAL_UV) < 0:
         echo_warning(
-            f"Your pipenv Version does not match the recommended pipenv version. \n"
-            f"This mismatch may cause Errors, please consider updating your Systems pipenv version \n"
-            f"Your Version: {sys_pipenv}\n"
-            f"Recommended Version: {MINIMAL_PIPENV}"
+            f"Your uv Version does not match the recommended uv version. \n"
+            f"This mismatch may cause Errors, please consider updating your Systems uv version \n"
+            f"Your Version: {sys_uv}\n"
+            f"Recommended Version: {MINIMAL_UV}"
         )
 
 
