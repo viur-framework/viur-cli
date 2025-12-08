@@ -1,2 +1,2 @@
-__version__ = "2.3.1"
-MINIMAL_PIPENV = "2023.11.15"
+__version__ = "3.0.0"
+MINIMAL_UV = "0.9.15"

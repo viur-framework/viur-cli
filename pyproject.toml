@@ -1,16 +1,11 @@
 [build-system]
-requires = [
-    "setuptools>=65",
-    "wheel"
-]
+requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "viur-cli"
 dynamic = ["version"]
-authors = [
-    {name = "Andreas H. Kelch", email = "ak@mausbrand.de"}
-]
+authors = [{ name = "Andreas H. Kelch", email = "ak@mausbrand.de" }]
 description = "Command-line interface for ViUR application maintenance."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,7 +21,7 @@ dependencies = [
     "requests~=2.0",
     "semver~=3.0",
     "watchdog~=6.0",
-    "safety~=3.5",
+    "pip-audit~=2.7",
     "viur-scriptor-api~=1.0",
 ]
 
@@ -39,8 +34,8 @@ viur = "viur_cli:cli"
 get-pyodide = "viur_cli.scripts.get_pyodide:main"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
-packages = {find = {where = ["src"]}}
+package-dir = { "" = "src" }
+packages = { find = { where = ["src"] } }
 
 [tool.setuptools.dynamic]
-version = {attr = "viur_cli.version.__version__"}
+version = { attr = "viur_cli.version.__version__" }
