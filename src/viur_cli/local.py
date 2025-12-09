@@ -1,16 +1,13 @@
 import json
 
 import click
-import os
 import shutil
 import subprocess
+from datetime import datetime
 
-from viur_cli import echo_info, echo_warning
+from viur_cli import echo_warning
 from .conf import config
 from . import cli, echo_error, utils, echo_fatal
-from requests import get
-from .package import vi as vi_install
-from types import SimpleNamespace
 
 
 def get_user_info():
@@ -86,7 +83,7 @@ def env(profile):
         click.echo(f"format: {config['format']}")
         for entry in conf["builds"]:
             if entry in conf["builds"]:
-                click.echo(f"\n {entry}: {conf['builds'][entry]['version']} ")
+                click.echo(f"\n {entry}: {conf['builds'][entry]['version'] } ")
 
     except Exception as e:
         echo_error("Error while collecting viur info")
@@ -197,73 +194,226 @@ def check(dev):
 
 def do_checks(dev=True):
     """
-    Runs several toolchain and ecosystem security checks for vulnerabilities, and reports these on demand.
+    Run security checks for Python and npm dependencies.
+
+    Args:
+        dev: Development mode flag (currently unused but kept for API compatibility)
+
+    Returns:
+        bool: True if no vulnerabilities found, False otherwise
     """
-    all_checks_passed = True
+    has_vulnerabilities = False
 
-    def show_output_if_not(args, check_str):
-        try:
-            result = subprocess.check_output(
-                args, stderr=subprocess.STDOUT, encoding="utf-8"
-            )
-        except subprocess.CalledProcessError as err:
-            result = err.output.strip()
-
-        if check_str not in result:
-            print(result)
-            return True
-
-        return False
-
-    # Check Python dependencies with pip-audit (replacement for pipenv check)
+    # Python vulnerability check
     try:
-        if dev:
-            # Include dev dependencies
-            if show_output_if_not(
-                "pip-audit -r deploy/requirements.txt --skip-editable --no-deps --disable-pip".split(),
-                "",
-            ):
-                subprocess.run(
-                    [
-                        "pip-audit",
-                        "-r deploy/requirements.txt",
-                        "--skip-editable",
-                        "--no-deps",
-                        "--disable-pip",
-                    ],
-                    check=False,
-                )
+        # Run uv-secure with JSON output to parse results
+        result = subprocess.run(
+            [
+                "uvx",
+                "pysentry-rs",
+                "--sources",
+                "pypa,pypi,osv",
+                "--format",
+                "json",
+                "--fail-on",
+                "high",
+            ],
+            capture_output=True,
+            check=True,
+        )
+
+        # Parse JSON output (strict=False allows control characters)
+        data = json.loads(result.stdout, strict=False)
+
+        # Check if no vulnerabilities found
+        if data.get("vulnerable_packages", 0) == 0:
+            py_vulns = False
         else:
-            # Production dependencies only
-            subprocess.run(
-                [
-                    "pip-audit",
-                    "-r deploy/requirements.txt",
-                    "--skip-editable",
-                    "--no-deps",
-                    "--disable-pip",
-                ],
-                check=False,
-            )
-    except FileNotFoundError:
-        echo_warning("pip-audit not found. Install with: uv pip install pip-audit")
-        all_checks_passed = False
+            py_vulns = True
+            has_vulnerabilities = True
 
-    # Check npm vulnerabilities for all npm builds
-    cfg = config.get_profile("default")
-    if builds_cfg := cfg.get("builds"):
-        if npm_apps := [
-            k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"
-        ]:
-            for name in npm_apps:
-                path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
+        # Format scan time to human readable format
+        scan_time_str = data.get("scan_time", "N/A")
+        try:
+            scan_time = datetime.fromisoformat(scan_time_str.replace("Z", "+00:00"))
+            formatted_time = scan_time.strftime("%H:%M:%S")
+        except:
+            formatted_time = scan_time_str
 
-                if dev:
-                    args = ("npm", "audit", "--prefix", path)
+        # Display scan summary for Python
+        click.echo("\n" + "=" * 60)
+        click.echo("Python Security Scan Results")
+        click.echo("=" * 60)
+        click.echo(f"Scan Time:              {formatted_time}")
+        click.echo(f"Total Packages:         {data.get('total_packages', 0)}")
+        click.echo(f"Vulnerable Packages:    {data.get('vulnerable_packages', 0)}")
+        click.echo(f"Total Vulnerabilities:  {data.get('total_vulnerabilities', 0)}")
+        click.echo("=" * 60)
+
+        # Display individual vulnerabilities
+        vulnerabilities = data.get("vulnerabilities", [])
+        if vulnerabilities:
+            click.echo("\nFound Python Vulnerabilities:\n")
+            for i, vuln in enumerate(vulnerabilities, 1):
+                click.echo(
+                    f"{i}. Package: {click.style(vuln.get('package_name', 'Unknown'), fg='red', bold=True)}"
+                )
+                click.echo(
+                    f"   Installed Version: {vuln.get('installed_version', 'N/A')}"
+                )
+
+                severity = vuln.get("severity", "Unknown")
+                severity_color = {
+                    "Critical": "red",
+                    "High": "red",
+                    "Medium": "yellow",
+                    "Low": "green",
+                }.get(severity, "white")
+                click.echo(
+                    f"   Severity: {click.style(severity, fg=severity_color, bold=True)}"
+                )
+
+                fixed_versions = vuln.get("fixed_versions", [])
+                if fixed_versions:
+                    click.echo(f"   Fixed in: {', '.join(fixed_versions)}")
                 else:
-                    args = ("npm", "audit", "--omit", "dev", "--prefix", path)
+                    click.echo("   Fixed in: No fix available yet")
+                click.echo()
 
-                if show_output_if_not(args, "found 0 vulnerabilities"):
-                    all_checks_passed = False
+    except FileNotFoundError:
+        echo_warning("uv-secure not found. Install with: uv pip install uv-secure")
+        py_vulns = False
+    except json.JSONDecodeError as e:
+        echo_error(f"Error parsing uv-secure output: {e}")
+        echo_error(f"Raw output: {result.stdout[:500]}")
+        py_vulns = False
+    except Exception as e:
+        echo_error(f"Unexpected error during Python security check: {e}")
+        py_vulns = False
+    # npm vulnerability check
+    if shutil.which("npm"):
+        conf = config.get_profile("default")
+        builds = conf.get("builds", {})
+        sources_folder = conf.get("sources_folder", "./sources")
 
-    return all_checks_passed
+        # Collect all npm builds
+        npm_builds = []
+        for build_name, build_config in builds.items():
+            if build_config.get("kind") == "npm":
+                source_path = build_config.get("source")
+                if source_path:
+                    npm_builds.append(
+                        {"name": build_name, "path": f"{sources_folder}/{source_path}"}
+                    )
+
+        if not npm_builds:
+            click.echo("\n" + "=" * 60)
+            click.echo("No npm builds found in config - skipping npm audit")
+            click.echo("=" * 60)
+        else:
+            # Run audit for each npm build
+            for build in npm_builds:
+                try:
+                    npm_audit_dir = build["path"]
+
+                    npm_result = subprocess.run(
+                        ["npm", "audit", "--json"],
+                        capture_output=True,
+                        text=True,
+                        cwd=npm_audit_dir,
+                    )
+
+                    npm_data = json.loads(npm_result.stdout, strict=False)
+
+                    metadata = npm_data.get("metadata", {})
+                    npm_vulnerabilities = npm_data.get("vulnerabilities", {})
+
+                    vuln_counts = metadata.get("vulnerabilities", {})
+                    dependencies = metadata.get("dependencies", {})
+
+                    total_npm_vulns = vuln_counts.get("total", 0)
+
+                    if total_npm_vulns > 0:
+                        has_vulnerabilities = True
+
+                    # Display npm scan summary
+                    click.echo("\n" + "=" * 60)
+                    click.echo(f"npm Security Scan Results - {build['name']}")
+                    click.echo("=" * 60)
+                    click.echo(f"Build Path:             {npm_audit_dir}")
+                    click.echo(
+                        f"Total Dependencies:     {dependencies.get('total', 0)}"
+                    )
+                    click.echo(f"Total Vulnerabilities:  {total_npm_vulns}")
+                    click.echo(
+                        f"  Critical:             {vuln_counts.get('critical', 0)}"
+                    )
+                    click.echo(f"  High:                 {vuln_counts.get('high', 0)}")
+                    click.echo(
+                        f"  Moderate:             {vuln_counts.get('moderate', 0)}"
+                    )
+                    click.echo(f"  Low:                  {vuln_counts.get('low', 0)}")
+                    click.echo(f"  Info:                 {vuln_counts.get('info', 0)}")
+                    click.echo("=" * 60)
+
+                    # Display individual npm vulnerabilities
+                    if npm_vulnerabilities and total_npm_vulns > 0:
+                        click.echo(f"\nFound npm Vulnerabilities in {build['name']}:\n")
+                        for i, (pkg_name, vuln_info) in enumerate(
+                            npm_vulnerabilities.items(), 1
+                        ):
+                            severity = vuln_info.get("severity", "unknown")
+                            severity_color = {
+                                "critical": "red",
+                                "high": "red",
+                                "moderate": "yellow",
+                                "low": "green",
+                                "info": "blue",
+                            }.get(severity.lower(), "white")
+
+                            # Get current version from nodes
+                            nodes = vuln_info.get("nodes", [])
+                            current_version = vuln_info.get("range", "N/A")
+
+                            click.echo(
+                                f"{i}. Package: {click.style(pkg_name, fg='red', bold=True)}"
+                            )
+                            click.echo(f"   Current Range: {current_version}")
+                            click.echo(
+                                f"   Severity: {click.style(severity.capitalize(), fg=severity_color, bold=True)}"
+                            )
+
+                            # Check for breaking changes
+                            fix_available = vuln_info.get("fixAvailable", {})
+                            if fix_available:
+                                fix_package = fix_available.get("name", pkg_name)
+                                fix_version = fix_available.get("version", "N/A")
+                                is_breaking = fix_available.get("isSemVerMajor", False)
+
+                                fix_text = f"   Fixed in: {fix_package}@{fix_version}"
+                                if is_breaking:
+                                    fix_text += click.style(
+                                        " (breaking change)", fg="yellow", bold=True
+                                    )
+                                click.echo(fix_text)
+                            else:
+                                click.echo("   Fixed in: No fix available yet")
+
+                            click.echo()
+
+                except FileNotFoundError:
+                    echo_warning(f"npm audit directory not found: {build['path']}")
+                except json.JSONDecodeError as e:
+                    echo_error(
+                        f"Error parsing npm audit output for {build['name']}: {e}"
+                    )
+                except Exception as e:
+                    echo_error(
+                        f"Unexpected error during npm security check for {build['name']}: {e}"
+                    )
+    else:
+        click.echo("\n" + "=" * 60)
+        click.echo("npm not found - skipping npm audit")
+        click.echo("=" * 60)
+
+    return not has_vulnerabilities
