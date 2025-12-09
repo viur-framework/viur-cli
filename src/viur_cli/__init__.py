@@ -5,7 +5,6 @@ from .local import *
 from .build import *
 from .setup import *
 from .version import *
-from .tool import *
 from .update import *
 from .cloud import *
 from .deprecated import *
