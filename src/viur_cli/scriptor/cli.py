@@ -107,8 +107,9 @@ def check_session(ctx: click.Context):
         click.echo("Invalid session, please run `viur script setup` again. okay ?")
         ctx.invoke(setup)
         ctx.close()
+    # init modules
+    get_modules()
 
-        
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
 @click.pass_context
