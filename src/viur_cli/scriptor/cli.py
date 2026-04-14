@@ -107,10 +107,8 @@ def check_session(ctx: click.Context):
         click.echo("Invalid session, please run `viur script setup` again. okay ?")
         ctx.invoke(setup)
         ctx.close()
-    # init modules
-    get_modules()
 
-
+        
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
 @click.pass_context
@@ -293,7 +291,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                                 f.write(args["script"])
 
                     click.echo(f"Push {_real_file}")
-                    await tree.add(_type, args)
+                    await tree.add(args, skel_type=_type)
 
     if watch:
         print("Watching...")
