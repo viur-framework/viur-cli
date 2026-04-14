@@ -12,6 +12,7 @@ from weakref import proxy
 from viur.scriptor import Modules
 from ..cli import cli
 from ..cli import scriptor_config
+from .login import ensure_login
 
 # Global modules instance that will be initialized when needed
 _modules = None
@@ -60,6 +61,14 @@ def setup():
     """
 
     base_url = scriptor_config.get("base_url")
+
+    try:
+        click.echo("This Feature is only avalible on viur-core 3.8.19 or higher.")
+        res = ensure_login("", host=base_url)
+        if res:
+            return
+    except KeyboardInterrupt:
+        pass
     try:
         session = requests.session()
         skey = session.get(base_url + "/json/skey")
@@ -95,11 +104,11 @@ def check_session(ctx: click.Context):
 
     response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config.get("cookies", {}))
     if not response.ok:
-        click.echo("Invalid session, please run `viur script setup` again.")
+        click.echo("Invalid session, please run `viur script setup` again. okay ?")
         ctx.invoke(setup)
         ctx.close()
 
-
+        
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
 @click.pass_context
