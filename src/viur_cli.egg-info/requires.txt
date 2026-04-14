@@ -1,0 +1,8 @@
+app-server~=1.0
+click~=8.1.7
+pipfile-requirements~=0.3
+requests~=2.0
+semver~=3.0
+watchdog~=6.0
+pip-audit~=2.7
+viur-scriptor-api~=1.0

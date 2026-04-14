@@ -1,0 +1,3 @@
+[console_scripts]
+get-pyodide = viur_cli.scripts.get_pyodide:main
+viur = viur_cli:cli
