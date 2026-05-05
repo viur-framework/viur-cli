@@ -146,9 +146,12 @@ def pull(ctx: click.Context, force: bool):
                         with open(_path, "r") as f:
                             if hashlib.sha256(entry["script"].encode()).digest() \
                                     != hashlib.sha256(f.read().encode()).digest():
-                                if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
-                                    os.remove(_path)
-                                    create_file()
+                                try:
+                                    if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
+                                        os.remove(_path)
+                                        create_file()
+                                except click.exceptions.Abort:
+                                    click.echo("\nSkipping...")
 
                 else:
                     create_file()
