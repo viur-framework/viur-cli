@@ -6,9 +6,9 @@ import string
 import time
 import click
 import yaml
-from viur_cli import echo_success, echo_warning, echo_fatal
 from .conf import config
-from . import cli, echo_error, echo_info, replace_vars
+from .cli import cli
+from .utils import echo_success, echo_warning, echo_fatal, echo_error, echo_info, replace_vars
 from .update import create_req
 
 
@@ -46,13 +46,19 @@ def storage_copy():
         print("Abort ...")
         return 0
     print(f"gsutil -m cp -r gs://{source}/ gs://{target}/")
-    os.system(f"gsutil -m cp -r gs://{source} gs://{target}")
+    subprocess.run(
+        ["gsutil", "-m", "cp", "-r", f"gs://{source}", f"gs://{target}"],
+        check=False,
+    )
 
 
 def datastore_import(profile):
     conf = config.get_profile(profile)
     target = click.prompt('path to overall_export_metadata')
-    os.system(f"gcloud datastore import gs://{target} --project={conf['application_name']}")
+    subprocess.run(
+        ["gcloud", "datastore", "import", f"gs://{target}", f"--project={conf['application_name']}"],
+        check=False,
+    )
 
 
 def datastore_export(profile):
@@ -60,8 +66,11 @@ def datastore_export(profile):
     target = click.prompt('bucketname')
     timestamp = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-manual'
     format = "default"
-    os.system(
-        f"gcloud datastore export gs://{target}/{timestamp}-{format} --format={format} --project={conf['application_name']} ")
+    subprocess.run(
+        ["gcloud", "datastore", "export", f"gs://{target}/{timestamp}-{format}",
+         f"--format={format}", f"--project={conf['application_name']}"],
+        check=False,
+    )
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
@@ -99,14 +108,12 @@ def enable_gcp_backup():
     # Create helper Variables
     project_id = conf["application_name"]
     bucket_name = f'backup-dot-{project_id}'
-    backup_bucket_command = f'gsutil mb -l EUROPE-WEST3 -p {project_id} gs://{bucket_name}'
 
     # Create the Backup Bucket
     try:
         result = subprocess.run(
-            backup_bucket_command,
+            ["gsutil", "mb", "-l", "EUROPE-WEST3", "-p", project_id, f"gs://{bucket_name}"],
             capture_output=True,
-            shell=True,
         )
         if result.returncode != 0:
             echo_error('Error creating bucket.')
@@ -119,10 +126,12 @@ def enable_gcp_backup():
     service_worker_mail = f'{project_id}@appspot.gserviceaccount.com'
 
     for r in iam_roles:
-        iam_roles_command = (f'gcloud projects add-iam-policy-binding {project_id} --member '
-                             f'serviceAccount:{service_worker_mail} --role {r}')
         try:
-            subprocess.run(iam_roles_command, capture_output=True, shell=True)
+            subprocess.run(
+                ["gcloud", "projects", "add-iam-policy-binding", project_id,
+                 "--member", f"serviceAccount:{service_worker_mail}", "--role", r],
+                capture_output=True,
+            )
 
         except Exception as e:
             print(f'An Error Occured during Roles {e}\n '
@@ -148,7 +157,7 @@ def init(service, profile):
     deployments = ["cron", "queue", "cron"]
     if service == "gcloud":
         for element in deployments:
-            os.system(f"viur cloud deploy {element} {profile} -y")
+            subprocess.run(["viur", "cloud", "deploy", element, profile, "-y"], check=False)
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
@@ -168,7 +177,10 @@ def cleanup(service, option, profile):
     conf = config.get_profile(profile)
 
     if service == "gcloud" and option == "datastore":
-        run_command(f"gcloud datastore indexes cleanup deploy/index.yaml --project={conf['application_name']}")
+        run_command([
+            "gcloud", "datastore", "indexes", "cleanup", "deploy/index.yaml",
+            f"--project={conf['application_name']}",
+        ])
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
@@ -209,14 +221,12 @@ def disable_gcp_backup():
     # Create helper Variables
     project_id = conf["application_name"]
     bucket_name = f'backup-dot-{project_id}'
-    backup_bucket_command = f'gsutil rm -r gs://{bucket_name}'
 
     # Remove the Backup Bucket
     try:
         result = subprocess.run(
-            backup_bucket_command,
+            ["gsutil", "rm", "-r", f"gs://{bucket_name}"],
             capture_output=True,
-            shell=True,
         )
         print(result)
         if result.returncode != 0:
@@ -230,10 +240,12 @@ def disable_gcp_backup():
     service_worker_mail = f'{project_id}@appspot.gserviceaccount.com'
 
     for r in iam_roles:
-        iam_roles_command = (f'gcloud projects remove-iam-policy-binding {project_id} --member '
-                             f'serviceAccount:{service_worker_mail} --role {r}')
         try:
-            subprocess.run(iam_roles_command, capture_output=True, shell=True)
+            subprocess.run(
+                ["gcloud", "projects", "remove-iam-policy-binding", project_id,
+                 "--member", f"serviceAccount:{service_worker_mail}", "--role", r],
+                capture_output=True,
+            )
 
         except Exception as e:
             print(f'An Error Occured during Roles {e}\n '
@@ -421,14 +433,13 @@ def transform_dict_to_yaml(transformed_data):
 
 # Helper function for running Commands in subprocess and getting the Output
 def run_command(command):
-    """
-    Executes the specified command in the system shell and returns the output.
+    """Run a command and return its captured stdout.
 
-    :param command: String
-        The command to be executed in the Subprocess.
+    :param command: list[str]
+        Argv list to pass to subprocess (no shell interpretation).
     """
     try:
-        return subprocess.check_output(command, shell=True)
+        return subprocess.check_output(command)
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
 
@@ -501,10 +512,17 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
             additional_args = [f"--appyaml={app_yaml_tmp.resolve()}", *additional_args]
 
         try:
-            os.system(
-                f'gcloud app deploy --project={conf["application_name"]} --version={version} '
-                f'--no-promote {" ".join(additional_args)} {conf["distribution_folder"]} {"-q" if yes else ""}'
-            )
+            deploy_argv = [
+                "gcloud", "app", "deploy",
+                f"--project={conf['application_name']}",
+                f"--version={version}",
+                "--no-promote",
+                *additional_args,
+                conf["distribution_folder"],
+            ]
+            if yes:
+                deploy_argv.append("-q")
+            subprocess.run(deploy_argv, check=False)
         finally:
             if app_yaml_tmp is not None:
                 app_yaml_tmp.unlink()
@@ -512,7 +530,7 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
                 app_yaml_hidden.rename(app_yaml)
 
     elif action == "cloudfunction":
-        os.system(build_deploy_command(name, conf["gcloud"]))
+        subprocess.run(build_deploy_command(name, conf["gcloud"]), check=False)
 
     else:
         if action not in ["index", "queue", "cron"]:
@@ -567,8 +585,15 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
                 echo_error(f"{yaml_file} is not a valid")
                 return
 
-        os.system(
-            f'gcloud app deploy --project={conf["application_name"]} {" ".join(additional_args)} {yaml_file} {"-q" if yes else ""}')
+        deploy_argv = [
+            "gcloud", "app", "deploy",
+            f"--project={conf['application_name']}",
+            *additional_args,
+            yaml_file,
+        ]
+        if yes:
+            deploy_argv.append("-q")
+        subprocess.run(deploy_argv, check=False)
 
 
 def build_deploy_command(name, conf):
@@ -603,20 +628,21 @@ def build_deploy_command(name, conf):
         echo_fatal(f"The cloudfunction {name} was not found your project.json\n "
                    f"You can create a cloudfunction entry by calling 'viur cloud create function'")
 
-    command = (
-        f"gcloud run deploy "
-        f"{name} "
-        f"--region='{conf['region']}'"
-        f"--max-instances={conf['max-instances']}"
-    )
+    command = [
+        "gcloud", "run", "deploy", name,
+        f"--region={conf['region']}",
+        f"--max-instances={conf['max-instances']}",
+    ]
 
     for k, v in conf["functions"][name].items():
         if k == "gen":
-            command += f" --{k}{v}"
+            # historic single-arg form: e.g. `--gen2`
+            command.append(f"--{k}{v}")
         elif k in ["trigger", "update", "set", "remove"]:
-            command += f"--{k}-{v}"
+            # historic compound form: e.g. `--trigger-http`
+            command.append(f"--{k}-{v}")
         else:
-            command += f" --{k}='{str(v)}'"
+            command.append(f"--{k}={v}")
 
     return command
 

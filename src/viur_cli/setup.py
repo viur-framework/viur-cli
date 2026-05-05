@@ -47,11 +47,11 @@ def clean_base(app_id, author=None):
 
     if os.path.exists(".git"):
         echo_info("Cleaning git history")
-        subprocess.check_output("git checkout --orphan main_tmp", shell=True)
-        echo_info(subprocess.check_output("git branch -D main", shell=True).decode().rstrip("\n"))
+        subprocess.check_output(["git", "checkout", "--orphan", "main_tmp"])
+        echo_info(subprocess.check_output(["git", "branch", "-D", "main"]).decode().rstrip("\n"))
 
-        subprocess.check_output("git branch -m main", shell=True)
-        branch_current = subprocess.check_output('git branch --show-current', shell=True).decode().rstrip('\n')
+        subprocess.check_output(["git", "branch", "-m", "main"])
+        branch_current = subprocess.check_output(["git", "branch", "--show-current"]).decode().rstrip("\n")
         echo_info(f"Current branch is: {branch_current}")
         echo_info("---")
 

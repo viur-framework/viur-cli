@@ -1,32 +1,35 @@
 import json
 
 import click
+import requests
 import shutil
 import subprocess
 from datetime import datetime
 
-from viur_cli import echo_warning
 from .conf import config
-from . import cli, echo_error, utils, echo_fatal
+from .cli import cli
+from . import utils
+from .utils import echo_warning, echo_error, echo_fatal
 
 
 def get_user_info():
+    """Fetch the gcloud-authenticated user's profile via Google's userinfo endpoint."""
     gcloud_auth_process = subprocess.run(
         ["gcloud", "auth", "application-default", "print-access-token"],
         capture_output=True,
         text=True,
+        check=True,
     )
+    auth_token = gcloud_auth_process.stdout.strip()
 
-    auth_token = gcloud_auth_process.stdout.strip()  # Extract auth token
-
-    curl_command = f'curl -X GET -H "Authorization: Bearer {auth_token}" "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"'
-
-    curl_process = subprocess.run(
-        curl_command, capture_output=True, shell=True, text=True
+    response = requests.get(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
+        params={"alt": "json"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+        timeout=10,
     )
-    user_info = json.loads(curl_process.stdout)
-
-    return user_info
+    response.raise_for_status()
+    return response.json()
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})

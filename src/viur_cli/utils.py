@@ -28,9 +28,16 @@ def rmdir(dir):
 
 
 def system(cmd):
-    """Performs an os.system() call with the given command, but throws an echo_fatal on error and stops viur-cli."""
-    if os.system(cmd) != 0:
-        echo_fatal(f"Failed to execute {cmd!r}")
+    """Run a shell command and abort viur-cli on non-zero exit.
+
+    Note: still uses `shell=True` because callers pass chained shell strings
+    (e.g. `cd src && npm install && npm run build`). Build pipeline refactor
+    is the proper place to switch this to argv lists; until then this wrapper
+    at least replaces the older `os.system` with `subprocess.run`.
+    """
+    result = subprocess.run(cmd, shell=True)
+    if result.returncode != 0:
+        echo_fatal(f"Failed to execute {cmd!r} (exit {result.returncode})")
 
 
 def echo_error(msg):
@@ -97,8 +104,8 @@ def replace_vars(string: str, vars: typing.Optional[typing.Dict[str, str]] = Non
         for var, content in vars.items():
             string = string.replace(f"$({var})", str(content))
     if "$(ref)" in string:
-        ref = subprocess.check_output("git rev-parse --short HEAD", shell=True)
-        string = string.replace(f"$(ref)", str(ref))
+        ref = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode().strip()
+        string = string.replace("$(ref)", ref)
     return string
 
 
