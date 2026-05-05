@@ -238,29 +238,7 @@ def do_checks(dev=True):
 
                 if vuln_deps:
                     has_vulnerabilities = True
-                    click.echo("\nFound Python Vulnerabilities:\n")
-                    counter = 0
-                    for dep in vuln_deps:
-                        for vuln in dep.get("vulns", []):
-                            counter += 1
-                            click.echo(
-                                f"{counter}. Package: "
-                                f"{click.style(dep['name'], fg='red', bold=True)}"
-                            )
-                            click.echo(f"   Installed Version: {dep.get('version', 'N/A')}")
-                            click.echo(f"   Advisory ID: {vuln.get('id', 'N/A')}")
-                            aliases = vuln.get("aliases", [])
-                            if aliases:
-                                click.echo(f"   Aliases: {', '.join(aliases)}")
-                            fix_versions = vuln.get("fix_versions", [])
-                            if fix_versions:
-                                click.echo(f"   Fixed in: {', '.join(fix_versions)}")
-                            else:
-                                click.echo("   Fixed in: No fix available yet")
-                            description = (vuln.get("description") or "").strip()
-                            if description:
-                                click.echo(f"   Description: {description[:200]}")
-                            click.echo()
+                    click.echo("Run `uvx pip-audit --vulnerability-service osv` for per-package detail.")
 
     # --- npm vulnerability check ---
     if shutil.which("npm"):
@@ -268,15 +246,15 @@ def do_checks(dev=True):
         builds = conf.get("builds", {})
         sources_folder = conf.get("sources_folder", "./sources")
 
-        # Collect all npm builds
+        # Collect all npm builds. Empty `source` is valid and means
+        # "audit at the sources_folder root" (npm workspace root).
         npm_builds = []
         for build_name, build_config in builds.items():
-            if build_config.get("kind") == "npm":
-                source_path = build_config.get("source")
-                if source_path:
-                    npm_builds.append(
-                        {"name": build_name, "path": f"{sources_folder}/{source_path}"}
-                    )
+            if build_config.get("kind") != "npm":
+                continue
+            source_path = build_config.get("source") or ""
+            audit_path = f"{sources_folder}/{source_path}".rstrip("/") if source_path else sources_folder
+            npm_builds.append({"name": build_name, "path": audit_path})
 
         if not npm_builds:
             click.echo("\n" + "=" * 60)
@@ -328,54 +306,8 @@ def do_checks(dev=True):
                     click.echo(f"  Info:                 {vuln_counts.get('info', 0)}")
                     click.echo("=" * 60)
 
-                    # Display individual npm vulnerabilities
-                    if npm_vulnerabilities and total_npm_vulns > 0:
-                        click.echo(f"\nFound npm Vulnerabilities in {build['name']}:\n")
-                        for i, (pkg_name, vuln_info) in enumerate(
-                            npm_vulnerabilities.items(), 1
-                        ):
-                            severity = vuln_info.get("severity", "unknown")
-                            severity_color = {
-                                "critical": "red",
-                                "high": "red",
-                                "moderate": "yellow",
-                                "low": "green",
-                                "info": "blue",
-                            }.get(severity.lower(), "white")
-
-                            # Get current version from nodes
-                            nodes = vuln_info.get("nodes", [])
-                            current_version = vuln_info.get("range", "N/A")
-
-                            click.echo(
-                                f"{i}. Package: {click.style(pkg_name, fg='red', bold=True)}"
-                            )
-                            click.echo(f"   Current Range: {current_version}")
-                            click.echo(
-                                f"   Severity: {click.style(severity.capitalize(), fg=severity_color, bold=True)}"
-                            )
-
-                            # npm audit's `fixAvailable` may be: a dict with
-                            # {name, version, isSemVerMajor}, the literal `true`,
-                            # or `false`/missing. Handle all three.
-                            fix_available = vuln_info.get("fixAvailable")
-                            if isinstance(fix_available, dict):
-                                fix_package = fix_available.get("name", pkg_name)
-                                fix_version = fix_available.get("version", "N/A")
-                                is_breaking = fix_available.get("isSemVerMajor", False)
-
-                                fix_text = f"   Fixed in: {fix_package}@{fix_version}"
-                                if is_breaking:
-                                    fix_text += click.style(
-                                        " (breaking change)", fg="yellow", bold=True
-                                    )
-                                click.echo(fix_text)
-                            elif fix_available is True:
-                                click.echo("   Fixed in: yes (run `npm audit fix`)")
-                            else:
-                                click.echo("   Fixed in: No fix available yet")
-
-                            click.echo()
+                    if total_npm_vulns > 0:
+                        click.echo(f"Run `npm audit` in {build['path']} for per-package detail.")
 
                 except FileNotFoundError:
                     echo_warning(f"npm audit directory not found: {build['path']}")
