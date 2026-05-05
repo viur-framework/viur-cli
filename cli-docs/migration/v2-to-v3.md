@@ -13,34 +13,24 @@ v3 ist ein **uv-only Release** mit Säuberung von Junior-Code-Mustern und kritis
 
 ## Voraussetzung — uv installieren
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-# oder
-pip install uv
-```
+Folge der offiziellen Anleitung: <https://docs.astral.sh/uv/getting-started/installation/>.
 
 Mindestversion: `0.9.15` (wird vom CLI beim Start geprüft, wenn deine Version niedriger ist erscheint eine Warnung).
 
 ## Pipenv → uv für bestehende Projekte
 
-Wenn dein Projekt noch `Pipfile` / `Pipfile.lock` benutzt:
+Wenn dein Projekt noch `Pipfile` / `Pipfile.lock` benutzt, übernimmt das offizielle [`migrate-to-uv`](https://github.com/mkniewallner/migrate-to-uv) die komplette Konvertierung — keine manuelle Übersetzung von Sektionen nötig.
 
 ```bash
-# 1. Pipfile in pyproject.toml umwandeln (manuell oder mit pipenv-to-uv)
-# Inhalt von Pipfile [packages] und [dev-packages] in pyproject.toml's
-# [project.dependencies] und [dependency-groups.dev] übertragen.
+# 1. Im Projekt-Root: Pipfile + Pipfile.lock automatisch in
+#    pyproject.toml + uv.lock konvertieren (alte Files werden entfernt)
+uvx migrate-to-uv
 
-# 2. Lockfile mit uv erzeugen
-uv lock
-
-# 3. Venv anlegen + dependencies installieren
-uv sync
-
-# 4. Pipfile + Pipfile.lock entfernen
-rm Pipfile Pipfile.lock
+# 2. Venv anlegen + dependencies (inkl. dev-Group) installieren
+uv sync --dev
 ```
 
-`viur-cli` selbst wird als Dev-Dependency installiert:
+`viur-cli` selbst wird anschließend als Dev-Dependency installiert:
 
 ```bash
 uv add --dev viur-cli
