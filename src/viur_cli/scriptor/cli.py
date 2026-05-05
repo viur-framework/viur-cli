@@ -4,6 +4,7 @@ import json
 import requests
 import os
 import hashlib
+import difflib
 import asyncio
 import sys
 import glob
@@ -144,14 +145,30 @@ def pull(ctx: click.Context, force: bool):
                         create_file()
                     else:
                         with open(_path, "r") as f:
-                            if hashlib.sha256(entry["script"].encode()).digest() \
-                                    != hashlib.sha256(f.read().encode()).digest():
-                                try:
-                                    if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
-                                        os.remove(_path)
-                                        create_file()
-                                except click.exceptions.Abort:
-                                    click.echo("\nSkipping...")
+                            local_content = f.read()
+                        remote_content = entry["script"]
+                        diff = list(difflib.unified_diff(
+                            remote_content.splitlines(),
+                            local_content.splitlines(),
+                            fromfile=f"server/{entry['path'].lstrip('/')}",
+                            tofile=f"local/{entry['path'].lstrip('/')}",
+                            lineterm="",
+                        ))
+                        if diff:
+                            for line in diff:
+                                if line.startswith("+++") or line.startswith("---"):
+                                    click.echo(click.style(line, bold=True), nl=True)
+                                elif line.startswith("@@"):
+                                    click.echo(click.style(line, fg="cyan"), nl=True)
+                                elif line.startswith("+"):
+                                    click.echo(click.style(line, fg="green"), nl=True)
+                                elif line.startswith("-"):
+                                    click.echo(click.style(line, fg="red"), nl=True)
+                                else:
+                                    click.echo(line, nl=True)
+                            if click.confirm(f"Overwrite local {entry['path']} with remote version?"):
+                                os.remove(_path)
+                                create_file()
 
                 else:
                     create_file()
