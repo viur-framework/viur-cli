@@ -50,7 +50,13 @@ def create_req(yes, profile, confirm_value=True):
 
     if yes or click.confirm( text=f"Would you like to regenerate {dist_folder}/requirements.txt ?",
                              default=confirm_value):
-        os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt")
+        ret = os.system(f"pipfile2req  --hashes > {dist_folder}/requirements.txt 2>/dev/null")
+        if ret != 0:
+            ret = os.system(f"uv export --no-dev > {dist_folder}/requirements.txt")
+
+        if ret != 0:
+            sys.exit(1)
+
         file_object = open(f"{dist_folder}/requirements.txt", 'r')
         generated_requirements = file_object.read()
 
@@ -64,12 +70,16 @@ def create_req(yes, profile, confirm_value=True):
         file_obj = open(f"{dist_folder}/requirements.txt", 'w')
         file_obj.write(generated_requirements)
         file_obj.close()
+
         echo_info("requirements.txt successfully generated")
 
-    # DEPRECATED: This check is only required prior viur-core 3.6.13
-    if check_req(f"{dist_folder}/requirements.txt"):
-        if not click.confirm(f"There are some depencency errors, are you sure you want to continue?"):
-            sys.exit(0)
+    # DEPRECATED: This enitre check is only required prior viur-core 3.6.13
+    try:
+        if check_req(f"{dist_folder}/requirements.txt"):
+            if not click.confirm(f"There are some depencency errors, are you sure you want to continue?"):
+                sys.exit(0)
+    except ModuleNotFoundError:
+        pass
 
 
 def check_req(projects_requirements_path):
