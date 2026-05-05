@@ -459,7 +459,7 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
 
     if action == "app":
         if not skip_checks:
-            from . import do_checks
+            from .local import do_checks
             if not do_checks(dev=False):
                 # --yes will not be implemented here because deploying security issues should be an explicit decission
                 if not click.confirm(f"The checks were not successful, do you want to continue?"):
