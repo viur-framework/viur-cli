@@ -255,6 +255,22 @@ class ScriptorConfig(Config):
         super().__init__(**kwargs)
 
 
-# Create specific configs
-config = ProjectConfig()
-scriptor_config = ScriptorConfig(path=config.path)
+# Create specific configs.
+# v3 transitional patch: ProjectConfig() / ScriptorConfig() call sys.exit(1)
+# at module import time when project.json is missing. We swallow the SystemExit
+# so module import succeeds outside a viur project (e.g. for `viur --help`).
+# Stderr is redirected during the call so the auto-init's "project.json not
+# found" message doesn't spam every CLI invocation. Consumers that actually
+# use these globals will hit the original error path on first access — that's
+# the right place to surface the message. The proper fix (lazy / dataclass
+# config) is deferred to a later branch.
+import contextlib as _contextlib
+import io as _io
+
+with _contextlib.redirect_stderr(_io.StringIO()), _contextlib.redirect_stdout(_io.StringIO()):
+    try:
+        config = ProjectConfig()
+        scriptor_config = ScriptorConfig(path=config.path)
+    except SystemExit:
+        config = None
+        scriptor_config = None

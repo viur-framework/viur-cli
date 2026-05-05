@@ -258,3 +258,23 @@ def autocomplete_info():
         echo_warning("No autocompletion installed")
         echo_info("\nTo install, run:")
         echo_info("  viur setup-autocomplete")
+
+
+def main() -> None:
+    """Entry point.
+
+    Explicitly imports each command module so its `@cli.command` /
+    `@cli.group` decorators attach to the root `cli` group above.
+    No more star-import-via-__init__.py side-effect chain.
+    """
+    # Side-effect imports — each module's decorators bind to `cli` at import time.
+    from viur_cli import build  # noqa: F401
+    from viur_cli import cloud  # noqa: F401
+    from viur_cli import local  # noqa: F401
+    from viur_cli import package  # noqa: F401
+    from viur_cli import setup  # noqa: F401
+    from viur_cli import update  # noqa: F401
+    from viur_cli import deprecated  # noqa: F401
+    from viur_cli.scriptor import script  # noqa: F401
+
+    cli()

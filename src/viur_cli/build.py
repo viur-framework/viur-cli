@@ -5,7 +5,8 @@ Performs build steps configured within the project, or creates any necessary ste
 import click
 import os
 from .conf import config
-from . import cli, utils
+from .cli import cli
+from . import utils
 
 
 def _build(conf, name, build_cfg, additional_args):

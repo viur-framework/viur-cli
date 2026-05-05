@@ -30,7 +30,7 @@ Homepage = "https://github.com/viur-framework/viur-cli"
 "Bug Tracker" = "https://github.com/viur-framework/viur-cli/issues"
 
 [project.scripts]
-viur = "viur_cli:cli"
+viur = "viur_cli.cli:main"
 get-pyodide = "viur_cli.scripts.get_pyodide:main"
 
 [tool.setuptools]

@@ -4,7 +4,8 @@ import sys
 import re
 from pathlib import Path
 from .conf import config
-from . import cli, echo_error, echo_info, echo_warning
+from .cli import cli
+from .utils import echo_error, echo_info, echo_warning
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})

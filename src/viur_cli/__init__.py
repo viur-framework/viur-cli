@@ -1,11 +1,6 @@
-from .cli import *
-from .conf import *
-from .package import *
-from .local import *
-from .build import *
-from .setup import *
-from .version import *
-from .update import *
-from .cloud import *
-from .deprecated import *
-from .scriptor import script
+# viur-cli v3 — package marker only.
+#
+# Submodules are imported explicitly by `cli.py`'s `main()` entry point.
+# The v2 pattern of `from .X import *` here triggered module-level side
+# effects (conf.py auto-loading project.json, sys.exit on missing files)
+# which is now avoided.
