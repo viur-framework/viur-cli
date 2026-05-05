@@ -3,11 +3,11 @@ import shutil
 import zipfile
 import click
 import requests
-from viur_cli import echo_success, echo_fatal
 from .conf import config
 from pathlib import Path
 from urllib.request import urlretrieve
-from . import cli, echo_error, echo_info
+from .cli import cli
+from .utils import echo_success, echo_fatal, echo_error, echo_info
 
 REPOS = {
     "vi": ("viur-framework/viur-vi", "viur-vi.zip"),
@@ -92,45 +92,128 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
     return real_version, download_url
 
 
-@cli.command()
-@click.argument('operation', type=click.Choice(['update', 'install']))
-@click.argument('component', type=click.Choice(['vi', 'admin', 'scriptor', 'all']))
-@click.argument("version", default="latest")
-@click.argument('profile', default='default')
-def package(operation, component, profile, version):
-    """
-    Performs installements and updates of ViUR Ecosystem packages
-    """
+_DEPRECATION_REMOVED_IN = "v3.2"
 
+
+def _run_op(operation: str, component: str, profile: str, version: str = "latest") -> None:
+    """Shared dispatch for package installs/updates.
+
+    Used by both the deprecated `viur package …` command and the new
+    `viur admin/vi/scriptor …` command groups.
+    """
     conf = config.get_profile(profile)
-    operations_links = {
-        'vi': vi,
-        'admin': admin,
-        'scriptor': scriptor
-    }
+    handlers = {"vi": _install_vi, "admin": _install_admin, "scriptor": _install_scriptor}
 
-    def perform_operation(component, version):
-        if operation == 'install':
-            operations_links[component](version, target=component, profile=profile)
+    def perform(comp: str, ver: str) -> None:
+        if operation == "install":
+            handlers[comp](ver, target=comp, profile=profile)
+        else:  # update
+            handlers[comp](version="latest", target=comp, profile=profile)
+
+    if component == "all":
+        if operation == "update":
+            for build in conf["builds"]:
+                if build in handlers:
+                    perform(build, "latest")
         else:
-            operations_links[component](version="latest", target=component, profile=profile)
+            # The new admin replaces vi by default — vi only on explicit install.
+            for build in ["admin", "scriptor"]:
+                perform(build, "latest")
+    else:
+        perform(component, version)
 
-    match component:
-        case 'vi':
-            perform_operation('vi', version)
-        case 'admin':
-            perform_operation('admin', version)
-        case 'scriptor':
-            perform_operation('scriptor', version)
-        case 'all':
-            if operation == 'update':
-                for build in conf["builds"]:
-                    if build in operations_links:
-                        perform_operation(build, "latest")
-            else:
-                # We want to force the User to use the new Admin, so Vi can only be installed explicitly!!
-                for build in ["admin", "scriptor"]:
-                    perform_operation(build, "latest")
+
+@cli.command()
+@click.argument("operation", type=click.Choice(["update", "install"]))
+@click.argument("component", type=click.Choice(["vi", "admin", "scriptor", "all"]))
+@click.argument("version", default="latest")
+@click.argument("profile", default="default")
+def package(operation, component, profile, version):
+    """[DEPRECATED] Use 'viur <component> <operation>' instead.
+
+    The 'viur package …' surface is kept for backwards compatibility and
+    will be removed in v3.2. Prefer 'viur admin install', 'viur scriptor
+    update', etc.
+    """
+    new_form = (
+        f"viur {component} {operation}"
+        + (f" {version}" if operation == "install" and version != "latest" else "")
+    )
+    click.echo(
+        click.style(
+            f"⚠ DEPRECATED: 'viur package {operation} {component}' will be removed in {_DEPRECATION_REMOVED_IN}. "
+            f"Use '{new_form}' instead.",
+            fg="yellow",
+        ),
+        err=True,
+    )
+    _run_op(operation, component, profile, version)
+
+
+# ---- New semantic command groups ---------------------------------------
+
+@cli.group()
+def admin():
+    """Manage the admin Vue.js CMS bundle."""
+
+
+@admin.command(name="install")
+@click.argument("version", default="latest")
+@click.argument("profile", default="default")
+def admin_install(version, profile):
+    """Install or replace admin at the given version (default: latest)."""
+    _run_op("install", "admin", profile, version)
+
+
+@admin.command(name="update")
+@click.argument("profile", default="default")
+def admin_update(profile):
+    """Update admin to the latest version."""
+    _run_op("update", "admin", profile, "latest")
+
+
+@cli.group()
+def vi():
+    """Manage the legacy 'vi' frontend bundle."""
+
+
+@vi.command(name="install")
+@click.argument("version", default="latest")
+@click.argument("profile", default="default")
+def vi_install(version, profile):
+    """Install or replace vi at the given version (default: latest)."""
+    _run_op("install", "vi", profile, version)
+
+
+@vi.command(name="update")
+@click.argument("profile", default="default")
+def vi_update(profile):
+    """Update vi to the latest version."""
+    _run_op("update", "vi", profile, "latest")
+
+
+@cli.group()
+def scriptor():
+    """Manage the scriptor frontend asset bundle.
+
+    This is the asset-bundle install (the SPA shipped with the admin).
+    For pulling/pushing scriptor scripts to a deployed app, see 'viur script'.
+    """
+
+
+@scriptor.command(name="install")
+@click.argument("version", default="latest")
+@click.argument("profile", default="default")
+def scriptor_install(version, profile):
+    """Install or replace the scriptor frontend at the given version."""
+    _run_op("install", "scriptor", profile, version)
+
+
+@scriptor.command(name="update")
+@click.argument("profile", default="default")
+def scriptor_update(profile):
+    """Update the scriptor frontend to the latest version."""
+    _run_op("update", "scriptor", profile, "latest")
 
 
 def checkreturncode(output):
@@ -143,7 +226,7 @@ def checkreturncode(output):
         echo_fatal("update exited with a non zero success code")
 
 
-def scriptor(version, target, profile):
+def _install_scriptor(version, target, profile):
     """
     Update the Scriptor tool to a specified version.
     """
@@ -183,7 +266,7 @@ def scriptor(version, target, profile):
     echo_success(f"Installed admin {real_version}")
 
 
-def admin(version: str, target: str, profile: str = "default"):
+def _install_admin(version: str, target: str, profile: str = "default"):
     """Update the admin to a specific version."""
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
@@ -220,7 +303,7 @@ def admin(version: str, target: str, profile: str = "default"):
     echo_success(f"Installed admin {real_version}")
 
 
-def vi(version, target, profile):
+def _install_vi(version, target, profile):
     """Updates Vi to the specified version."""
 
     conf = config.get_profile(profile)
