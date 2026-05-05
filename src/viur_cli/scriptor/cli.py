@@ -126,7 +126,7 @@ def pull(ctx: click.Context, force: bool):
         working_dir = scriptor_config.get("working_dir")
 
         async def process_entry(entry: dict, is_node: bool):
-            _path = os.path.join(working_dir, entry["path"])
+            _path = os.path.join(working_dir, entry["path"].lstrip("/"))
 
             if is_node:
                 if not os.path.exists(_path):
