@@ -12,6 +12,7 @@ from weakref import proxy
 from viur.scriptor import Modules
 from ..cli import cli
 from ..cli import scriptor_config
+from .login import ensure_login
 
 # Global modules instance that will be initialized when needed
 _modules = None
@@ -22,7 +23,7 @@ def get_modules():
     global _modules
     if _modules is None:
         _modules = Modules(scriptor_config["base_url"], cookies=scriptor_config["cookies"])
-        asyncio.new_event_loop().run_until_complete(_modules.init())
+        asyncio.run(_modules.init())
 
     return _modules
 
@@ -43,7 +44,6 @@ def configure(url: str, username: str, working_dir: str):
     Manage configuration settings.
     """
 
-
     if url:
         scriptor_config["base_url"] = url
 
@@ -61,6 +61,14 @@ def setup():
     """
 
     base_url = scriptor_config.get("base_url")
+
+    try:
+        click.echo("This Feature is only avalible on viur-core 3.8.19 or higher.")
+        res = ensure_login("", host=base_url)
+        if res:
+            return
+    except KeyboardInterrupt:
+        pass
     try:
         session = requests.session()
         skey = session.get(base_url + "/json/skey")
@@ -96,14 +104,11 @@ def check_session(ctx: click.Context):
 
     response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config.get("cookies", {}))
     if not response.ok:
-        click.echo("Invalid session, please run `viur script setup` again.")
+        click.echo("Invalid session, please run `viur script setup` again. okay ?")
         ctx.invoke(setup)
         ctx.close()
-    #FIXME We need this ?
-    # Update modules with cookies
-    modules = get_modules()
-    # modules.request.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
-
+    # init modules
+    get_modules()
 
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
@@ -114,7 +119,6 @@ def pull(ctx: click.Context, force: bool):
     """
     check_session(ctx)
 
-
     async def main():
         # In the new API, we don't need to call structure
         modules = get_modules()
@@ -122,7 +126,7 @@ def pull(ctx: click.Context, force: bool):
         working_dir = scriptor_config.get("working_dir")
 
         async def process_entry(entry: dict, is_node: bool):
-            _path = os.path.join(working_dir, entry["path"])
+            _path = os.path.join(working_dir, entry["path"].lstrip("/"))
 
             if is_node:
                 if not os.path.exists(_path):
@@ -142,9 +146,12 @@ def pull(ctx: click.Context, force: bool):
                         with open(_path, "r") as f:
                             if hashlib.sha256(entry["script"].encode()).digest() \
                                     != hashlib.sha256(f.read().encode()).digest():
-                                if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
-                                    os.remove(_path)
-                                    create_file()
+                                try:
+                                    if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
+                                        os.remove(_path)
+                                        create_file()
+                                except click.exceptions.Abort:
+                                    click.echo("\nSkipping...")
 
                 else:
                     create_file()
@@ -157,7 +164,7 @@ def pull(ctx: click.Context, force: bool):
         async for leaf in tree.list(skel_type="leaf"):
             await process_entry(leaf, False)
 
-    asyncio.new_event_loop().run_until_complete(main())
+    asyncio.run(main())
 
 
 @script.command()
@@ -288,7 +295,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                                 f.write(args["script"])
 
                     click.echo(f"Push {_real_file}")
-                    await tree.add(_type, args)
+                    await tree.add(args, skel_type=_type)
 
     if watch:
         print("Watching...")
@@ -309,7 +316,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     elif os.path.getmtime(event.src_path) == modified_files[event.src_path]:
                         return
                     modified_files[event.src_path] = os.path.getmtime(event.src_path)
-                    asyncio.new_event_loop().run_until_complete(main(event.src_path))
+                    asyncio.run(main(event.src_path))
                 except Exception as e:
                     import traceback
                     print(f"Error: on file {event.src_path} {e}")
@@ -337,9 +344,9 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 observer.stop()
                 observer.join()
 
-        asyncio.new_event_loop().run_until_complete(watch_loop())
+        watch_loop()
         return
-    asyncio.new_event_loop().run_until_complete(main())
+    asyncio.run(main())
 
 
 @script.command()
@@ -372,4 +379,4 @@ def run(ctx: click.Context, path: str, args=None):
 
         await module.main()
 
-    asyncio.new_event_loop().run_until_complete(main())
+    asyncio.run(main())
