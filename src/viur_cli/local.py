@@ -4,7 +4,6 @@ import click
 import requests
 import shutil
 import subprocess
-from datetime import datetime
 
 from .conf import config
 from .cli import cli
@@ -196,104 +195,74 @@ def check(dev):
 
 
 def do_checks(dev=True):
-    """
-    Run security checks for Python and npm dependencies.
+    """Run security checks for Python and npm dependencies.
 
-    Args:
-        dev: Development mode flag (currently unused but kept for API compatibility)
-
-    Returns:
-        bool: True if no vulnerabilities found, False otherwise
+    Returns True if no vulnerabilities found, False otherwise.
     """
     has_vulnerabilities = False
 
-    # Python vulnerability check
+    # --- Python vulnerability check via pip-audit (PyPA tool, OSV data) ---
     try:
-        # Run uv-secure with JSON output to parse results
         result = subprocess.run(
-            [
-                "uvx",
-                "pysentry-rs",
-                "--sources",
-                "pypa,pypi,osv",
-                "--format",
-                "json",
-                "--fail-on",
-                "high",
-            ],
+            ["uvx", "pip-audit", "--format", "json", "--vulnerability-service", "osv"],
             capture_output=True,
-            check=True,
+            text=True,
         )
-
-        # Parse JSON output (strict=False allows control characters)
-        data = json.loads(result.stdout, strict=False)
-
-        # Check if no vulnerabilities found
-        if data.get("vulnerable_packages", 0) == 0:
-            py_vulns = False
-        else:
-            py_vulns = True
-            has_vulnerabilities = True
-
-        # Format scan time to human readable format
-        scan_time_str = data.get("scan_time", "N/A")
-        try:
-            scan_time = datetime.fromisoformat(scan_time_str.replace("Z", "+00:00"))
-            formatted_time = scan_time.strftime("%H:%M:%S")
-        except:
-            formatted_time = scan_time_str
-
-        # Display scan summary for Python
-        click.echo("\n" + "=" * 60)
-        click.echo("Python Security Scan Results")
-        click.echo("=" * 60)
-        click.echo(f"Scan Time:              {formatted_time}")
-        click.echo(f"Total Packages:         {data.get('total_packages', 0)}")
-        click.echo(f"Vulnerable Packages:    {data.get('vulnerable_packages', 0)}")
-        click.echo(f"Total Vulnerabilities:  {data.get('total_vulnerabilities', 0)}")
-        click.echo("=" * 60)
-
-        # Display individual vulnerabilities
-        vulnerabilities = data.get("vulnerabilities", [])
-        if vulnerabilities:
-            click.echo("\nFound Python Vulnerabilities:\n")
-            for i, vuln in enumerate(vulnerabilities, 1):
-                click.echo(
-                    f"{i}. Package: {click.style(vuln.get('package_name', 'Unknown'), fg='red', bold=True)}"
-                )
-                click.echo(
-                    f"   Installed Version: {vuln.get('installed_version', 'N/A')}"
-                )
-
-                severity = vuln.get("severity", "Unknown")
-                severity_color = {
-                    "Critical": "red",
-                    "High": "red",
-                    "Medium": "yellow",
-                    "Low": "green",
-                }.get(severity, "white")
-                click.echo(
-                    f"   Severity: {click.style(severity, fg=severity_color, bold=True)}"
-                )
-
-                fixed_versions = vuln.get("fixed_versions", [])
-                if fixed_versions:
-                    click.echo(f"   Fixed in: {', '.join(fixed_versions)}")
-                else:
-                    click.echo("   Fixed in: No fix available yet")
-                click.echo()
-
     except FileNotFoundError:
-        echo_warning("uv-secure not found. Install with: uv pip install uv-secure")
-        py_vulns = False
-    except json.JSONDecodeError as e:
-        echo_error(f"Error parsing uv-secure output: {e}")
-        echo_error(f"Raw output: {result.stdout[:500]}")
-        py_vulns = False
-    except Exception as e:
-        echo_error(f"Unexpected error during Python security check: {e}")
-        py_vulns = False
-    # npm vulnerability check
+        echo_warning("uvx not found; skipping Python vulnerability check.")
+    else:
+        # pip-audit returncode: 0 = no vulns, 1 = vulns found, anything else = real error.
+        if result.returncode not in (0, 1):
+            echo_error(
+                f"pip-audit failed (exit {result.returncode}): "
+                f"{(result.stderr or result.stdout)[:500]}"
+            )
+        else:
+            try:
+                data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                echo_error(f"Failed to parse pip-audit output: {e}")
+                echo_error(f"Raw output (truncated): {result.stdout[:500]}")
+            else:
+                deps = data.get("dependencies", [])
+                vuln_deps = [d for d in deps if d.get("vulns")]
+                total_vulns = sum(len(d["vulns"]) for d in vuln_deps)
+
+                click.echo("\n" + "=" * 60)
+                click.echo("Python Security Scan Results (pip-audit, OSV)")
+                click.echo("=" * 60)
+                click.echo(f"Total Packages:         {len(deps)}")
+                click.echo(f"Vulnerable Packages:    {len(vuln_deps)}")
+                click.echo(f"Total Vulnerabilities:  {total_vulns}")
+                click.echo("=" * 60)
+
+                if vuln_deps:
+                    has_vulnerabilities = True
+                    click.echo("\nFound Python Vulnerabilities:\n")
+                    counter = 0
+                    for dep in vuln_deps:
+                        for vuln in dep.get("vulns", []):
+                            counter += 1
+                            click.echo(
+                                f"{counter}. Package: "
+                                f"{click.style(dep['name'], fg='red', bold=True)}"
+                            )
+                            click.echo(f"   Installed Version: {dep.get('version', 'N/A')}")
+                            click.echo(f"   Advisory ID: {vuln.get('id', 'N/A')}")
+                            aliases = vuln.get("aliases", [])
+                            if aliases:
+                                click.echo(f"   Aliases: {', '.join(aliases)}")
+                            fix_versions = vuln.get("fix_versions", [])
+                            if fix_versions:
+                                click.echo(f"   Fixed in: {', '.join(fix_versions)}")
+                            else:
+                                click.echo("   Fixed in: No fix available yet")
+                            description = (vuln.get("description") or "").strip()
+                            if description:
+                                click.echo(f"   Description: {description[:200]}")
+                            click.echo()
+
+    # --- npm vulnerability check ---
     if shutil.which("npm"):
         conf = config.get_profile("default")
         builds = conf.get("builds", {})
@@ -386,9 +355,11 @@ def do_checks(dev=True):
                                 f"   Severity: {click.style(severity.capitalize(), fg=severity_color, bold=True)}"
                             )
 
-                            # Check for breaking changes
-                            fix_available = vuln_info.get("fixAvailable", {})
-                            if fix_available:
+                            # npm audit's `fixAvailable` may be: a dict with
+                            # {name, version, isSemVerMajor}, the literal `true`,
+                            # or `false`/missing. Handle all three.
+                            fix_available = vuln_info.get("fixAvailable")
+                            if isinstance(fix_available, dict):
                                 fix_package = fix_available.get("name", pkg_name)
                                 fix_version = fix_available.get("version", "N/A")
                                 is_breaking = fix_available.get("isSemVerMajor", False)
@@ -399,6 +370,8 @@ def do_checks(dev=True):
                                         " (breaking change)", fg="yellow", bold=True
                                     )
                                 click.echo(fix_text)
+                            elif fix_available is True:
+                                click.echo("   Fixed in: yes (run `npm audit fix`)")
                             else:
                                 click.echo("   Fixed in: No fix available yet")
 
