@@ -23,7 +23,7 @@ def get_modules():
     global _modules
     if _modules is None:
         _modules = Modules(scriptor_config["base_url"], cookies=scriptor_config["cookies"])
-        asyncio.new_event_loop().run_until_complete(_modules.init())
+        asyncio.run(_modules.init())
 
     return _modules
 
@@ -146,9 +146,12 @@ def pull(ctx: click.Context, force: bool):
                         with open(_path, "r") as f:
                             if hashlib.sha256(entry["script"].encode()).digest() \
                                     != hashlib.sha256(f.read().encode()).digest():
-                                if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
-                                    os.remove(_path)
-                                    create_file()
+                                try:
+                                    if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
+                                        os.remove(_path)
+                                        create_file()
+                                except click.exceptions.Abort:
+                                    click.echo("\nSkipping...")
 
                 else:
                     create_file()
@@ -161,7 +164,7 @@ def pull(ctx: click.Context, force: bool):
         async for leaf in tree.list(skel_type="leaf"):
             await process_entry(leaf, False)
 
-    asyncio.new_event_loop().run_until_complete(main())
+    asyncio.run(main())
 
 
 @script.command()
@@ -313,7 +316,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     elif os.path.getmtime(event.src_path) == modified_files[event.src_path]:
                         return
                     modified_files[event.src_path] = os.path.getmtime(event.src_path)
-                    asyncio.new_event_loop().run_until_complete(main(event.src_path))
+                    asyncio.run(main(event.src_path))
                 except Exception as e:
                     import traceback
                     print(f"Error: on file {event.src_path} {e}")
@@ -341,9 +344,9 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 observer.stop()
                 observer.join()
 
-        asyncio.new_event_loop().run_until_complete(watch_loop())
+        watch_loop()
         return
-    asyncio.new_event_loop().run_until_complete(main())
+    asyncio.run(main())
 
 
 @script.command()
@@ -376,4 +379,4 @@ def run(ctx: click.Context, path: str, args=None):
 
         await module.main()
 
-    asyncio.new_event_loop().run_until_complete(main())
+    asyncio.run(main())
