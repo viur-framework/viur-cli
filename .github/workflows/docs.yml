@@ -1,8 +1,6 @@
 name: Deploy docs
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +8,8 @@ permissions:
   pages: write
   id-token: write
 
-# Nur ein Build gleichzeitig; in-flight cancel'n wenn ein neuer Push kommt.
+# Nur ein Build gleichzeitig; bei mehreren manuellen Triggern wird der
+# laufende Build abgebrochen und der jüngste deployed.
 concurrency:
   group: pages
   cancel-in-progress: true
