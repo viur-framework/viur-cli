@@ -27,6 +27,20 @@
     --sidebar-ring: #76a6ff;
 }
 
+/* === Headerlink (¶) on anchor navigation ==========================
+ * shadcn shows the headerlink only on :hover by default. Material
+ * additionally keeps it visible when the heading is the URL's :target
+ * (i.e. after clicking a sidebar / TOC link). Restore that behaviour.
+ */
+article h1:target .headerlink,
+article h2:target .headerlink,
+article h3:target .headerlink,
+article h4:target .headerlink,
+article h5:target .headerlink,
+article h6:target .headerlink {
+    opacity: 1;
+}
+
 /* === Topbar logo size =============================================
  * Enlarge by ~1.75× (default size-5 = 20px → 35px). Targets only the
  * home-link button so other size-5/size-8 elements (search icon,

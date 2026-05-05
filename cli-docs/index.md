@@ -13,7 +13,7 @@ uv add --dev viur-cli
 Voraussetzungen: Python ≥ 3.11, [uv](https://docs.astral.sh/uv/) ≥ 0.9.15.
 
 !!! note "Migration von v2"
-    Wer von v2 kommt: das `project.json`-Format ist unverändert. Pipenv-Projekte müssen zuerst auf uv migrieren. Details siehe Migration-Sektion.
+    Wer von v2 kommt: das `project.json`-Format ist unverändert. Pipenv-Projekte müssen zuerst auf uv migrieren. [Details in der Migrations-Sektion](migration/v2-to-v3.md).
 
 ## Schnellstart
 

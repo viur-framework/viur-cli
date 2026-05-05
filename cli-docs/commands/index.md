@@ -7,4 +7,5 @@ Diese Seite wird **automatisch** aus den Click-Definitionen in `viur_cli` generi
     :command: cli
     :prog_name: viur
     :depth: 2
-    :style: table
+    :style: plain
+    :list_subcommands: true
