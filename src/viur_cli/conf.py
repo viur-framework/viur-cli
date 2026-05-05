@@ -8,19 +8,20 @@ from .version import __version__ as cli_version
 
 
 class Config(dict):
-    """
-    Abstraction layer for managing config files.
+    """Dict-backed JSON config file with parent-dir auto-discovery and a migration hook.
+
+    Subclasses set :attr:`FILENAME` to the on-disk filename (e.g.
+    ``project.json``) and :attr:`VERSION` to the schema version they
+    expect. On instantiation the loader walks up the directory tree
+    until it finds the file, reads + parses it, and runs
+    :meth:`migrate` for any per-version rewrites.
     """
 
-    FILENAME = None
-    """
-    The filename used for this configuration file.
-    """
+    FILENAME: str | None = None
+    """On-disk filename to read/write (set by subclasses)."""
 
-    VERSION = None
-    """
-    The current version for this configuration file, which is tied to the viur-cli package.
-    """
+    VERSION: str | None = None
+    """Schema version this config layer understands. Tied to the viur-cli release."""
 
     def __init__(self, *, path=None):
         self.path = path
@@ -31,8 +32,16 @@ class Config(dict):
         self.load()
 
     def load(self):
-        """
-            Load configuration from a file into this config object.
+        """Walk up the directory tree to find FILENAME, then read + migrate it.
+
+        Side effects:
+            * ``os.chdir("..")`` repeatedly until ``FILENAME`` is found
+              or the filesystem root is reached. The resulting cwd
+              becomes the project root for all subsequent commands.
+            * Aborts via ``echo_fatal`` if the file is missing, broken
+              JSON, or otherwise unreadable.
+            * Calls :meth:`migrate` on success so subclasses can rewrite
+              older formats.
         """
         # Search in any parent folder for a project.json,
         # change working directory because subsequent commands
@@ -71,15 +80,11 @@ class Config(dict):
         self.migrate()
 
     def migrate(self):
-        """
-        A hook for migrating a read config.
-        """
+        """Hook for subclasses to rewrite older format versions in place."""
         pass
 
     def save(self):
-        """
-        Write the current configuration back to the file.
-        """
+        """Persist the current dict back to FILENAME as pretty-printed JSON."""
         os.chdir(self.path)
         with open(self.FILENAME, "w") as f:
             json.dump(self, f, indent=4, sort_keys=True)
@@ -95,7 +100,14 @@ class ProjectConfig(Config):
         super().__init__()
 
     def get_profile(self, profile):
-        """Get profile configuration"""
+        """Return the merged config for `profile` (default overlaid with profile-specific keys).
+
+        Args:
+            profile: A profile key from ``project.json``. Must not be
+                ``"format"`` (reserved for the schema version field).
+
+        Aborts via ``echo_fatal`` on an unknown profile name.
+        """
         if profile == "format":
             echo_fatal("Your profile can not be named 'Format' ")
         if profile not in self:
@@ -208,6 +220,13 @@ class ProjectConfig(Config):
 
 
 def print_changelog_from_github(user, repo, last_version):
+    """Fetch CHANGELOG.md from GitHub and either print it or diff it against `last_version`.
+
+    On a fresh install (``last_version is None``) the first 20 lines of
+    ``main``'s ``CHANGELOG.md`` are printed and the user is prompted to
+    acknowledge. On an upgrade, the diff between ``v{last_version}``
+    and ``main`` is rendered via :func:`get_changelog_difference`.
+    """
     version_url = f"https://raw.githubusercontent.com/{user}/{repo}/refs/heads/main/CHANGELOG.md"
     response = requests.get(version_url)
 
@@ -231,6 +250,7 @@ def print_changelog_from_github(user, repo, last_version):
 
 
 def get_changelog_difference(response, response1):
+    """Print the unified diff between two changelog line lists, hiding diff metadata."""
     diff = difflib.unified_diff(response, response1)
     for line in diff:  # Skip the first 2 lines
         if line.startswith('@@') or line.startswith('---') or line.startswith('+++'):
@@ -239,10 +259,8 @@ def get_changelog_difference(response, response1):
 
 
 class ScriptorConfig(Config):
-    """
-    Manage scriptor configuration.
-    TODO miragte with other config
-    """
+    """Persistent settings for `viur script` (base URL, username, working dir, cookies)."""
+    # TODO: merge with the project-level Config layout
     FILENAME = "viur_scriptor_config.json"
     DEFAULT_BASE_URL = "http://localhost:8080"
     DEFAULT_WORKING_DIR = "scripts/"

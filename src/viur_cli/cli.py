@@ -15,26 +15,16 @@ from pathlib import Path
 @click.version_option(__version__)
 @click.pass_context
 def cli(ctx):
+    """Manage and operate ViUR projects from a single command line.
+
+    Reads `project.json` for per-profile settings (deploy targets, build
+    pipelines, packaged ViUR frontends). Run `viur project list` to see
+    the resolved configuration of a profile.
     """
-    Command-line interface for managing project configuration and information.
-
-    The viur-cli provides a set of commands to manage your project's configuration in the 'project.json'.
-     It also offers commands to view and modify project information.
-
-    Note:
-
-        - Use the `--version` option to display the CLI tool's version.
-
-        - Run the 'project' command to manage 'project.json' and project configuration settings.
-    """
-
-    # Get the systems pipenv Version Number
-    uv_version = subprocess.check_output(['uv', 'self', 'version']).decode("utf-8")
-    version_pattern = r'\b(\d+\.\d+\.\d+)\b'
-    match = re.search(version_pattern, uv_version)
+    uv_version = subprocess.check_output(["uv", "self", "version"]).decode("utf-8")
+    match = re.search(r"\b(\d+\.\d+\.\d+)\b", uv_version)
     sys_uv = match.group(1)
 
-    # sys kleiner min
     if semver.compare(sys_uv, MINIMAL_UV) < 0:
         echo_warning(
             f"Your uv Version does not match the recommended uv version. \n"
@@ -48,7 +38,7 @@ def cli(ctx):
 @click.argument("action", type=click.Choice(['list']))
 @click.argument("profile", default="default")
 def project(action, profile):
-    """List your project.json Configuration File"""
+    """Inspect the resolved project.json configuration for a profile."""
     project_config = config.get_profile(profile)
     if action == "list":
         echo_info(f"These are the Settings for {profile} profile")
@@ -59,10 +49,14 @@ def project(action, profile):
 @click.option('--shell', type=click.Choice(['bash', 'zsh', 'fish', 'auto']),
               default='auto', help='Shell type (auto-detect if not specified)')
 def setup_autocomplete(shell):
-    """Install shell autocompletion for the viur CLI.
+    """Install shell tab-completion for the viur CLI.
 
-    This command sets up autocompletion for your shell, making it easier
-    to use the viur CLI by providing tab-completion for commands and options.
+    Generates Click's completion script for the chosen shell and writes it
+    next to the shell's rc file (sourcing it from `~/.bashrc` / `~/.zshrc`,
+    or directly into fish's completions dir).
+
+    Args:
+        shell: ``bash``, ``zsh``, ``fish``, or ``auto`` (detect from $SHELL).
     """
     # Auto-detect shell if not specified
     if shell == 'auto':
@@ -261,13 +255,14 @@ def autocomplete_info():
 
 
 def main() -> None:
-    """Entry point.
+    """Entry point used by the ``viur`` console script.
 
-    Explicitly imports each command module so its `@cli.command` /
-    `@cli.group` decorators attach to the root `cli` group above.
-    No more star-import-via-__init__.py side-effect chain.
+    Imports each command module explicitly so its ``@cli.command`` /
+    ``@cli.group`` decorators bind to the root ``cli`` group above. This
+    replaces the v2 pattern that relied on star-imports in
+    ``__init__.py`` to trigger the same decorator side-effects.
     """
-    # Side-effect imports — each module's decorators bind to `cli` at import time.
+    # Side-effect imports — decorators run on module load.
     from viur_cli import build  # noqa: F401
     from viur_cli import cloud  # noqa: F401
     from viur_cli import local  # noqa: F401

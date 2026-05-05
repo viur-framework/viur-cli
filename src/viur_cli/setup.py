@@ -6,13 +6,25 @@ from .utils import *
 
 
 def clean_base(app_id, author=None):
-    """
-    Sets up a clean ViUR project base.
+    """Stamp a freshly cloned `viur-base` checkout with the new project's identity.
+
+    Walks the project tree and substitutes ``{{app_id}}`` / ``{{whoami}}``
+    / ``{{timestamp}}`` placeholders inside ``.py`` / ``.yaml`` /
+    ``.html`` / ``.md`` / ``.sh`` / ``.json`` / ``.js`` / ``.less``
+    files, then resets git history to a single ``main`` commit.
 
     Args:
-        clean_history (bool, optional): Whether to clean the git history. Defaults to True.
-        app_id (str, optional): The application-id to use. If not provided, prompts the user.
-        author (str, optional): The author's name to use. If not provided, defaults to the current user.
+        app_id: New application-id; also doubles as the working
+            directory the function ``chdir``'s into.
+        author: Author name. Defaults to the current OS user (or
+            ``"viur"`` if that lookup fails).
+
+    Side effects:
+        * Modifies files in place under ``<cwd>/<app_id>``.
+        * Resets git history to a single ``main`` branch.
+        * Removes the original ``README.md`` and renames
+          ``viur-project.md`` over it.
+        * Deletes ``sys.argv[0]`` (the script that triggered cleanup).
     """
 
     try:
@@ -69,26 +81,10 @@ def clean_base(app_id, author=None):
 @click.argument("name")
 @click.pass_context
 def create(ctx, name):
-    """
-    Create a new ViUR project.
+    """Clone viur-base into ./NAME and run its clean-base.py setup wizard.
 
-    The 'create' command allows you to create a new ViUR project by cloning the ViUR base project and configuring it.
-    You can specify the name of the new project as the 'name' argument.
-
-    The 'create' command performs the following steps:
-
-        1. Clones the ViUR base project from the official GitHub repository.
-
-        2. Configures the new project by running 'clean-base.py'.
-
-        3. Optionally configures the project as a new gcloud project (if confirmed).
-
-    Note:
-
-        - This command initializes the new ViUR project based on the ViUR base project.
-
-        - Make sure to provide a unique project name to avoid conflicts with existing folders.
-
+    Optionally chains into ``./viur-gcloud-setup.sh NAME`` if confirmed,
+    so the project is wired to a fresh GCP project in one shot.
     """
     if os.path.exists(f'./{name}'):
         echo_error(f'"{name}" Folder already exists. Please use a different name or remove this folder ./{name}')

@@ -9,10 +9,11 @@ import subprocess
 
 
 def rmdir(dir):
-    """Secure and error-prone recursive removal of entire folders.
+    """Recursively remove a folder, but only if it lives under the current working directory.
 
-    Does only allow to remove folders inside the project folder, so that a misconfiguration, wanted or not,
-    cannot delete the entire home folder or similar.
+    Refuses (via ``echo_fatal``) to delete anything outside the project
+    so a misconfigured ``project.json`` can't take out ``$HOME`` or
+    similar. Missing directories are silently ignored.
     """
     # Verify the dir is part of the current folder
     dir = os.path.abspath(dir)
@@ -30,10 +31,11 @@ def rmdir(dir):
 def system(cmd):
     """Run a shell command and abort viur-cli on non-zero exit.
 
-    Note: still uses `shell=True` because callers pass chained shell strings
-    (e.g. `cd src && npm install && npm run build`). Build pipeline refactor
-    is the proper place to switch this to argv lists; until then this wrapper
-    at least replaces the older `os.system` with `subprocess.run`.
+    Still uses ``shell=True`` because callers pass chained shell strings
+    (e.g. ``cd src && npm install && npm run build``). The build
+    pipeline refactor is the right place to switch this to argv lists;
+    until then this wrapper at least replaces the older ``os.system``
+    with ``subprocess.run``.
     """
     result = subprocess.run(cmd, shell=True)
     if result.returncode != 0:
@@ -41,41 +43,50 @@ def system(cmd):
 
 
 def echo_error(msg):
-    """colored cli feedback for error messages"""
+    """Print a red ERROR-prefixed line."""
     click.echo(click.style("ERROR: " + msg, fg="red"))
 
 
 def echo_success(msg):
-    """colored cli feedback for success messages"""
+    """Print a green SUCCESS-prefixed line."""
     click.echo(click.style("SUCCESS: " + msg, fg="green"))
 
 
 def echo_warning(msg):
-    """colored cli feedback for warnings"""
+    """Print a yellow WARNING-prefixed line."""
     click.echo(click.style("WARNING: " + msg, fg=(255, 231, 0)))
 
 
 def echo_fatal(msg):
+    """Print an ERROR line and exit the process with status 1."""
     echo_error(msg)
     sys.exit(1)
 
 
 def echo_info(msg):
-    """colored cli feedback for information"""
+    """Print a cyan informational line."""
     click.echo(click.style(msg, fg="cyan"))
 
 
 def replace_vars(string: str, vars: typing.Optional[typing.Dict[str, str]] = None) -> str:
-    """Replaces $(placeholders) in a string by values from a dict until no more values are being replaced.
+    """Replace `$(placeholder)` tokens in a string until no more are resolvable.
 
-    The function enriches the provided vars dictionary by the following defaults if not given:
-    - user: Current user's name
-    - day: Current date's day
-    - month: Current date's month
-    - year: Current date's year
-    - hour: Current date's hour
-    - minute: Current date's minute
-    - second: Current date's second
+    Args:
+        string: Template string containing zero or more ``$(name)``
+            tokens.
+        vars: Mapping of token names to replacement values. Mutated in
+            place to gain a small set of defaults if not already
+            present:
+
+            * ``user`` — current OS user (or ``"viur"`` as fallback)
+            * ``day`` / ``month`` / ``year`` / ``hour`` / ``minute`` /
+              ``second`` — zero-padded components of the current
+              datetime
+
+    Returns:
+        The fully expanded string. Iterates until a fixed point so
+        nested expansions resolve. ``$(ref)`` is special-cased to the
+        short git HEAD SHA (resolved at call time).
     """
     # set some defaults
     if vars is None:
@@ -110,6 +121,14 @@ def replace_vars(string: str, vars: typing.Optional[typing.Dict[str, str]] = Non
 
 
 def requirements_to_dict(requirements):
+    """Convert a list of pipfile-requirements entries into a `{package: options}` dict.
+
+    Each input entry is expected to expose ``.requirement`` (e.g.
+    ``foo[extra]==1.2.3; python_version>="3.11"``) and an
+    ``.options`` dict. The resulting dict is keyed by package name
+    (lower-cased, extras stripped) and carries the parsed version under
+    a new ``"version"`` key inside the options dict.
+    """
     ret = {}
     for requirement in requirements:
         package, version = requirement.requirement.split(";")[0].split("==")

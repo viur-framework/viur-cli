@@ -17,41 +17,24 @@ REPOS = {
 
 
 def get_version_info(software: str, version: str) -> tuple[str, str]:
-    """
+    """Resolve a version label into a concrete `(version, download_url)` tuple.
 
-    :param software: String
-        Name of the ViUR Software
+    Calls the GitHub Releases API to validate that the requested tag
+    exists and to translate ``"latest"`` into the corresponding semver.
+    On success, also writes the resolved version into ``project.json``
+    under ``default.builds[<software>]`` so subsequent installs are
+    reproducible.
 
-    :param version: String
-        Desired version of the ViUR Software
+    Args:
+        software: One of the keys in :data:`REPOS` (``vi``, ``admin``,
+            ``scriptor``).
+        version: A semver string (with or without a leading ``v``) or
+            the literal ``"latest"``.
 
-    :returns: tuple[str, str]
-        real version and download URL
-
-    Description:
-    This method takes in the name of a software and a desired version,
-    and returns the real version and download URL for that software.
-
-    The 'software' parameter is a string that represents the name of the software.
-
-    The 'version' parameter is a string that represents the desired version of the software.
-    If the version starts with 'v', it will be normalized by removing the leading 'v'.
-    *The 'version' can also be set as 'latest' to get the latest version available.
-
-    The method uses the provided 'software' parameter to fetch the repository
-    and download information from REPOS dictionary.
-
-    If the 'version' is 'latest', the method constructs the URL using the repository information to fetch the
-    latest release information from GitHub API. If the request fails, an error message
-    * will be displayed. If the request is successful, the real version of the latest release is obtained
-    and saved in the config.
-
-    If the 'version' is not 'latest', the method constructs the URL using the repository and desired version information.
-    If the request for the version tag information fails, the method
-    * falls back to the previously obtained real version. Else, the tag is used to construct the download URL.
-
-    Finally, the method returns a tuple containing the real version and download URL.
-
+    Returns:
+        Tuple ``(real_version, download_url)``. ``real_version`` may be
+        ``None`` if the GitHub API request failed; the function falls
+        back to the unvalidated ``version`` for the URL in that case.
     """
     repo, download_name = REPOS[software]
 
@@ -96,10 +79,21 @@ _DEPRECATION_REMOVED_IN = "v3.2"
 
 
 def _run_op(operation: str, component: str, profile: str, version: str = "latest") -> None:
-    """Shared dispatch for package installs/updates.
+    """Shared dispatch for the package install/update commands.
 
-    Used by both the deprecated `viur package …` command and the new
-    `viur admin/vi/scriptor …` command groups.
+    Used by the deprecated ``viur package …`` command as well as the new
+    ``viur admin/vi/scriptor …`` command groups so both paths exercise
+    the exact same install logic.
+
+    Args:
+        operation: Either ``"install"`` or ``"update"``.
+        component: ``vi``, ``admin``, ``scriptor``, or ``all``. ``all``
+            on ``install`` covers admin + scriptor (vi must be requested
+            explicitly); on ``update`` it iterates every entry in the
+            profile's ``builds``.
+        profile: Profile name from ``project.json``.
+        version: Used only for single-component installs. Defaults to
+            ``"latest"``.
     """
     conf = config.get_profile(profile)
     handlers = {"vi": _install_vi, "admin": _install_admin, "scriptor": _install_scriptor}
@@ -196,8 +190,9 @@ def vi_update(profile):
 def scriptor():
     """Manage the scriptor frontend asset bundle.
 
-    This is the asset-bundle install (the SPA shipped with the admin).
-    For pulling/pushing scriptor scripts to a deployed app, see 'viur script'.
+    Asset-bundle install for the SPA shipped alongside admin. Not to be
+    confused with ``viur script`` (which pulls/pushes Scriptor scripts
+    against a deployed app).
     """
 
 
@@ -217,9 +212,7 @@ def scriptor_update(profile):
 
 
 def checkreturncode(output):
-    """
-    Check the return code of a process output.
-    """
+    """Echo success or abort fatally based on a CompletedProcess's returncode."""
     if output.returncode == 0:
         echo_success("update was successful")
     else:
@@ -227,8 +220,14 @@ def checkreturncode(output):
 
 
 def _install_scriptor(version, target, profile):
-    """
-    Update the Scriptor tool to a specified version.
+    """Download the Scriptor frontend bundle and extract it into the deploy folder.
+
+    Args:
+        version: Semver string or ``"latest"``.
+        target: Subfolder name under ``conf['distribution_folder']``
+            (typically ``"scriptor"``).
+        profile: Profile from ``project.json`` used to resolve
+            ``distribution_folder``.
     """
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
@@ -267,7 +266,14 @@ def _install_scriptor(version, target, profile):
 
 
 def _install_admin(version: str, target: str, profile: str = "default"):
-    """Update the admin to a specific version."""
+    """Download the admin Vue.js CMS bundle and extract it into the deploy folder.
+
+    Args:
+        version: Semver string or ``"latest"``.
+        target: Subfolder name under ``conf['distribution_folder']``
+            (typically ``"admin"``).
+        profile: Profile from ``project.json``.
+    """
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]
 
@@ -304,7 +310,14 @@ def _install_admin(version: str, target: str, profile: str = "default"):
 
 
 def _install_vi(version, target, profile):
-    """Updates Vi to the specified version."""
+    """Download the legacy `vi` frontend bundle and extract it into the deploy folder.
+
+    Args:
+        version: Semver string or ``"latest"``.
+        target: Subfolder name under ``conf['distribution_folder']``
+            (typically ``"vi"``).
+        profile: Profile from ``project.json``.
+    """
 
     conf = config.get_profile(profile)
     dist_folder = conf["distribution_folder"]

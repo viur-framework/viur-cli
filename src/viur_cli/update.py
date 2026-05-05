@@ -13,45 +13,35 @@ from .utils import echo_error, echo_info, echo_warning
 @click.argument("profile", default='default')
 @click.argument("additional_args", nargs=-1)
 def update(action, profile, additional_args):
-    """
-    Update project-specific files and dependencies.
+    """Regenerate project-managed deploy files (currently `deploy/requirements.txt`).
 
-    This command allows you to update project-specific files and dependencies for a specified project configuration.
-    Currently, it supports the 'requirements' action, which is used to update the requirements using uv.
-
-    The `update` command performs the specified 'action' to update project-specific files or dependencies.
-    It ensures that the specified project configuration exists and uses modern uv tooling.
-
-    Note:
-        - Requires uv to be installed: pip install uv
-        - Uses pyproject.toml as the source of truth for dependencies
-        - Generates requirements.txt with hashes for security
+    \b
+    Examples:
+      viur update requirements
+      viur update requirements live
     """
     if action == "requirements":
         create_req(True, profile)
 
 
 def create_req(yes, profile, confirm_value=True):
-    """
-    Generate a requirements.txt using uv from pyproject.toml.
+    """Compile pyproject.toml into deploy/requirements.txt with hashes via `uv pip compile`.
 
-    This function generates a requirements.txt file based on the project's pyproject.toml.
-    It uses uv for modern, fast dependency resolution with hash generation.
+    Args:
+        yes: Skip the confirmation prompt before regeneration.
+        profile: Profile name from ``project.json``; used to resolve
+            ``distribution_folder`` (where ``requirements.txt`` lands).
+        confirm_value: Default for the confirmation prompt when ``yes``
+            is False.
 
-    :param yes: bool
-        If True, skip confirmation prompt.
-    :param profile: str
-        The project profile to use.
-    :param confirm_value: bool, default: True
-        Default value for confirmation prompt.
-
-    Note:
-    - Requires uv to be installed
-    - Uses pyproject.toml as dependency source
-    - Generates hashes for all dependencies for security
-    - Post-processes requirements to handle extras compatibility
-
-    :return: None
+    Side effects:
+        * Calls ``uv pip compile pyproject.toml --generate-hashes -o
+          deploy/requirements.txt``.
+        * Post-processes the result: for any ``foo[extra]==X.Y`` line,
+          appends a stripped ``foo==X.Y`` line for callers that don't
+          understand extras syntax.
+        * Aborts the process via ``sys.exit(1)`` if uv is missing or the
+          compile step fails.
     """
     conf = config.get_profile(profile)
     dist_folder = Path(conf["distribution_folder"])
@@ -175,17 +165,7 @@ dependencies = [
 
 
 def verify_requirements(requirements_file: Path):
-    """
-    Verify the generated requirements.txt file.
-
-    This function performs basic validation on the generated requirements file:
-    - Checks if file exists and is not empty
-    - Counts number of dependencies
-    - Verifies hash presence
-
-    :param requirements_file: Path
-        Path to the requirements.txt file to verify
-    """
+    """Sanity-check a generated requirements.txt — non-empty, hashes present."""
     if not requirements_file.exists():
         echo_error(f"Requirements file not found: {requirements_file}")
         return

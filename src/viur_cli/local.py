@@ -35,10 +35,11 @@ def get_user_info():
 @click.argument("profile", default="default")
 @click.argument("additional_args", nargs=-1)
 def run(profile, additional_args):
-    """
-    Start your application locally.
-    The 'run' command launches your ViUR application locally specified configuration and optional arguments.
-    This Enforces the Usage of gcloud tool
+    """Start the application locally via app_server (requires an active gcloud login).
+
+    Resolves ``application_name`` from the profile and forwards
+    ``--appyaml``, ``--port`` and ``--gunicorn_port`` to ``app_server``
+    if they are set.
     """
     try:
         echo_warning(
@@ -68,13 +69,7 @@ def run(profile, additional_args):
 @cli.command()
 @click.argument("profile", default="default")
 def env(profile):
-    """
-    Check the local environment for ViUR development.
-
-    The 'env' command provides information about the versions tools and dependencies, such as ViUR-CLI, app_server,
-    git, Python, npm, node, and more. It checks the availability of these tools and reports their versions.
-
-    """
+    """Print the resolved profile and the versions of CLI tools used by ViUR development."""
 
     valid_icon = "\U00002714"
     failed_icon = "\U0000274c"
@@ -185,19 +180,25 @@ def env(profile):
 @cli.command()
 @click.option("--dev", "-d", is_flag=True, default=False)
 def check(dev):
-    """
-    Perform security checks for vulnerabilities.
-    The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
-    """
+    """Audit Python (pip-audit) and npm (npm audit) dependencies for known vulnerabilities."""
 
     if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
 
 def do_checks(dev=True):
-    """Run security checks for Python and npm dependencies.
+    """Run Python (pip-audit) and npm (npm audit) vulnerability scans.
 
-    Returns True if no vulnerabilities found, False otherwise.
+    Args:
+        dev: Reserved for future filtering between dev/prod-only deps.
+            Currently unused but kept on the signature for caller
+            compatibility.
+
+    Returns:
+        ``True`` when no vulnerabilities were found across either scan,
+        ``False`` if at least one was reported. Tool failures are printed
+        but do not flip the return value to ``False`` unless the failure
+        actually surfaces a vulnerability.
     """
     has_vulnerabilities = False
 
