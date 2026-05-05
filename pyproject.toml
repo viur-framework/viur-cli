@@ -39,3 +39,9 @@ packages = { find = { where = ["src"] } }
 
 [tool.setuptools.dynamic]
 version = { attr = "viur_cli.version.__version__" }
+
+[dependency-groups]
+docs = [
+    "mkdocs-shadcn",
+    "mkdocs-click~=0.8",
+]

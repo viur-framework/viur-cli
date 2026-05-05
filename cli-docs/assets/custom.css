@@ -1,0 +1,45 @@
+/* === ViUR brand colors ============================================
+ * Hex values taken straight from icon-cli.svg gradient stops:
+ *   #1d94f3  bright blue (top face of the hex)
+ *   #76a6ff  light blue gradient stop
+ *   #004992  medium-dark blue
+ *   #00265c  navy / shadow
+ *
+ * shadcn defines its theme via CSS custom properties on :root (light)
+ * and .dark (dark). We override only --primary / --primary-foreground
+ * / --ring to keep the design tokens of the rest of the theme intact.
+ */
+:root {
+    --primary: #1d94f3;
+    --primary-foreground: #ffffff;
+    --ring: #1d94f3;
+    --sidebar-primary: #1d94f3;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #1d94f3;
+}
+
+.dark {
+    --primary: #76a6ff;
+    --primary-foreground: #00265c;
+    --ring: #76a6ff;
+    --sidebar-primary: #76a6ff;
+    --sidebar-primary-foreground: #00265c;
+    --sidebar-ring: #76a6ff;
+}
+
+/* === Topbar logo size =============================================
+ * Enlarge by ~1.75× (default size-5 = 20px → 35px). Targets only the
+ * home-link button so other size-5/size-8 elements (search icon,
+ * GitHub icon, mobile menu) stay at their original size.
+ */
+a[data-slot="button"] > span.size-8:first-child {
+    width: auto;
+    height: 35px;
+    min-width: 35px;
+}
+
+a[data-slot="button"] > span.size-8:first-child > img.size-5 {
+    width: auto !important;
+    height: 35px !important;
+    max-width: none;
+}

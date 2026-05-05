@@ -2,6 +2,7 @@ LICENSE
 README.md
 pyproject.toml
 src/viur_cli/__init__.py
+src/viur_cli/_docs_cli.py
 src/viur_cli/build.py
 src/viur_cli/cli.py
 src/viur_cli/cloud.py

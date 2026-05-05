@@ -1,0 +1,45 @@
+site_name: viur-cli
+site_description: Command-line interface for ViUR application maintenance
+site_url: https://viur-framework.github.io/viur-cli/
+repo_url: https://github.com/viur-framework/viur-cli
+repo_name: viur-framework/viur-cli
+edit_uri: edit/main/cli-docs/
+
+docs_dir: cli-docs
+
+theme:
+  name: shadcn
+  icon: assets/logo.svg
+  favicon: assets/logo.svg
+  show_title: true
+  show_stargazers: true
+  show_datetime: true
+  topbar_sections: true
+  accent: "#1d94f3"
+  pygments_style:
+    light: shadcn-light
+    dark: gotthard-dark
+
+extra_css:
+  - assets/custom.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - mkdocs-click
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+# Erweitere die Nav während du Inhalte schreibst.
+# Vorerst nur Home + auto-generierte Befehlsreferenz.
+nav:
+  - Home: index.md
+  - Befehle: commands/index.md
