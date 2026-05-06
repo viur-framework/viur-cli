@@ -139,6 +139,7 @@ def pull(ctx: click.Context, force: bool):
     check_session(ctx)
 
     async def main():
+        # In the new API, we don't need to call structure
         modules = get_modules()
         tree = await modules.get_module("script")
         working_dir = scriptor_config.get("working_dir")
@@ -244,7 +245,6 @@ def push(ctx: click.Context, force: bool, watch: bool):
     check_session(ctx)
 
     async def main(file_path: str = None):
-        # In the new API, we don't need to call structure
         modules = get_modules()
         tree = await modules.get_module("script")
 
