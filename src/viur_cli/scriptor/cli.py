@@ -1,18 +1,17 @@
-import datetime
-import click
-import json
-import requests
-import os
-import hashlib
 import asyncio
-import sys
+import datetime
 import glob
+import hashlib
+import os
+import sys
+
+import click
+import requests
 from requests.sessions import cookiejar_from_dict
-from weakref import proxy
 from viur.scriptor import Modules
-from ..cli import cli
-from ..cli import scriptor_config
+
 from .login import ensure_login
+from ..cli import cli, scriptor_config
 
 # Global modules instance that will be initialized when needed
 _modules = None
@@ -52,6 +51,8 @@ def configure(url: str, username: str, working_dir: str):
 
     if working_dir:
         scriptor_config["working_dir"] = working_dir.replace("\\", "/")
+
+    scriptor_config.save()
 
 
 @script.command()
@@ -109,6 +110,7 @@ def check_session(ctx: click.Context):
         ctx.close()
     # init modules
     get_modules()
+
 
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
