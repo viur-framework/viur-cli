@@ -238,6 +238,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
     check_session(ctx)
 
     async def main(file_path: str = None):
+        # In the new API, we don't need to call structure
         modules = get_modules()
         tree = await modules.get_module("script")
 
