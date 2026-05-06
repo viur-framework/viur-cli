@@ -4,6 +4,7 @@ import json
 import requests
 import os
 import hashlib
+import difflib
 import asyncio
 import sys
 import glob
@@ -34,7 +35,7 @@ def script():
 
 
 @script.command()
-@click.option('--url', default=None, help='Set the url')
+@click.option('--url', default=None, help='Set the server url')
 @click.option('--username', default=None, help='Set the username')
 @click.option('--working_dir', default=None, help='Set the working directory where scripts are stored to')
 def configure(url: str, username: str, working_dir: str):
@@ -43,15 +44,32 @@ def configure(url: str, username: str, working_dir: str):
     Only flags that are passed are written; the rest of the
     `viur_scriptor_config.json` keeps its previous values.
     """
+    if not any([url, username, working_dir]):
+        click.echo("No parameters provided. Use one or more of the following options:")
+        click.echo("  --url         Set the server URL")
+        click.echo("  --username    Set the username")
+        click.echo("  --working_dir Set the working directory where scripts are stored to")
+        return
+
+    changed = []
 
     if url:
         scriptor_config["base_url"] = url
+        changed.append(f"url = {url}")
 
     if username:
         scriptor_config["username"] = username
+        changed.append(f"username = {username}")
 
     if working_dir:
         scriptor_config["working_dir"] = working_dir.replace("\\", "/")
+        changed.append(f"working_dir = {working_dir}")
+
+    click.echo("Configuration updated:")
+    for entry in changed:
+        click.echo(f"  {entry}")
+
+    scriptor_config.save()
 
 
 @script.command()
@@ -115,7 +133,8 @@ def check_session(ctx: click.Context):
     get_modules()
 
 @script.command()
-@click.option('--force', default=False, help='Force replace files from server in local working directory')
+@click.option('--force', default=False, is_flag=True,
+              help='Overwrite local files without asking for confirmation')
 @click.pass_context
 def pull(ctx: click.Context, force: bool):
     """Download all server-side Scriptor scripts into the local working_dir.
@@ -131,36 +150,74 @@ def pull(ctx: click.Context, force: bool):
         tree = await modules.get_module("script")
         working_dir = scriptor_config.get("working_dir")
 
+        stats = {"new": 0, "updated": 0, "skipped": 0, "unchanged": 0, "dirs": 0}
+
         async def process_entry(entry: dict, is_node: bool):
             _path = os.path.join(working_dir, entry["path"].lstrip("/"))
 
             if is_node:
                 if not os.path.exists(_path):
+                    click.echo(click.style(f"  mkdir {entry['path']}", fg="blue"))
                     os.makedirs(_path)
+                    stats["dirs"] += 1
             else:
+                click.echo(f"  check {entry['path']}", nl=False)
+
                 def create_file():
                     with open(_path, "a+") as f:
                         f.write(entry["script"])
 
-                    click.echo(f"Pull {_path}")
-
                 if os.path.exists(_path):
                     if force:
+                        with open(_path, "r") as f:
+                            changed = f.read().splitlines() != entry["script"].splitlines()
                         os.remove(_path)
                         create_file()
+                        if changed:
+                            click.echo(click.style("  [updated]", fg="yellow"))
+                            stats["updated"] += 1
+                        else:
+                            click.echo(click.style("  [ok]", fg="green"))
+                            stats["unchanged"] += 1
                     else:
                         with open(_path, "r") as f:
-                            if hashlib.sha256(entry["script"].encode()).digest() \
-                                    != hashlib.sha256(f.read().encode()).digest():
-                                try:
-                                    if click.confirm(f"There is a difference with {entry['path']}. Overwrite?"):
-                                        os.remove(_path)
-                                        create_file()
-                                except click.exceptions.Abort:
-                                    click.echo("\nSkipping...")
-
+                            local_content = f.read()
+                        remote_content = entry["script"]
+                        diff = list(difflib.unified_diff(
+                            remote_content.splitlines(),
+                            local_content.splitlines(),
+                            fromfile=f"server/{entry['path'].lstrip('/')}",
+                            tofile=f"local/{entry['path'].lstrip('/')}",
+                            lineterm="",
+                        ))
+                        if diff:
+                            click.echo(click.style("  [diff]", fg="yellow"))
+                            for line in diff:
+                                if line.startswith("+++") or line.startswith("---"):
+                                    click.echo(click.style(line, bold=True))
+                                elif line.startswith("@@"):
+                                    click.echo(click.style(line, fg="cyan"))
+                                elif line.startswith("+"):
+                                    click.echo(click.style(line, fg="green"))
+                                elif line.startswith("-"):
+                                    click.echo(click.style(line, fg="red"))
+                                else:
+                                    click.echo(line)
+                            if click.confirm(f"Overwrite local {entry['path']} with remote version?"):
+                                os.remove(_path)
+                                create_file()
+                                stats["updated"] += 1
+                            else:
+                                stats["skipped"] += 1
+                        else:
+                            click.echo(click.style("  [ok]", fg="green"))
+                            stats["unchanged"] += 1
                 else:
+                    click.echo(click.style("  [new]", fg="green"))
                     create_file()
+                    stats["new"] += 1
+
+        click.echo("Fetching scripts from server...")
 
         # Process nodes first
         async for node in tree.list(skel_type="node"):
@@ -169,6 +226,13 @@ def pull(ctx: click.Context, force: bool):
         # Then process leaves
         async for leaf in tree.list(skel_type="leaf"):
             await process_entry(leaf, False)
+
+        click.echo("")
+        click.echo(click.style("Summary:", bold=True))
+        click.echo(f"  new:       {stats['new']}")
+        click.echo(f"  updated:   {stats['updated']}")
+        click.echo(f"  skipped:   {stats['skipped']}")
+        click.echo(f"  unchanged: {stats['unchanged']}")
 
     asyncio.run(main())
 
