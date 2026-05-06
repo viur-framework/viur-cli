@@ -111,7 +111,8 @@ def check_session(ctx: click.Context):
     get_modules()
 
 @script.command()
-@click.option('--force', default=False, help='Force replace files from server in local working directory')
+@click.option('--force', default=False, is_flag=True,
+              help='Overwrite local files without asking for confirmation')
 @click.pass_context
 def pull(ctx: click.Context, force: bool):
     """
