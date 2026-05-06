@@ -144,23 +144,35 @@ def pull(ctx: click.Context, force: bool):
         tree = await modules.get_module("script")
         working_dir = scriptor_config.get("working_dir")
 
+        stats = {"new": 0, "updated": 0, "skipped": 0, "unchanged": 0, "dirs": 0}
+
         async def process_entry(entry: dict, is_node: bool):
             _path = os.path.join(working_dir, entry["path"].lstrip("/"))
 
             if is_node:
                 if not os.path.exists(_path):
+                    click.echo(click.style(f"  mkdir {entry['path']}", fg="blue"))
                     os.makedirs(_path)
+                    stats["dirs"] += 1
             else:
+                click.echo(f"  check {entry['path']}", nl=False)
+
                 def create_file():
                     with open(_path, "a+") as f:
                         f.write(entry["script"])
 
-                    click.echo(f"Pull {_path}")
-
                 if os.path.exists(_path):
                     if force:
+                        with open(_path, "r") as f:
+                            changed = f.read().splitlines() != entry["script"].splitlines()
                         os.remove(_path)
                         create_file()
+                        if changed:
+                            click.echo(click.style("  [updated]", fg="yellow"))
+                            stats["updated"] += 1
+                        else:
+                            click.echo(click.style("  [ok]", fg="green"))
+                            stats["unchanged"] += 1
                     else:
                         with open(_path, "r") as f:
                             local_content = f.read()
@@ -173,23 +185,33 @@ def pull(ctx: click.Context, force: bool):
                             lineterm="",
                         ))
                         if diff:
+                            click.echo(click.style("  [diff]", fg="yellow"))
                             for line in diff:
                                 if line.startswith("+++") or line.startswith("---"):
-                                    click.echo(click.style(line, bold=True), nl=True)
+                                    click.echo(click.style(line, bold=True))
                                 elif line.startswith("@@"):
-                                    click.echo(click.style(line, fg="cyan"), nl=True)
+                                    click.echo(click.style(line, fg="cyan"))
                                 elif line.startswith("+"):
-                                    click.echo(click.style(line, fg="green"), nl=True)
+                                    click.echo(click.style(line, fg="green"))
                                 elif line.startswith("-"):
-                                    click.echo(click.style(line, fg="red"), nl=True)
+                                    click.echo(click.style(line, fg="red"))
                                 else:
-                                    click.echo(line, nl=True)
+                                    click.echo(line)
                             if click.confirm(f"Overwrite local {entry['path']} with remote version?"):
                                 os.remove(_path)
                                 create_file()
-
+                                stats["updated"] += 1
+                            else:
+                                stats["skipped"] += 1
+                        else:
+                            click.echo(click.style("  [ok]", fg="green"))
+                            stats["unchanged"] += 1
                 else:
+                    click.echo(click.style("  [new]", fg="green"))
                     create_file()
+                    stats["new"] += 1
+
+        click.echo("Fetching scripts from server...")
 
         # Process nodes first
         async for node in tree.list(skel_type="node"):
@@ -198,6 +220,13 @@ def pull(ctx: click.Context, force: bool):
         # Then process leaves
         async for leaf in tree.list(skel_type="leaf"):
             await process_entry(leaf, False)
+
+        click.echo("")
+        click.echo(click.style("Summary:", bold=True))
+        click.echo(f"  new:       {stats['new']}")
+        click.echo(f"  updated:   {stats['updated']}")
+        click.echo(f"  skipped:   {stats['skipped']}")
+        click.echo(f"  unchanged: {stats['unchanged']}")
 
     asyncio.run(main())
 
