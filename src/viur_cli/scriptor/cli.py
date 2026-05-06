@@ -36,22 +36,37 @@ def script():
 
 
 @script.command()
-@click.option('--url', default=None, help='Set the url')
+@click.option('--url', default=None, help='Set the server url')
 @click.option('--username', default=None, help='Set the username')
 @click.option('--working_dir', default=None, help='Set the working directory where scripts are stored to')
 def configure(url: str, username: str, working_dir: str):
     """
     Manage configuration settings.
     """
+    if not any([url, username, working_dir]):
+        click.echo("No parameters provided. Use one or more of the following options:")
+        click.echo("  --url         Set the server URL")
+        click.echo("  --username    Set the username")
+        click.echo("  --working_dir Set the working directory where scripts are stored to")
+        return
+
+    changed = []
 
     if url:
         scriptor_config["base_url"] = url
+        changed.append(f"url = {url}")
 
     if username:
         scriptor_config["username"] = username
+        changed.append(f"username = {username}")
 
     if working_dir:
         scriptor_config["working_dir"] = working_dir.replace("\\", "/")
+        changed.append(f"working_dir = {working_dir}")
+
+    click.echo("Configuration updated:")
+    for entry in changed:
+        click.echo(f"  {entry}")
 
     scriptor_config.save()
 
