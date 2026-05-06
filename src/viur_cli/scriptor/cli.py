@@ -1,17 +1,18 @@
-import asyncio
 import datetime
-import glob
-import hashlib
-import os
-import sys
-
 import click
+import json
 import requests
+import os
+import hashlib
+import asyncio
+import sys
+import glob
 from requests.sessions import cookiejar_from_dict
+from weakref import proxy
 from viur.scriptor import Modules
-
+from ..cli import cli
+from ..cli import scriptor_config
 from .login import ensure_login
-from ..cli import cli, scriptor_config
 
 # Global modules instance that will be initialized when needed
 _modules = None
@@ -110,7 +111,6 @@ def check_session(ctx: click.Context):
         ctx.close()
     # init modules
     get_modules()
-
 
 @script.command()
 @click.option('--force', default=False, help='Force replace files from server in local working directory')
