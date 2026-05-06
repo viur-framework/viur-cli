@@ -53,6 +53,8 @@ def configure(url: str, username: str, working_dir: str):
     if working_dir:
         scriptor_config["working_dir"] = working_dir.replace("\\", "/")
 
+    scriptor_config.save()
+
 
 @script.command()
 def setup():
