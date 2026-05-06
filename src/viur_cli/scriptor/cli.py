@@ -162,10 +162,16 @@ def pull(ctx: click.Context, force: bool):
 
                 if os.path.exists(_path):
                     if force:
-                        click.echo(click.style("  [forced]", fg="yellow"))
+                        with open(_path, "r") as f:
+                            changed = f.read().splitlines() != entry["script"].splitlines()
                         os.remove(_path)
                         create_file()
-                        stats["updated"] += 1
+                        if changed:
+                            click.echo(click.style("  [updated]", fg="yellow"))
+                            stats["updated"] += 1
+                        else:
+                            click.echo(click.style("  [ok]", fg="green"))
+                            stats["unchanged"] += 1
                     else:
                         with open(_path, "r") as f:
                             local_content = f.read()
