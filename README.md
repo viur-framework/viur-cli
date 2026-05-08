@@ -323,7 +323,7 @@ viur-cli depends on
 
 ## License
 
-Copyright © 2025 by Mausbrand Informationssysteme GmbH.<br>
+Copyright © 2026 by Mausbrand Informationssysteme GmbH.<br>
 Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
 
 This project is free software under the MIT license.<br>
