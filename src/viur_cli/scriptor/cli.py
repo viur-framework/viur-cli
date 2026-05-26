@@ -372,8 +372,9 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
             def on_modified(event):
                 try:
-                    # check for tmp file
                     if event.src_path.endswith("~"):
+                        return
+                    if not os.path.exists(event.src_path):
                         return
                     if event.src_path not in modified_files:
                         modified_files[event.src_path] = os.path.getmtime(event.src_path)
@@ -386,7 +387,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     print(f"Error: on file {event.src_path} {e}")
                     traceback.print_exc()
 
-            regexes = [r".*\.py"]
+            regexes = [r".*\.py$"]
             ignore_regexes = []
             ignore_directories = True
             case_sensitive = False
