@@ -84,4 +84,4 @@ In case you have appropriate permissions, a release can be done this way:
 
 ## Maintenance
 
-Maintainer of this project is [@grashalmbeisser](https://github.com/Grashalmbeisser).
+Maintainer of this project is [@KadirBalku](https://github.com/KadirBalku).
