@@ -159,12 +159,12 @@ def pull(ctx: click.Context, force: bool):
 
                 def create_file():
                     with open(_path, "a+") as f:
-                        f.write(entry["script"])
+                        f.write(entry["script"] or "")
 
                 if os.path.exists(_path):
                     if force:
                         with open(_path, "r") as f:
-                            changed = f.read().splitlines() != entry["script"].splitlines()
+                            changed = f.read().splitlines() != (entry["script"] or "").splitlines()
                         os.remove(_path)
                         create_file()
                         if changed:
@@ -176,7 +176,7 @@ def pull(ctx: click.Context, force: bool):
                     else:
                         with open(_path, "r") as f:
                             local_content = f.read()
-                        remote_content = entry["script"]
+                        remote_content = entry["script"] or ""
                         diff = list(difflib.unified_diff(
                             remote_content.splitlines(),
                             local_content.splitlines(),
@@ -287,7 +287,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     with open(_real_file, "r") as f:
                         file_content = f.read()
 
-                        if hashlib.sha256(entry["script"].encode("utf-8")).digest() \
+                        if hashlib.sha256((entry["script"] or "").encode("utf-8")).digest() \
                                 != hashlib.sha256(file_content.encode("utf-8")).digest():
                             can_push = force
                             if not can_push:
