@@ -49,7 +49,7 @@ def ensure_login(
 
         cookie_str: str = callback_app.cookie.get()
         key, value = cookie_str.split(";", 1)[0].split("=")
-        scriptor_config.get("cookies",{})[key] = value
+        scriptor_config.setdefault("cookies", {})[key] = value
         scriptor_config.save()
 
         return True
