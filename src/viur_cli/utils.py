@@ -6,6 +6,7 @@ import typing
 import datetime
 import getpass
 import subprocess
+from pathlib import Path
 
 
 def rmdir(dir):
@@ -28,16 +29,20 @@ def rmdir(dir):
         pass
 
 
-def system(cmd):
+def system(cmd: str, *, cwd: Path | str | None = None, env: dict[str, str] | None = None) -> None:
     """Run a shell command and abort viur-cli on non-zero exit.
 
-    Still uses ``shell=True`` because callers pass chained shell strings
-    (e.g. ``cd src && npm install && npm run build``). The build
-    pipeline refactor is the right place to switch this to argv lists;
-    until then this wrapper at least replaces the older ``os.system``
-    with ``subprocess.run``.
+    Uses ``shell=True`` because callers pass chained shell strings (e.g.
+    ``npm install && npm run build``) and arbitrary ``exec`` build commands.
+
+    Args:
+        cmd: The shell command to execute.
+        cwd: Working directory for the command (``None`` = current directory).
+        env: The complete environment for the subprocess (``None`` = inherit
+            the parent environment). Callers that only want to *add* variables
+            must merge ``os.environ`` themselves.
     """
-    result = subprocess.run(cmd, shell=True)
+    result = subprocess.run(cmd, shell=True, cwd=cwd, env=env)
     if result.returncode != 0:
         echo_fatal(f"Failed to execute {cmd!r} (exit {result.returncode})")
 

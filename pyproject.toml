@@ -45,3 +45,9 @@ docs = [
     "mkdocs-shadcn",
     "mkdocs-click~=0.8",
 ]
+test = [
+    "pytest~=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

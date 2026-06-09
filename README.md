@@ -114,13 +114,31 @@ Arguments:
 - `version`  version to install
 
 ```sh
-$ viur build {app|clean|release} [option]
+$ viur build {app|clean|release} [options]
 ```
-Builds ViUR Project or specific apps
+Builds the ViUR project or specific apps.
+
 Commands:
-- `app` Build a specific application
-- `clean` Clean up Build Artifacts
-- `release` Build all relevant applications to deploy the project
+- `release` Build every entry of a profile's `builds` section
+- `app` Build a single named application
+- `clean` Clean up build artifacts
+
+Options (all three commands):
+- `-p, --profile` Profile from `project.json` (default: `default`)
+- `-v, --verbose` Echo each command, working directory and env override before running it
+- `-e, --env KEY=VALUE` Set an environment variable for the build(s); repeatable
+
+Flags and env combine from two sources: static defaults per build via the `args` / `env`
+fields in `project.json`, plus runtime values on the CLI (CLI wins). Arbitrary pass-through
+arguments to the underlying build tool are accepted **only** by `app`, after `--`:
+
+```sh
+$ viur build app vue -e NODE_ENV=production -- --mode staging
+$ viur build release -p develop -v -e VITE_DISABLE_IMAGES=1
+```
+
+> **Breaking change (v3):** `profile` is now the `-p/--profile` option instead of a positional
+> argument, on all three build commands.
 
 ```sh
 $ viur cloud deploy {app|index|cloudfunction} {profile} {--ext|--yes|--name}
@@ -218,7 +236,12 @@ It contains the default viur project profile and it can be expanded with several
             "npm": {
                 "command": "build",
                 "kind": "npm",
-                "source": ""
+                "source": "",
+                "args": ["--mode", "production"],  // OPTIONAL: appended as `npm run build -- --mode production`
+                "env": {  // OPTIONAL: env vars for the build process; $(…) tokens are expanded
+                    "NODE_ENV": "production",
+                    "VITE_BUILD_REF": "$(ref)"
+                }
             }
             /* OPTIONAL arguments, can be set in default or in a specific profile */
             "appyaml": "app_stub.yaml",  // Use a name other than "app.yaml"
@@ -249,7 +272,15 @@ It contains the default viur project profile and it can be expanded with several
     },
     "develop": {
         "application_name": "my-dev-app-viur3",
-        "version": "dev-$(user)"
+        "version": "dev-$(user)",
+        /* The "builds" section is deep-merged onto "default": a profile only needs to
+           declare the deltas. Per build, fields override the default; the "env" dict is
+           merged (not replaced). Builds not mentioned here are inherited from "default". */
+        "builds": {
+            "npm": {
+                "env": { "NODE_ENV": "development" }  // overrides only this one var
+            }
+        }
     }
 }
 

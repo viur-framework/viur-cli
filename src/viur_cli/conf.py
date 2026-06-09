@@ -91,6 +91,28 @@ class Config(dict):
             f.write('\n')
 
 
+def _merge_builds(base: dict, override: dict) -> dict:
+    """Deep-merge two ``builds`` dicts per build name.
+
+    For each build present in `override`, its fields overlay the matching build
+    in `base`; the ``env`` dict is *merged* (not replaced). Builds only in `base`
+    are kept; builds only in `override` are added. Neither input is mutated.
+    """
+    merged = {name: dict(cfg) for name, cfg in base.items()}
+    for name, override_cfg in override.items():
+        if name not in merged:
+            merged[name] = dict(override_cfg)
+            continue
+
+        target = merged[name]
+        for key, value in override_cfg.items():
+            if key == "env" and isinstance(value, dict) and isinstance(target.get("env"), dict):
+                target["env"] = {**target["env"], **value}
+            else:
+                target[key] = value
+    return merged
+
+
 class ProjectConfig(Config):
     FILENAME = "project.json"
     VERSION = "2.0.0"
@@ -99,8 +121,13 @@ class ProjectConfig(Config):
         self["default"] = {}
         super().__init__()
 
-    def get_profile(self, profile):
+    def get_profile(self, profile: str) -> dict:
         """Return the merged config for `profile` (default overlaid with profile-specific keys).
+
+        Top-level keys use a shallow overlay (profile overrides default). The
+        ``builds`` subtree is merged *deeply* via :func:`_merge_builds` so a
+        profile can override individual build fields — and individual ``env``
+        entries — without having to redeclare the whole ``builds`` section.
 
         Args:
             profile: A profile key from ``project.json``. Must not be
@@ -112,7 +139,11 @@ class ProjectConfig(Config):
             echo_fatal("Your profile can not be named 'Format' ")
         if profile not in self:
             echo_fatal(f"{profile!r} is not a valid profile name")
-        return self["default"].copy() | self[profile]
+
+        merged = self["default"].copy() | self[profile]
+        if (base := self["default"].get("builds")) and (override := self[profile].get("builds")):
+            merged["builds"] = _merge_builds(base, override)
+        return merged
 
     def find_key(self, dictionary, target_key, target, keep=False):
         if target_key in dictionary:
