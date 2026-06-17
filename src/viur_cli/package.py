@@ -110,10 +110,12 @@ def package(operation, component, profile, version):
     }
 
     def perform_operation(component, version):
+        # Use target from builds config if available, otherwise fall back to component name
+        target = conf.get("builds", {}).get(component, {}).get("target", component)
         if operation == 'install':
-            operations_links[component](version, target=component, profile=profile)
+            operations_links[component](version, target=target, profile=profile)
         else:
-            operations_links[component](version="latest", target=component, profile=profile)
+            operations_links[component](version="latest", target=target, profile=profile)
 
     match component:
         case 'vi':
@@ -251,7 +253,7 @@ def vi(version, target, profile):
             elif element == 3:
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
-            elif element == 5:
+            elif element == 4:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
