@@ -111,8 +111,7 @@ def setup():
             scriptor_config.save()
             click.echo("Setup done")
         else:
-            if "cookies" in scriptor_config:
-                del scriptor_config["cookies"]
+            scriptor_config["cookies"] = {}
             click.echo("Failed to login. Did you maybe entered the wrong password?")
     except KeyboardInterrupt:
         pass
@@ -122,9 +121,9 @@ def check_session(ctx: click.Context):
     base_url = scriptor_config.get("base_url")
 
     s = requests.Session()
-    s.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
+    s.cookies = cookiejar_from_dict(scriptor_config["cookies"])
 
-    response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config.get("cookies", {}))
+    response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config["cookies"])
     if not response.ok:
         click.echo("Invalid session, please run `viur script setup` again. okay ?")
         ctx.invoke(setup)

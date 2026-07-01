@@ -269,6 +269,7 @@ class ScriptorConfig(Config):
         self.update({
             "base_url": self.DEFAULT_BASE_URL,
             "working_dir": self.DEFAULT_WORKING_DIR,
+            "cookies": {},
         })
         super().__init__(**kwargs)
 
