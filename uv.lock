@@ -1083,7 +1083,7 @@ docs = [
 
 [[package]]
 name = "viur-scriptor-api"
-version = "1.13.0"
+version = "1.14.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "chardet" },
@@ -1093,9 +1093,9 @@ dependencies = [
     { name = "requests" },
     { name = "simple-term-menu" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ff/b6/f015ad83d6b2b76ac47bde0162b95b484aed223951c475087c96b4be7f2b/viur_scriptor_api-1.13.0.tar.gz", hash = "sha256:13d0ebd91c367ceda150ce9fbf78aeb233ec4060b504c51d9bc37b06eedb2b2d", size = 59272, upload-time = "2025-10-29T12:25:23.515Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/4d/2aba553a2050c5570e66211ede91a19c139fb702461ae08f5d59d49563b2/viur_scriptor_api-1.14.3.tar.gz", hash = "sha256:a55006f3dba14a218dbeec4195c0b514472a284b088307775cb833b356252eea", size = 63920, upload-time = "2026-05-06T14:12:27.933Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6d/36/2c22514beb2c8d5ed7f1a38c6fe0111ac03de09d4bf4ac01f03ca21b93e3/viur_scriptor_api-1.13.0-py3-none-any.whl", hash = "sha256:440b4506fb4fce89888724fd123733ef6f492b241784c3d3a97c85966f976e81", size = 43330, upload-time = "2025-10-29T12:25:22.25Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/b2/bea16e2bbe615b8bac2ac78148ca1631f0de271d93c6989979c08d10e3db/viur_scriptor_api-1.14.3-py3-none-any.whl", hash = "sha256:b2254949deb19a777b10e67f472f9087af3cda0acd120576af43e75c4b45a9fd", size = 47188, upload-time = "2026-05-06T14:12:26.398Z" },
 ]
 
 [[package]]
