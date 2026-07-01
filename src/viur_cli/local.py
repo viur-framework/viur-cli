@@ -1,4 +1,9 @@
+import contextlib
+import itertools
 import json
+import sys
+import threading
+import time
 
 import click
 import requests
@@ -186,6 +191,41 @@ def check(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
 
+@contextlib.contextmanager
+def _spinner(message):
+    """Show an animated spinner next to ``message`` until the block exits.
+
+    No-op (prints the message once) when stdout is not a TTY so CI logs
+    stay clean.
+    """
+    styled = click.style(message, fg="cyan")
+    if not sys.stdout.isatty():
+        click.echo(styled)
+        yield
+        return
+
+    done = threading.Event()
+
+    def spin():
+        for ch in itertools.cycle("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
+            if done.is_set():
+                break
+            sys.stdout.write(f"\r{styled} {click.style(ch, fg='cyan')}")
+            sys.stdout.flush()
+            time.sleep(0.1)
+
+    t = threading.Thread(target=spin, daemon=True)
+    t.start()
+    try:
+        yield
+    finally:
+        done.set()
+        t.join()
+        # Leave the message in place; swap the spinner glyph for a check mark.
+        sys.stdout.write(f"\r{styled} {click.style('✓', fg='cyan')}\n")
+        sys.stdout.flush()
+
+
 def do_checks(dev=True):
     """Run Python (pip-audit) and npm (npm audit) vulnerability scans.
 
@@ -204,11 +244,12 @@ def do_checks(dev=True):
 
     # --- Python vulnerability check via pip-audit (PyPA tool, OSV data) ---
     try:
-        result = subprocess.run(
-            ["uvx", "pip-audit", "--format", "json", "--vulnerability-service", "osv"],
-            capture_output=True,
-            text=True,
-        )
+        with _spinner("Scanning Python dependencies (pip-audit)"):
+            result = subprocess.run(
+                ["uvx", "pip-audit", "--format", "json", "--vulnerability-service", "osv"],
+                capture_output=True,
+                text=True,
+            )
     except FileNotFoundError:
         echo_warning("uvx not found; skipping Python vulnerability check.")
     else:
@@ -229,7 +270,7 @@ def do_checks(dev=True):
                 vuln_deps = [d for d in deps if d.get("vulns")]
                 total_vulns = sum(len(d["vulns"]) for d in vuln_deps)
 
-                click.echo("\n" + "=" * 60)
+                click.echo("\n\n" + "=" * 60)
                 click.echo("Python Security Scan Results (pip-audit, OSV)")
                 click.echo("=" * 60)
                 click.echo(f"Total Packages:         {len(deps)}")
@@ -240,6 +281,7 @@ def do_checks(dev=True):
                 if vuln_deps:
                     has_vulnerabilities = True
                     click.echo("Run `uvx pip-audit --vulnerability-service osv` for per-package detail.")
+                click.echo()
 
     # --- npm vulnerability check ---
     if shutil.which("npm"):
@@ -258,7 +300,7 @@ def do_checks(dev=True):
             npm_builds.append({"name": build_name, "path": audit_path})
 
         if not npm_builds:
-            click.echo("\n" + "=" * 60)
+            click.echo("\n\n" + "=" * 60)
             click.echo("No npm builds found in config - skipping npm audit")
             click.echo("=" * 60)
         else:
@@ -267,12 +309,13 @@ def do_checks(dev=True):
                 try:
                     npm_audit_dir = build["path"]
 
-                    npm_result = subprocess.run(
-                        ["npm", "audit", "--json"],
-                        capture_output=True,
-                        text=True,
-                        cwd=npm_audit_dir,
-                    )
+                    with _spinner(f"Scanning npm dependencies ({build['name']})"):
+                        npm_result = subprocess.run(
+                            ["npm", "audit", "--json"],
+                            capture_output=True,
+                            text=True,
+                            cwd=npm_audit_dir,
+                        )
 
                     npm_data = json.loads(npm_result.stdout, strict=False)
 
@@ -288,7 +331,7 @@ def do_checks(dev=True):
                         has_vulnerabilities = True
 
                     # Display npm scan summary
-                    click.echo("\n" + "=" * 60)
+                    click.echo("\n\n" + "=" * 60)
                     click.echo(f"npm Security Scan Results - {build['name']}")
                     click.echo("=" * 60)
                     click.echo(f"Build Path:             {npm_audit_dir}")
@@ -309,6 +352,7 @@ def do_checks(dev=True):
 
                     if total_npm_vulns > 0:
                         click.echo(f"Run `npm audit` in {build['path']} for per-package detail.")
+                    click.echo()
 
                 except FileNotFoundError:
                     echo_warning(f"npm audit directory not found: {build['path']}")
@@ -321,7 +365,7 @@ def do_checks(dev=True):
                         f"Unexpected error during npm security check for {build['name']}: {e}"
                     )
     else:
-        click.echo("\n" + "=" * 60)
+        click.echo("\n\n" + "=" * 60)
         click.echo("npm not found - skipping npm audit")
         click.echo("=" * 60)
 
