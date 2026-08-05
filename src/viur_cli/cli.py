@@ -3,7 +3,7 @@ import subprocess
 import click
 from .conf import *
 from .version import __version__
-from .version import MINIMAL_PIPENV
+from .version import MINIMAL_UV
 import semver
 import pprint
 import os
@@ -15,32 +15,22 @@ from pathlib import Path
 @click.version_option(__version__)
 @click.pass_context
 def cli(ctx):
+    """Manage and operate ViUR projects from a single command line.
+
+    Reads `project.json` for per-profile settings (deploy targets, build
+    pipelines, packaged ViUR frontends). Run `viur project list` to see
+    the resolved configuration of a profile.
     """
-    Command-line interface for managing project configuration and information.
+    uv_version = subprocess.check_output(["uv", "self", "version"]).decode("utf-8")
+    match = re.search(r"\b(\d+\.\d+\.\d+)\b", uv_version)
+    sys_uv = match.group(1)
 
-    The viur-cli provides a set of commands to manage your project's configuration in the 'project.json'.
-     It also offers commands to view and modify project information.
-
-    Note:
-
-        - Use the `--version` option to display the CLI tool's version.
-
-        - Run the 'project' command to manage 'project.json' and project configuration settings.
-    """
-
-    # Get the systems pipenv Version Number
-    pipenv_version = subprocess.check_output(['pipenv', '--version']).decode("utf-8")
-    version_pattern = r'\b(\d+\.\d+\.\d+)\b'
-    match = re.search(version_pattern, pipenv_version)
-    sys_pipenv = match.group(1)
-
-    # sys kleiner min
-    if semver.compare(sys_pipenv, MINIMAL_PIPENV) < 0:
+    if semver.compare(sys_uv, MINIMAL_UV) < 0:
         echo_warning(
-            f"Your pipenv Version does not match the recommended pipenv version. \n"
-            f"This mismatch may cause Errors, please consider updating your Systems pipenv version \n"
-            f"Your Version: {sys_pipenv}\n"
-            f"Recommended Version: {MINIMAL_PIPENV}"
+            f"Your uv Version does not match the recommended uv version. \n"
+            f"This mismatch may cause Errors, please consider updating your Systems uv version \n"
+            f"Your Version: {sys_uv}\n"
+            f"Recommended Version: {MINIMAL_UV}"
         )
 
 
@@ -48,7 +38,7 @@ def cli(ctx):
 @click.argument("action", type=click.Choice(['list']))
 @click.argument("profile", default="default")
 def project(action, profile):
-    """List your project.json Configuration File"""
+    """Inspect the resolved project.json configuration for a profile."""
     project_config = config.get_profile(profile)
     if action == "list":
         echo_info(f"These are the Settings for {profile} profile")
@@ -59,10 +49,14 @@ def project(action, profile):
 @click.option('--shell', type=click.Choice(['bash', 'zsh', 'fish', 'auto']),
               default='auto', help='Shell type (auto-detect if not specified)')
 def setup_autocomplete(shell):
-    """Install shell autocompletion for the viur CLI.
+    """Install shell tab-completion for the viur CLI.
 
-    This command sets up autocompletion for your shell, making it easier
-    to use the viur CLI by providing tab-completion for commands and options.
+    Generates Click's completion script for the chosen shell and writes it
+    next to the shell's rc file (sourcing it from `~/.bashrc` / `~/.zshrc`,
+    or directly into fish's completions dir).
+
+    Args:
+        shell: ``bash``, ``zsh``, ``fish``, or ``auto`` (detect from $SHELL).
     """
     # Auto-detect shell if not specified
     if shell == 'auto':
@@ -258,3 +252,24 @@ def autocomplete_info():
         echo_warning("No autocompletion installed")
         echo_info("\nTo install, run:")
         echo_info("  viur setup-autocomplete")
+
+
+def main() -> None:
+    """Entry point used by the ``viur`` console script.
+
+    Imports each command module explicitly so its ``@cli.command`` /
+    ``@cli.group`` decorators bind to the root ``cli`` group above. This
+    replaces the v2 pattern that relied on star-imports in
+    ``__init__.py`` to trigger the same decorator side-effects.
+    """
+    # Side-effect imports — decorators run on module load.
+    from viur_cli import build  # noqa: F401
+    from viur_cli import cloud  # noqa: F401
+    from viur_cli import local  # noqa: F401
+    from viur_cli import package  # noqa: F401
+    from viur_cli import setup  # noqa: F401
+    from viur_cli import update  # noqa: F401
+    from viur_cli import deprecated  # noqa: F401
+    from viur_cli.scriptor import script  # noqa: F401
+
+    cli()

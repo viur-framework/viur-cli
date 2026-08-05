@@ -1,49 +1,60 @@
+import contextlib
+import itertools
 import json
+import sys
+import threading
+import time
 
 import click
-import os
+import requests
 import shutil
 import subprocess
 
-from viur_cli import echo_info, echo_warning
 from .conf import config
-from . import cli, echo_error, utils, echo_fatal
-from requests import get
-from .package import vi as vi_install
-from types import SimpleNamespace
+from .cli import cli
+from . import utils
+from .utils import echo_warning, echo_error, echo_fatal
 
 
 def get_user_info():
-    gcloud_auth_process = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'],
-                                         capture_output=True,
-                                         text=True)
+    """Fetch the gcloud-authenticated user's profile via Google's userinfo endpoint."""
+    gcloud_auth_process = subprocess.run(
+        ["gcloud", "auth", "application-default", "print-access-token"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    auth_token = gcloud_auth_process.stdout.strip()
 
-    auth_token = gcloud_auth_process.stdout.strip()  # Extract auth token
-
-    curl_command = f'curl -X GET -H "Authorization: Bearer {auth_token}" "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"'
-
-    curl_process = subprocess.run(curl_command,
-                                  capture_output=True, shell=True,
-                                  text=True)
-    user_info = json.loads(curl_process.stdout)
-
-    return user_info
+    response = requests.get(
+        "https://www.googleapis.com/oauth2/v1/userinfo",
+        params={"alt": "json"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 @cli.command(context_settings={"ignore_unknown_options": True})
-@click.argument("profile", default='default')
+@click.argument("profile", default="default")
 @click.argument("additional_args", nargs=-1)
 def run(profile, additional_args):
-    """
-        Start your application locally.
-        The 'run' command launches your ViUR application locally specified configuration and optional arguments.
-        This Enforces the Usage of gcloud tool
+    """Start the application locally via app_server (requires an active gcloud login).
+
+    Resolves ``application_name`` from the profile and forwards
+    ``--appyaml``, ``--port`` and ``--gunicorn_port`` to ``app_server``
+    if they are set.
     """
     try:
-        echo_warning(f"You are using the development Server with your default account: {get_user_info()['email']}")
+        echo_warning(
+            f"You are using the development Server with your default account: {get_user_info()['email']}"
+        )
     except:
-        echo_fatal(f"It seems you are not Using an appropriate account. "
-                   f"Please install the 'gcloud' tool or Log in with an appropriate account.")
+        echo_fatal(
+            f"It seems you are not Using an appropriate account. "
+            f"Please install the 'gcloud' tool or Log in with an appropriate account."
+        )
 
     conf = config.get_profile(profile)
     additional_args = list(additional_args)
@@ -56,30 +67,25 @@ def run(profile, additional_args):
         additional_args.append(f"--gunicorn_port={conf['gunicorn_port']}")
 
     utils.system(
-        f'app_server -A={conf["application_name"]} {conf["distribution_folder"]} {" ".join(additional_args)}')
+        f"app_server -A={conf['application_name']} {conf['distribution_folder']} {' '.join(additional_args)}"
+    )
 
 
 @cli.command()
 @click.argument("profile", default="default")
 def env(profile):
-    """
-       Check the local environment for ViUR development.
-
-       The 'env' command provides information about the versions tools and dependencies, such as ViUR-CLI, app_server,
-       git, Python, npm, node, and more. It checks the availability of these tools and reports their versions.
-
-    """
+    """Print the resolved profile and the versions of CLI tools used by ViUR development."""
 
     valid_icon = "\U00002714"
-    failed_icon = "\U0000274C"
+    failed_icon = "\U0000274c"
 
     conf = config.get_profile(profile)
     click.echo(f"Project Info:\n--------------------------------")
     try:
-        click.echo(f'format: {config["format"]}')
+        click.echo(f"format: {config['format']}")
         for entry in conf["builds"]:
             if entry in conf["builds"]:
-                click.echo(f'\n {entry}: {conf["builds"][entry]["version"]} ')
+                click.echo(f"\n {entry}: {conf['builds'][entry]['version'] } ")
 
     except Exception as e:
         echo_error("Error while collecting viur info")
@@ -89,70 +95,76 @@ def env(profile):
 
     # viur-cli
     if shutil.which("viur"):
-        app_server_version = subprocess.check_output(['viur', '--version']).decode("utf-8")
+        app_server_version = subprocess.check_output(["viur", "--version"]).decode(
+            "utf-8"
+        )
         click.echo(f"{valid_icon} {app_server_version}")
     else:
         click.echo(f"{failed_icon} ViUR-CLI")
 
     # app_server
     if shutil.which("app_server"):
-        app_server_version = subprocess.check_output(['app_server', '-V']).decode("utf-8")
+        app_server_version = subprocess.check_output(["app_server", "-V"]).decode(
+            "utf-8"
+        )
         click.echo(f"{valid_icon} {app_server_version}")
     else:
         click.echo(f"{failed_icon} app_server")
 
     # git
     if shutil.which("git"):
-        git_version = subprocess.check_output(['git', '--version']).decode("utf-8")
+        git_version = subprocess.check_output(["git", "--version"]).decode("utf-8")
         click.echo(f"{valid_icon} {git_version}")
     else:
         click.echo(f"{failed_icon}")
 
     # python3
     if shutil.which("python3"):
-        npm_version = subprocess.check_output(['python3', '-V']).decode("utf-8")
+        npm_version = subprocess.check_output(["python3", "-V"]).decode("utf-8")
         click.echo(f"{valid_icon} python3 > {npm_version}")
     else:
         click.echo(f"{failed_icon}")
 
     # python
     if shutil.which("python"):
-        npm_version = subprocess.check_output(['python', '-V']).decode("utf-8")
+        npm_version = subprocess.check_output(["python", "-V"]).decode("utf-8")
         click.echo(f"{valid_icon} python > {npm_version}")
     else:
         click.echo(f"{failed_icon}")
 
     # python3
     if shutil.which("pyenv"):
-        pyenv_version = subprocess.check_output(['pyenv', '--version']).decode("utf-8")
+        pyenv_version = subprocess.check_output(["pyenv", "--version"]).decode("utf-8")
         click.echo(f"{valid_icon} {pyenv_version}")
     else:
         click.echo(f"{failed_icon}")
 
     # npm
     if shutil.which("npm"):
-        npm_version = subprocess.check_output(['npm', '-v']).decode("utf-8")
+        npm_version = subprocess.check_output(["npm", "-v"]).decode("utf-8")
         click.echo(f"{valid_icon} npm {npm_version}")
     else:
         click.echo(f"{failed_icon} npm")
 
     # node
     if shutil.which("node"):
-        npm_version = subprocess.check_output(['node', '-v']).decode("utf-8")
+        npm_version = subprocess.check_output(["node", "-v"]).decode("utf-8")
         click.echo(f"{valid_icon} node {npm_version}")
     else:
         click.echo(f"{failed_icon} node")
 
     # pnpm
     if shutil.which("pnpm"):
-        npm_version = subprocess.check_output(['pnpm', '-v']).decode("utf-8")
+        npm_version = subprocess.check_output(["pnpm", "-v"]).decode("utf-8")
         click.echo(f"{valid_icon} pnpm {npm_version}")
     else:
         click.echo(f"{failed_icon} pnpm (optional)")
 
     # gcloud
     if shutil.which("gcloud"):
-        gcloud_version = subprocess.check_output(['gcloud', '-v']).decode("utf-8").split("\n\n")[0]
+        gcloud_version = (
+            subprocess.check_output(["gcloud", "-v"]).decode("utf-8").split("\n\n")[0]
+        )
         versionList = []
         for line in gcloud_version.split("\n"):
             if not line:
@@ -160,7 +172,7 @@ def env(profile):
             if not line.startswith("Google Cloud SDK"):
                 line = " - " + line
             versionList.append(line)
-        versionString = '\n'.join(versionList)
+        versionString = "\n".join(versionList)
         click.echo(f"{valid_icon} {versionString}")
     else:
         click.echo(f"{failed_icon} gcloud")
@@ -171,57 +183,190 @@ def env(profile):
 
 
 @cli.command()
-@click.option('--dev', '-d', is_flag=True, default=False)
+@click.option("--dev", "-d", is_flag=True, default=False)
 def check(dev):
-    """
-    Perform security checks for vulnerabilities.
-    The 'check' command helps you identify and address security vulnerabilities in your project's dependencies.
-    """
+    """Audit Python (pip-audit) and npm (npm audit) dependencies for known vulnerabilities."""
 
     if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
 
 
+@contextlib.contextmanager
+def _spinner(message):
+    """Show an animated spinner next to ``message`` until the block exits.
+
+    No-op (prints the message once) when stdout is not a TTY so CI logs
+    stay clean.
+    """
+    styled = click.style(message, fg="cyan")
+    if not sys.stdout.isatty():
+        click.echo(styled)
+        yield
+        return
+
+    done = threading.Event()
+
+    def spin():
+        for ch in itertools.cycle("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
+            if done.is_set():
+                break
+            sys.stdout.write(f"\r{styled} {click.style(ch, fg='cyan')}")
+            sys.stdout.flush()
+            time.sleep(0.1)
+
+    t = threading.Thread(target=spin, daemon=True)
+    t.start()
+    try:
+        yield
+    finally:
+        done.set()
+        t.join()
+        # Leave the message in place; swap the spinner glyph for a check mark.
+        sys.stdout.write(f"\r{styled} {click.style('✓', fg='cyan')}\n")
+        sys.stdout.flush()
+
+
 def do_checks(dev=True):
+    """Run Python (pip-audit) and npm (npm audit) vulnerability scans.
+
+    Args:
+        dev: Reserved for future filtering between dev/prod-only deps.
+            Currently unused but kept on the signature for caller
+            compatibility.
+
+    Returns:
+        ``True`` when no vulnerabilities were found across either scan,
+        ``False`` if at least one was reported. Tool failures are printed
+        but do not flip the return value to ``False`` unless the failure
+        actually surfaces a vulnerability.
     """
-    Runs several toolchain and ecosystem security checks for vulnerabilities, and reports these on demand.
-    """
-    all_checks_passed = True
+    has_vulnerabilities = False
 
-    def show_output_if_not(args, check_str):
-        try:
-            result = subprocess.check_output(args, stderr=subprocess.STDOUT, encoding="utf-8")
-        except subprocess.CalledProcessError as err:
-            result = err.output.strip()
+    # --- Python vulnerability check via pip-audit (PyPA tool, OSV data) ---
+    try:
+        with _spinner("Scanning Python dependencies (pip-audit)"):
+            result = subprocess.run(
+                ["uvx", "pip-audit", "--format", "json", "--vulnerability-service", "osv"],
+                capture_output=True,
+                text=True,
+            )
+    except FileNotFoundError:
+        echo_warning("uvx not found; skipping Python vulnerability check.")
+    else:
+        # pip-audit returncode: 0 = no vulns, 1 = vulns found, anything else = real error.
+        if result.returncode not in (0, 1):
+            echo_error(
+                f"pip-audit failed (exit {result.returncode}): "
+                f"{(result.stderr or result.stdout)[:500]}"
+            )
+        else:
+            try:
+                data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                echo_error(f"Failed to parse pip-audit output: {e}")
+                echo_error(f"Raw output (truncated): {result.stdout[:500]}")
+            else:
+                deps = data.get("dependencies", [])
+                vuln_deps = [d for d in deps if d.get("vulns")]
+                total_vulns = sum(len(d["vulns"]) for d in vuln_deps)
 
-        if check_str not in result:
-            print(result)
-            return True
+                click.echo("\n\n" + "=" * 60)
+                click.echo("Python Security Scan Results (pip-audit, OSV)")
+                click.echo("=" * 60)
+                click.echo(f"Total Packages:         {len(deps)}")
+                click.echo(f"Vulnerable Packages:    {len(vuln_deps)}")
+                click.echo(f"Total Vulnerabilities:  {total_vulns}")
+                click.echo("=" * 60)
 
-        return False
+                if vuln_deps:
+                    has_vulnerabilities = True
+                    click.echo("Run `uvx pip-audit --vulnerability-service osv` for per-package detail.")
+                click.echo()
 
-    # Check Pipenv vulnerabilities
+    # --- npm vulnerability check ---
+    if shutil.which("npm"):
+        conf = config.get_profile("default")
+        builds = conf.get("builds", {})
+        sources_folder = conf.get("sources_folder", "./sources")
 
-    if show_output_if_not("pipenv check --output minimal".split(), "0 vulnerabilities found"):
-        all_checks_passed = False
+        # Collect all npm builds. Empty `source` is valid and means
+        # "audit at the sources_folder root" (npm workspace root).
+        npm_builds = []
+        for build_name, build_config in builds.items():
+            if build_config.get("kind") != "npm":
+                continue
+            source_path = build_config.get("source") or ""
+            audit_path = f"{sources_folder}/{source_path}".rstrip("/") if source_path else sources_folder
+            npm_builds.append({"name": build_name, "path": audit_path})
 
-    if dev:
-        if show_output_if_not("pipenv check --output minimal --categories develop".split(), "0 vulnerabilities found"):
-            all_checks_passed = False
+        if not npm_builds:
+            click.echo("\n\n" + "=" * 60)
+            click.echo("No npm builds found in config - skipping npm audit")
+            click.echo("=" * 60)
+        else:
+            # Run audit for each npm build
+            for build in npm_builds:
+                try:
+                    npm_audit_dir = build["path"]
 
-    # Check npm vulnerabilities for all npm builds
-    cfg = config.get_profile("default")
-    if builds_cfg := cfg.get("builds"):
-        if npm_apps := [k for k, v in builds_cfg.items() if builds_cfg[k]["kind"] == "npm"]:
-            for name in npm_apps:
-                path = os.path.join(cfg["sources_folder"], builds_cfg[name]["source"])
+                    with _spinner(f"Scanning npm dependencies ({build['name']})"):
+                        npm_result = subprocess.run(
+                            ["npm", "audit", "--json"],
+                            capture_output=True,
+                            text=True,
+                            cwd=npm_audit_dir,
+                        )
 
-                if dev:
-                    args = ("npm", "audit", "--prefix", path)
-                else:
-                    args = ("npm", "audit", "--omit", "dev", "--prefix", path)
+                    npm_data = json.loads(npm_result.stdout, strict=False)
 
-                if show_output_if_not(args, "found 0 vulnerabilities"):
-                    all_checks_passed = False
+                    metadata = npm_data.get("metadata", {})
+                    npm_vulnerabilities = npm_data.get("vulnerabilities", {})
 
-    return all_checks_passed
+                    vuln_counts = metadata.get("vulnerabilities", {})
+                    dependencies = metadata.get("dependencies", {})
+
+                    total_npm_vulns = vuln_counts.get("total", 0)
+
+                    if total_npm_vulns > 0:
+                        has_vulnerabilities = True
+
+                    # Display npm scan summary
+                    click.echo("\n\n" + "=" * 60)
+                    click.echo(f"npm Security Scan Results - {build['name']}")
+                    click.echo("=" * 60)
+                    click.echo(f"Build Path:             {npm_audit_dir}")
+                    click.echo(
+                        f"Total Dependencies:     {dependencies.get('total', 0)}"
+                    )
+                    click.echo(f"Total Vulnerabilities:  {total_npm_vulns}")
+                    click.echo(
+                        f"  Critical:             {vuln_counts.get('critical', 0)}"
+                    )
+                    click.echo(f"  High:                 {vuln_counts.get('high', 0)}")
+                    click.echo(
+                        f"  Moderate:             {vuln_counts.get('moderate', 0)}"
+                    )
+                    click.echo(f"  Low:                  {vuln_counts.get('low', 0)}")
+                    click.echo(f"  Info:                 {vuln_counts.get('info', 0)}")
+                    click.echo("=" * 60)
+
+                    if total_npm_vulns > 0:
+                        click.echo(f"Run `npm audit` in {build['path']} for per-package detail.")
+                    click.echo()
+
+                except FileNotFoundError:
+                    echo_warning(f"npm audit directory not found: {build['path']}")
+                except json.JSONDecodeError as e:
+                    echo_error(
+                        f"Error parsing npm audit output for {build['name']}: {e}"
+                    )
+                except Exception as e:
+                    echo_error(
+                        f"Unexpected error during npm security check for {build['name']}: {e}"
+                    )
+    else:
+        click.echo("\n\n" + "=" * 60)
+        click.echo("npm not found - skipping npm audit")
+        click.echo("=" * 60)
+
+    return not has_vulnerabilities

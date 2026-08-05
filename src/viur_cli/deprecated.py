@@ -1,5 +1,6 @@
 import click
-from . import cli, echo_error
+from .cli import cli
+from .utils import echo_error
 
 '''
     This Document keeps Track of "Deprecation Warnings"

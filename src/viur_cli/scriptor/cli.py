@@ -31,9 +31,7 @@ def get_modules():
 
 @cli.group()
 def script():
-    """
-    Manage and run scriptor scripts locally on the console
-    """
+    """Pull, push, and run ViUR Scriptor scripts against a deployed app."""
 
 
 @script.command()
@@ -41,8 +39,10 @@ def script():
 @click.option('--username', default=None, help='Set the username')
 @click.option('--working_dir', default=None, help='Set the working directory where scripts are stored to')
 def configure(url: str, username: str, working_dir: str):
-    """
-    Manage configuration settings.
+    """Update Scriptor connection settings (base URL, username, working dir).
+
+    Only flags that are passed are written; the rest of the
+    `viur_scriptor_config.json` keeps its previous values.
     """
     if not any([url, username, working_dir]):
         click.echo("No parameters provided. Use one or more of the following options:")
@@ -74,8 +74,12 @@ def configure(url: str, username: str, working_dir: str):
 
 @script.command()
 def setup():
-    """
-    Setup user session with a given username and password.
+    """Authenticate against the configured Scriptor base URL and persist the session.
+
+    Tries SSO via :func:`ensure_login` first (requires viur-core
+    ≥ 3.8.19); falls back to user+password prompt and stores the
+    resulting cookies in `viur_scriptor_config.json` for subsequent
+    `viur script pull/push/run`.
     """
 
     base_url = scriptor_config.get("base_url")
@@ -107,8 +111,7 @@ def setup():
             scriptor_config.save()
             click.echo("Setup done")
         else:
-            if "cookies" in scriptor_config:
-                del scriptor_config["cookies"]
+            scriptor_config["cookies"] = {}
             click.echo("Failed to login. Did you maybe entered the wrong password?")
     except KeyboardInterrupt:
         pass
@@ -118,9 +121,9 @@ def check_session(ctx: click.Context):
     base_url = scriptor_config.get("base_url")
 
     s = requests.Session()
-    s.cookies = cookiejar_from_dict(scriptor_config.get("cookies", {}))
+    s.cookies = cookiejar_from_dict(scriptor_config["cookies"])
 
-    response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config.get("cookies", {}))
+    response = s.get(base_url + "/vi/user/view/self", cookies=scriptor_config["cookies"])
     if not response.ok:
         click.echo("Invalid session, please run `viur script setup` again. okay ?")
         ctx.invoke(setup)
@@ -133,8 +136,10 @@ def check_session(ctx: click.Context):
               help='Overwrite local files without asking for confirmation')
 @click.pass_context
 def pull(ctx: click.Context, force: bool):
-    """
-    Pull contents from server to working_dir.
+    """Download all server-side Scriptor scripts into the local working_dir.
+
+    Existing files with diverging content prompt for confirmation
+    before being overwritten, unless ``--force`` is set.
     """
     check_session(ctx)
 
@@ -238,8 +243,11 @@ def pull(ctx: click.Context, force: bool):
               help="Watch for file changes in the script folder and push them to the server")
 @click.pass_context
 def push(ctx: click.Context, force: bool, watch: bool):
-    """
-    Push contents of working_dir to server.
+    """Upload local working_dir scripts to the server.
+
+    Skips files whose SHA-256 already matches the server-side copy.
+    With ``--watch`` the command stays running and re-pushes any file
+    that changes on disk.
     """
 
     check_session(ctx)
@@ -419,9 +427,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
 @click.argument("args", nargs=-1)
 @click.pass_context
 def run(ctx: click.Context, path: str, args=None):
-    """
-    Locally run a script located in the working_dir.
-    """
+    """Execute `working_dir/PATH` locally with the configured Scriptor session."""
     check_session(ctx)
 
     for dir in (os.path.dirname(os.path.realpath(__file__)), scriptor_config.get("working_dir")):
