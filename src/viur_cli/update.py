@@ -109,12 +109,12 @@ dependencies = [
     # Generate requirements.txt with uv
     cmd = [
         "uv",
-        "pip",
-        "compile",
-        str(pyproject_file),
-        "--generate-hashes",
+        "export",
+        "--format",
+        "requirements-txt",
         "--output-file",
-        str(requirements_file)
+        str(requirements_file),
+        "--no-dev",
     ]
 
     try:
