@@ -29,6 +29,32 @@ def get_modules():
     return _modules
 
 
+def normalize_path(path: str | None) -> str:
+    """
+    Normalize a tree path for comparison.
+
+    The server stores node and leaf paths without surrounding slashes, whereas paths
+    derived from the local working directory may carry a leading or trailing slash.
+
+    :param path: The path to normalize, may be ``None``.
+    :return: The path without leading or trailing slashes.
+    """
+    return (path or "").strip("/")
+
+
+def normalize_newlines(content: str | None) -> str:
+    """
+    Normalize all line endings of a script to ``\\n``.
+
+    Scripts edited in the browser are stored with CRLF line endings, while local files
+    usually use LF. Without normalization every file would be reported as modified.
+
+    :param content: The script content to normalize, may be ``None``.
+    :return: The content using ``\\n`` line endings only.
+    """
+    return (content or "").replace("\r\n", "\n").replace("\r", "\n")
+
+
 @cli.group()
 def script():
     """
@@ -159,7 +185,7 @@ def pull(ctx: click.Context, force: bool):
 
                 def create_file():
                     with open(_path, "a+") as f:
-                        f.write(entry["script"] or "")
+                        f.write(normalize_newlines(entry["script"]))
 
                 if os.path.exists(_path):
                     if force:
@@ -265,8 +291,6 @@ def push(ctx: click.Context, force: bool, watch: bool):
             if not working_dir.endswith("/"):
                 tmp += "/"
             file = file.removeprefix(tmp)
-            if _type == "node":
-                file += "/"
 
             is_root = False
             parent = parent.removeprefix(tmp).removeprefix(working_dir.replace("/", ""))
@@ -277,7 +301,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 # Search for the entry with the given path
                 entry = None
                 async for item in tree.list(skel_type=_type):
-                    if item.get("path") == file:
+                    if normalize_path(item.get("path")) == normalize_path(file):
                         entry = item
                         break
 
@@ -287,8 +311,11 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     with open(_real_file, "r") as f:
                         file_content = f.read()
 
-                        if hashlib.sha256((entry["script"] or "").encode("utf-8")).digest() \
-                                != hashlib.sha256(file_content.encode("utf-8")).digest():
+                        remote_content = normalize_newlines(entry["script"])
+                        local_content = normalize_newlines(file_content)
+
+                        if hashlib.sha256(remote_content.encode("utf-8")).digest() \
+                                != hashlib.sha256(local_content.encode("utf-8")).digest():
                             can_push = force
                             if not can_push:
                                 can_push = click.confirm(f"Content of {file} changed. Overwrite?")
@@ -317,17 +344,30 @@ def push(ctx: click.Context, force: bool, watch: bool):
                             root_node_entry = node
                             break
 
-                    if not parent.endswith("/"):
-                        parent += "/"
+                    if root_node_entry is None:
+                        click.echo(click.style(
+                            "Unable to determine the root node of the script tree. "
+                            "Make sure the server is reachable and the session is still valid, "
+                            "otherwise run `viur script setup` again.",
+                            fg="red"
+                        ))
+                        return
 
                     parent_entry = root_node_entry
                     if not is_root:
                         # Find parent entry
                         parent_entry = None
                         async for node in tree.list(skel_type="node"):
-                            if node.get("path") == parent:
+                            if normalize_path(node.get("path")) == normalize_path(parent):
                                 parent_entry = node
                                 break
+
+                        if parent_entry is None:
+                            click.echo(click.style(
+                                f"Skipping {file}, because its parent folder {parent} does not exist on the server.",
+                                fg="red"
+                            ))
+                            continue
 
                     last = file
                     if file.count("/") > 0:
