@@ -3,7 +3,6 @@ import click
 import json
 import requests
 import os
-import hashlib
 import difflib
 import asyncio
 import sys
@@ -42,17 +41,19 @@ def normalize_path(path: str | None) -> str:
     return (path or "").strip("/")
 
 
-def normalize_newlines(content: str | None) -> str:
+def scripts_differ(remote: str | None, local: str | None) -> bool:
     """
-    Normalize all line endings of a script to ``\\n``.
+    Compare a remote and a local script, ignoring differing line endings.
 
-    Scripts edited in the browser are stored with CRLF line endings, while local files
-    usually use LF. Without normalization every file would be reported as modified.
+    Scripts edited in the browser are stored with CRLF, whereas local files usually use
+    LF. Comparing them line by line -- as ``pull`` already does -- keeps both commands
+    from reporting a file as modified just because of its line endings.
 
-    :param content: The script content to normalize, may be ``None``.
-    :return: The content using ``\\n`` line endings only.
+    :param remote: The script as stored on the server, may be ``None``.
+    :param local: The script as read from the working directory, may be ``None``.
+    :return: True if the scripts differ in anything but their line endings.
     """
-    return (content or "").replace("\r\n", "\n").replace("\r", "\n")
+    return (remote or "").splitlines() != (local or "").splitlines()
 
 
 @cli.group()
@@ -185,12 +186,12 @@ def pull(ctx: click.Context, force: bool):
 
                 def create_file():
                     with open(_path, "a+") as f:
-                        f.write(normalize_newlines(entry["script"]))
+                        f.write(entry["script"] or "")
 
                 if os.path.exists(_path):
                     if force:
                         with open(_path, "r") as f:
-                            changed = f.read().splitlines() != (entry["script"] or "").splitlines()
+                            changed = scripts_differ(entry["script"], f.read())
                         os.remove(_path)
                         create_file()
                         if changed:
@@ -311,11 +312,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     with open(_real_file, "r") as f:
                         file_content = f.read()
 
-                        remote_content = normalize_newlines(entry["script"])
-                        local_content = normalize_newlines(file_content)
-
-                        if hashlib.sha256(remote_content.encode("utf-8")).digest() \
-                                != hashlib.sha256(local_content.encode("utf-8")).digest():
+                        if scripts_differ(entry["script"], file_content):
                             can_push = force
                             if not can_push:
                                 can_push = click.confirm(f"Content of {file} changed. Overwrite?")
