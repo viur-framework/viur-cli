@@ -87,7 +87,7 @@ class Config(dict):
         """Persist the current dict back to FILENAME as pretty-printed JSON."""
         os.chdir(self.path)
         with open(self.FILENAME, "w") as f:
-            json.dump(self, f, indent=4, sort_keys=True)
+            json.dump(self, f, indent=4)
             f.write('\n')
 
 
