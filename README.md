@@ -11,315 +11,245 @@
     Command-line interface for <a href="https://www.viur.dev">ViUR framework</a> project maintenance.
 </div>
 
-## What does it do?
-`viur-cli` allows to control, maintain, develop and deploy a ViUR project from one central
-location by using the `viur` command.
+## What it is
 
+A ViUR project has a handful of recurring chores: start it locally, build its
+frontends, install the admin bundle, regenerate the requirements for App Engine,
+deploy to Google Cloud, audit the dependencies. Each of them is a different tool
+with its own arguments, and each needs the same three facts about the project:
+which App Engine project it belongs to, where the deploy folder is, what the
+version string is.
+
+`viur-cli` puts these facts into one file, `project.json`, and puts the chores
+behind one command, `viur`. The file holds a `default` profile and any number of
+named profiles on top of it, so `viur cloud deploy app live` and
+`viur cloud deploy app develop` differ in one argument and not in a checklist.
+
+What comes with it:
+
+- **Profiles.** Every profile inherits `default` and overrides what differs,
+  typically `application_name` and `version`.
+- **Builds in declaration order.** The `builds` section lists npm bundles and
+  shell steps; `viur build release` runs them top to bottom.
+- **Frontend bundles as packages.** `viur admin install`, `viur vi install` and
+  `viur scriptor install` fetch a released bundle from GitHub and unpack it into
+  the deploy folder, pinned to the version recorded in `project.json`.
+- **Version strings with placeholders.** `live-$(year)-$(month)-$(day)` or
+  `dev-$(user)-$(ref)` are resolved at deploy time.
+- **A security gate.** `viur check` runs `pip-audit` over the Python
+  environment and `npm audit` over every npm build; `viur cloud deploy app`
+  runs it first, then regenerates `deploy/requirements.txt`, then uploads.
+
+## Requirements
+
+| What | What for |
+|---|---|
+| Python 3.11 or newer | the CLI itself |
+| [`uv`](https://docs.astral.sh/uv/) 0.9.15 or newer | installs the CLI and regenerates `deploy/requirements.txt` |
+| [`gcloud`](https://cloud.google.com/sdk) | `viur run` (login check) and everything under `viur cloud` |
+| `git` | `viur create` and the `$(ref)` placeholder |
+| `npm` | builds of `kind: npm` and their audit in `viur check` |
+| [`app_server`](https://github.com/viur-framework/viur-app_server) | the local development server behind `viur run`; installed as a dependency of `viur-cli` |
+
+macOS and Linux. The CLI warns at start when `uv` is older than the version it
+was tested with.
 
 ## Installation
 
-To use `viur-cli` in your ViUR projects, install the [PyPI package `viur-cli`](https://pypi.org/project/pipenv/).
+Inside a ViUR project, as a development dependency:
 
-```bash
-$ pipenv install --dev viur-cli
+```
+uv add --dev viur-cli
+uv run viur --version
 ```
 
-## Shell Autocompletion
+Or once for the user, independent of any project:
 
-`viur-cli` supports shell autocompletion for bash, zsh, and fish shells. This makes it easier to use the CLI by providing tab-completion for commands and options.
-
-### Installing Autocompletion
-
-To install autocompletion for your shell, run:
-
-```bash
-$ viur setup-autocomplete
+```
+uv tool install viur-cli
 ```
 
-This will automatically detect your shell and set up the appropriate completion script. You can also specify a shell explicitly:
+Updating is `uv lock --upgrade-package viur-cli` in the project, or
+`uv tool upgrade viur-cli` for the global install.
 
-```bash
-$ viur setup-autocomplete --shell=bash  # For bash
-$ viur setup-autocomplete --shell=zsh   # For zsh
-$ viur setup-autocomplete --shell=fish  # For fish
+Coming from v2: the `project.json` format is unchanged, but v3 is `uv` only and
+a project still on `Pipfile` has to migrate first. The steps and the renamed
+commands are in the [migration guide](https://viur-framework.github.io/viur-cli/migration/v2-to-v3/).
+
+## Getting started
+
+```
+viur create my-project        clone viur-base and run its setup wizard
+cd my-project
+viur admin install            fetch the admin frontend into deploy/admin
+viur run                      start the app locally via app_server
+viur build release            run the build steps of project.json
+viur cloud deploy app         audit and deploy the default profile
 ```
 
-After installation, restart your shell or source your shell configuration file:
+`viur-base` brings the `project.json` along and the wizard fills in the
+project name. From then on every `viur` command finds the file by walking up
+from the current directory, so the commands work from any subfolder of the
+project.
 
-```bash
-# For bash
-$ source ~/.bashrc
+`viur run` needs an active `gcloud auth login`, because the local app_server
+talks to Google Cloud with that account. It tells you which account it found.
 
-# For zsh
-$ source ~/.zshrc
-```
+## Commands
 
-### Checking Autocompletion Status
+The reference is generated from the code and lives at
+<https://viur-framework.github.io/viur-cli/commands/>. `viur -h` and
+`viur <command> -h` show the same texts. In short:
 
-To see if autocompletion is installed and get more information:
+| Command | Effect |
+|---|---|
+| `viur create <name>` | clone `viur-base` into `./<name>` and run its setup wizard |
+| `viur run [profile]` | start the app locally via `app_server` |
+| `viur check [--dev]` | audit Python and npm dependencies for known vulnerabilities |
+| `viur build release [profile]` | run every entry of the profile's `builds` section in declaration order |
+| `viur build app <name>` | run a single build entry |
+| `viur build clean [name]` | drop build artifacts of one or all entries |
+| `viur admin`, `viur vi`, `viur scriptor` | `install [version]` or `update` the respective frontend bundle |
+| `viur cloud deploy <app\|index\|cron\|queue\|cloudfunction>` | deploy to Google Cloud; `--ext` appends to the version, `--yes` skips prompts, `--skip_checks` skips the audit |
+| `viur cloud init` | bootstrap a fresh App Engine project by deploying its cron and queue configs |
+| `viur cloud create function` | add a cloud function entry to `project.json` |
+| `viur cloud enable\|disable backup` | manage the backup buckets of the active project |
+| `viur cloud get\|setup gcroles` | export IAM role bindings to `<profile>_roles.json`, or apply them back |
+| `viur cloud copy <bucket2bucket\|bucket2local\|local2bucket>` | copy data between buckets, or between a bucket and the Datastore |
+| `viur cloud cleanup` | run `gcloud datastore indexes cleanup` against `deploy/index.yaml` |
+| `viur update requirements [profile]` | compile `pyproject.toml` into `deploy/requirements.txt` with hashes via `uv pip compile` |
+| `viur env [profile]` | print the resolved profile and the versions of the tools involved |
+| `viur project list [profile]` | print the resolved profile |
+| `viur script ...` | pull, push and run Scriptor scripts, see below |
+| `viur setup-autocomplete [--shell]` | install tab completion for bash, zsh or fish; `autocomplete-info` and `uninstall-autocomplete` go with it |
 
-```bash
-$ viur autocomplete-info
-```
+Every command that reads the configuration takes a profile as its last
+positional argument and defaults to `default`.
 
-### Uninstalling Autocompletion
-
-To remove the autocompletion setup:
-
-```bash
-$ viur uninstall-autocomplete
-```
-
-## Usage
-
-```sh
-$ viur -h
-```
-will show all the commands that are currently supported by viur-cli
-
-```sh
-$ viur --version
-```
-will show your current viur-cli version
-
-
-```sh
-$ viur create myapp
-```
-this will create a new project folder, clone the base project and then call `viur init` to prepare a project.json
-you can use this to get started quickly with a new viur project from scratch.
-
-```sh
-$ viur run [profile]
-```
-run the appserver and start your app locally. You may specify a target profile.
-
-
-```sh
-$ viur check [--dev]
-```
-Runs a security check for the python environment and for each npm project registered under builds.
-
-```sh
-$ viur package {install|update} {vi|scriptor|admin|all}
-```
-handles ViUR ecosystem package operations
-
-Commands:
-- `install`  installs a ViUR package (in a specific version)
-- `update`   updates a ViUR package to the newest version
-
-Arguments:
-- `profile`  profile to install to
-- `version`  version to install
-
-```sh
-$ viur build {app|clean|release} [option]
-```
-Builds ViUR Project or specific apps
-Commands:
-- `app` Build a specific application
-- `clean` Clean up Build Artifacts
-- `release` Build all relevant applications to deploy the project
-
-```sh
-$ viur cloud deploy {app|index|cloudfunction} {profile} {--ext|--yes|--name}
-```
-This Function deploys the Google Cloud application and / or different .yaml files
-Scripts:
-- `app`           Deploy application to the Google Appengine
-  - `index`         Deploy index.yaml to Google Appenginge
-  - `cloudfunction` Deploy Cloudfunction to Google Appengine
-  Commands:
-  - `profile`       The project.json profile you want to Work from
-
-```sh
-$ viur cloud init {service} {profile}
-```
-This Function makes the init deployment for a ViUR project.
-This Function needs to be called so that the development server works locally.
-
-
-```sh
-$ viur cloud {enable|disable} backup
-```
-Enable/ Disable the Backup buckets you need to Backup a cloud project in the Google Cloud Console
-
-```sh
-$ viur cloud setup {gcloud|gcroles}
-```
-Scripts:
-- `gcloud`    This Function setups your project to work on the gcloud plattform
-  - `gcroles`   This function lets you set up Roles for your google appengine Workspace
-
-
-```sh
-$ viur cloud get {gcroles}
-```
-Scripts:
-- `gcroles`   This function lets you get Roles for your google appengine Workspace in a readable .json Format
-
-```sh
-$ viur package {update|install} {vi|admin|scriptor|all} [profile] [version]
-```
-Performs operations on packages
-
-Scripts:
-- `update` Updates an installed package
-- `install` Installs a declared package
-
-Options:
-- `vi`
-- `admin`
-- `scriptor`
-- `all`
-
-```sh
-$ viur env
-```
-Show information about your current environment.
-
-```sh
-$ viur project list
-```
-Pretty prints your `project.json` file on the console.
-
-```sh
-$ viur update {requirements}
-```
-with this you can update your project specific requirements.txt file automatically
+`viur package <install|update> <admin|vi|scriptor|all>` still works but prints a
+deprecation warning and is removed in v3.2. `viur admin install` and its
+siblings replace it.
 
 ## The project.json
-The `project.json` is your core project configuration file for every viur related operation.
-It contains the default viur project profile and it can be expanded with several individual project profiles.
 
-### Example project.json
-```json lines
+```json
 {
-    /*
-      The format Key, Value pair defines the project json format, the viur-cli uses
-    */
     "format": "2.0.0",
-    /*
-      The first level contains of your profiles
-      "default" is a profile, which is inherited by "develop" and "live" and can be customized for particular versions
-      and/or GAE projects. Therefore, every profile can contain all keys from the "default" profile.*/
     "default": {
-        /*
-          The builds level declares steps for the `viur build` command.
-          It can contain viur components and other components that need to be build before project deployment
-        */
+        "application_name": "my-app",
+        "version": "live-$(year)-$(month)-$(day)",
+        "distribution_folder": "./deploy",
+        "sources_folder": "./sources",
         "builds": {
             "admin": {
-                "command": "viur install admin",
                 "kind": "exec",
-                "version": "4.0.8"
+                "command": "viur admin install",
+                "version": "5.0.3"
             },
-            "npm": {
-                "command": "build",
+            "frontend": {
                 "kind": "npm",
-                "source": ""
-            }
-            /* OPTIONAL arguments, can be set in default or in a specific profile */
-            "appyaml": "app_stub.yaml",  // Use a name other than "app.yaml"
-            "appyaml_substitition": true,  // Set to true to replace only standard variables in app.yaml
-            "appyaml_substitition": {  // Set to an object to replace these in addition to the standard variables in app.yaml
-                "$REGION": "europe-west3"
+                "source": "frontend",
+                "command": "build"
             }
         },
         "gcloud": {
-            "functions": { //Declarations for a cloud function
-                "testfunction1": {
-                    "entry-point": "main",
-                    "env-vars-file": "env.yaml",
-                    "memory": "512MB",
-                    "runtime": "python311",
-                    "source": "deploy/cloudfunction/function1",
-                    "trigger": "http"
-                }
-            },
-            "max-instances": "1",
-            "region": "europe-west3"
-        },
-        "core": "3.5.1",  // viur-core version of your project
-        "distribution_folder": "./deploy", // Deploy folder uploaded to GAE
-        "sources_folder": "./sources",
-        "version": "live-$(year)-$(month)-$(day)", // Version string; Variables can be used here.
-        "application_name": "my-live-app-viur3" // Name of the GAE project *4
+            "region": "europe-west3",
+            "max-instances": "1"
+        }
     },
     "develop": {
-        "application_name": "my-dev-app-viur3",
+        "application_name": "my-app-dev",
         "version": "dev-$(user)"
     }
 }
-
 ```
 
-## Viur scripting interface
+`format` is the schema version and is maintained by the CLI, which rewrites
+older files on load. Everything else lives in profiles: `default` and any number
+of named profiles, each of which is `default` overlaid with its own keys.
 
-There is a new core component that enables us to pull and push python scripts from/to a deployed application and run these in a sandbox or even locally.
-The GUI version is called scriptor and can be accessed via a webinterface, but viur-cli also has a cli for this:
+| Key | Effect |
+|---|---|
+| `application_name` | the App Engine project id; `viur run` and `viur cloud` act on it |
+| `version` | the App Engine version to deploy; placeholders are resolved first, then the result is lowercased and stripped to `a-z`, `0-9` and `-` |
+| `distribution_folder` | the folder uploaded to App Engine, default `./deploy` in `viur-base` |
+| `sources_folder` | where npm builds find their `source` |
+| `builds` | build steps, see below |
+| `gcloud.region`, `gcloud.max-instances` | passed to `gcloud app deploy` |
+| `gcloud.functions.<name>` | cloud function definitions for `viur cloud deploy cloudfunction`, written by `viur cloud create function` |
+| `appyaml` | a file name other than `app.yaml` inside the deploy folder |
+| `appyaml_substitition` | `true` replaces `$PROJECT_ID`, `$PROJECT_VERSION` and `$CLI_PROFILE` in `app.yaml` before deploying; an object adds further `"$PATTERN": "value"` pairs |
+| `port`, `gunicorn_port` | forwarded to `app_server` by `viur run` |
 
-```sh
-$ viur script {configure|pull|push|run|setup}
+Note the spelling of `appyaml_substitition`: the key is misspelled in the code
+and kept that way so existing files keep working.
+
+### Builds
+
+Each entry under `builds` is one step, run in the order the file lists them. A
+step that depends on another one has to come after it.
+
+| Kind | Needs | Does |
+|---|---|---|
+| `npm` | `source`, `command` | `npm install` and `npm run <command>` in `<sources_folder>/<source>` |
+| `exec` | `command` | runs the shell command in the project root |
+
+Two optional keys apply to both kinds: `clean` is a shell command that
+`viur build clean` runs after its own cleanup, and `target` overrides the
+folder below the deploy folder into which `viur admin|vi|scriptor install`
+unpacks a bundle, defaulting to the component name. `version` on a frontend
+bundle entry is recorded by the install command and used by `update`.
+
+### Version placeholders
+
+`$(name)` in the `version` string is replaced at deploy time. Available are
+every key of the resolved profile plus:
+
+| Placeholder | Value |
+|---|---|
+| `$(user)` | the OS user running the deploy |
+| `$(year)`, `$(month)`, `$(day)` | current date, zero-padded |
+| `$(hour)`, `$(minute)`, `$(second)` | current time, zero-padded |
+| `$(ref)` | short git SHA of `HEAD` |
+
+Replacement repeats until nothing changes, so a placeholder may expand to
+another placeholder.
+
+## Scriptor scripts
+
+`viur script` works against the Scriptor module of a deployed application: it
+downloads the scripts stored there, uploads local changes and runs a script
+locally with the server's session.
+
 ```
-Manage your ViUR Scriptor Scripts via the CLI
-Commands:
-- `configure`  Manage configuration settings.
-- `pull`       Pull contents from server to working_dir.
-- `push`       Push contents of working_dir to server.
-- `run`        Locally run a script located in the working_dir.
-- `setup`      Setup user session with a given username and...
-
-
-## Packaged tools
-
-In order to use the packaged tools, you can run:
-
-```sh
-$ viur tool {2to3|pyodide|ssl-fix}
+viur script configure --url https://my-app.appspot.com --username me
+viur script setup             log in and persist the session
+viur script pull              server -> working_dir
+viur script push --watch      working_dir -> server, re-pushing on file changes
+viur script run my_script.py
 ```
-Scripts:
-- `2to3`     viur porting script
-- `pyodide`  run the get_pyodide command
-- `ssl-fix`  ssl fix for MacOS
 
-for example the 2to3 script helps porting viur2 project to viur3, it can be used to automatically rename some things that are deprecated
-in viur3 as well, so you can use it whenever a new core version is released for viur3 projects as well:
-
-```sh
-$ viur tool 2to3 -d .
-```
-will dry-run the script in the current directory and not make any changes, only suggestions. If you want to make the changes,
-leave out the -d argument and if you are a daring go-getter and like to live dangerously, replace the -d with -x,
-which will write the suggested changes without making a backup of the changed files.
+The connection settings and the session live in `viur_scriptor_config.json`
+next to `project.json`; the working directory defaults to `scripts/`.
 
 ## Development
 
-If you want to hack `viur-cli`, clone this repository next to the folder of your ViUR project.
-
-```sh
-$ git clone git@github.com:viur-framework/viur-cli.git
-$ ls -1
-viur-cli
-your-project
+```
+git clone git@github.com:viur-framework/viur-cli.git
+cd viur-cli
+uv sync
+uv run viur --version
 ```
 
-Then, add it to your project as an editable dependency using
+To try a checkout against a real project, install it there as an editable
+dependency:
 
-```sh
-$ cd your-project
-$ pipenv install --dev --editable ../viur-cli
+```
+cd your-project
+uv add --dev --editable ../viur-cli
 ```
 
-## Dependencies
-
-viur-cli depends on
-
-* [click](https://click.palletsprojects.com/)
-* [app_server](https://github.com/XeoN-GHMB/app_server)
-* [pipfile-requirements](https://github.com/frostming/pipfile-requirements)
-* [watchgod](https://github.com/samuelcolvin/watchgod)
+Pull requests target `develop`; the rules are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
