@@ -72,8 +72,9 @@ Try to keep external dependencies low.
 In case you have appropriate permissions, a release can be done this way:
 
 - Bump version number in `src/viur_cli/version.py`
-- Update [`CHANGELOG.md`](/CHANGELOG.md) and also check version number there
 - Commit and tag version with `f"v{__version__}`
+- Pushing the tag publishes to PyPI and creates a GitHub release whose notes are
+  generated from the merged pull requests (grouped by label, see `.github/release.yml`)
 
 ## Branches
 
