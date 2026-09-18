@@ -347,7 +347,7 @@ def _install_vi(version, target, profile):
             elif element == 3:
                 with zipfile.ZipFile(tmp_zip_file) as zip_f:
                     zip_f.extractall(vi_path)
-            elif element == 5:
+            elif element == 4:
                 tmp_zip_file.unlink()
                 bar.label = "updated successful"
 
