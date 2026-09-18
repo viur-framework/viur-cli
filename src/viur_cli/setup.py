@@ -1,8 +1,11 @@
+import datetime
+import getpass
 import os
 import subprocess
+import sys
 import click
 from .cli import cli
-from .utils import *
+from .utils import echo_error, echo_info, echo_success
 
 
 def clean_base(app_id, author=None):
@@ -42,8 +45,9 @@ def clean_base(app_id, author=None):
         for file in files:
             filepath = subdir + os.sep + file
 
-            if any([filepath.endswith(ext) for ext in
-                    [".py", ".yaml", ".html", ".md", ".sh", ".json", ".js", ".less"]]):
+            if any(
+                [filepath.endswith(ext) for ext in [".py", ".yaml", ".html", ".md", ".sh", ".json", ".js", ".less"]]
+            ):
                 file_list.append(filepath)
 
     for file_obj in file_list:
@@ -86,21 +90,21 @@ def create(ctx, name):
     Optionally chains into ``./viur-gcloud-setup.sh NAME`` if confirmed,
     so the project is wired to a fresh GCP project in one shot.
     """
-    if os.path.exists(f'./{name}'):
+    if os.path.exists(f"./{name}"):
         echo_error(f'"{name}" Folder already exists. Please use a different name or remove this folder ./{name}')
         return
 
     # fetch base project
-    git_clonne_cmd = ['git', 'clone', f'https://github.com/viur-framework/viur-base.git', name]
+    git_clonne_cmd = ["git", "clone", "https://github.com/viur-framework/viur-base.git", name]
     subprocess.run(git_clonne_cmd, check=True)
 
     wdir = f"{os.getcwd()}/{name}"
 
     # Run clean-base.py
-    clean_base_cmd = ['python3', 'clean-base.py', '-A', f'{name}']
+    clean_base_cmd = ["python3", "clean-base.py", "-A", f"{name}"]
     subprocess.run(clean_base_cmd, check=True, cwd=wdir)
 
     # Run gcloud config (if confirmed)
     if click.confirm(f'Do you want to configure "{name}" as a new gcloud project?'):
-        gcloud_setup_cmd = ['./viur-gcloud-setup.sh', name]
+        gcloud_setup_cmd = ["./viur-gcloud-setup.sh", name]
         subprocess.run(gcloud_setup_cmd, check=True, cwd=wdir)

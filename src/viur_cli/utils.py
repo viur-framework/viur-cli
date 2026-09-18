@@ -96,7 +96,7 @@ def replace_vars(string: str, vars: typing.Optional[typing.Dict[str, str]] = Non
     if "user" not in vars:
         try:
             whoami = getpass.getuser()
-        except:
+        except Exception:
             whoami = "viur"
 
         vars["user"] = whoami

@@ -39,7 +39,7 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
     repo, download_name = REPOS[software]
 
     if version[0] == "v":
-        echo_info("Version should be provided without a leading \"v\"!")
+        echo_info('Version should be provided without a leading "v"!')
         version = version[1:]  # normalize it!
 
     if version == "latest":
@@ -58,7 +58,7 @@ def get_version_info(software: str, version: str) -> tuple[str, str]:
         if software not in config["default"]["builds"]:
             config["default"]["builds"][software] = {
                 "kind": "exec",
-                "command": f"viur package install {software} {version_str if version != 'latest' else ''}".strip()
+                "command": f"viur package install {software} {version_str if version != 'latest' else ''}".strip(),
             }
 
         if config["default"]["builds"].get("version") != version_str:
@@ -137,9 +137,8 @@ def package(operation, component, profile, version):
     will be removed in v3.2. Prefer 'viur admin install', 'viur scriptor
     update', etc.
     """
-    new_form = (
-        f"viur {component} {operation}"
-        + (f" {version}" if operation == "install" and version != "latest" else "")
+    new_form = f"viur {component} {operation}" + (
+        f" {version}" if operation == "install" and version != "latest" else ""
     )
     click.echo(
         click.style(
@@ -153,6 +152,7 @@ def package(operation, component, profile, version):
 
 
 # ---- New semantic command groups ---------------------------------------
+
 
 @cli.group()
 def admin():
@@ -247,13 +247,13 @@ def _install_scriptor(version, target, profile):
 
     def step_label(step: int) -> str:
         if step == 1:
-            return f"downloading scriptor..."
+            return "downloading scriptor..."
         elif step == 1:
-            return f"clearing scriptor..."
+            return "clearing scriptor..."
         elif step == 2:
-            return f"extracting scriptor..."
+            return "extracting scriptor..."
         elif step == 4:
-            return f"success!"
+            return "success!"
 
     with click.progressbar([1, 2, 3, 4], label="updating scriptor...", item_show_func=step_label) as bar:
         for element in bar:
@@ -292,13 +292,13 @@ def _install_admin(version: str, target: str, profile: str = "default"):
 
     def step_label(step: int) -> str:
         if step == 1:
-            return f"downloading admin..."
+            return "downloading admin..."
         elif step == 2:
-            return f"remove old admin..."
+            return "remove old admin..."
         elif step == 3:
-            return f"extracting new admin..."
+            return "extracting new admin..."
         elif step == 4:
-            return f"success!"
+            return "success!"
 
     with click.progressbar([1, 2, 3, 4], label="updating admin...", item_show_func=step_label) as bar:
         for element in bar:
@@ -339,11 +339,11 @@ def _install_vi(version, target, profile):
         if step == 1:
             return f"downloading {version} vi..."
         elif step == 2:
-            return f"remove old vi..."
+            return "remove old vi..."
         elif step == 3:
-            return f"extracting new vi..."
+            return "extracting new vi..."
         elif step == 4:
-            return f"success!"
+            return "success!"
 
     with click.progressbar([1, 2, 3, 4], label="updating vi...", item_show_func=step_label) as bar:
         for element in bar:

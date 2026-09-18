@@ -1,6 +1,5 @@
 import datetime
 import click
-import json
 import requests
 import os
 import difflib
@@ -8,10 +7,9 @@ import asyncio
 import sys
 import glob
 from requests.sessions import cookiejar_from_dict
-from weakref import proxy
 from viur.scriptor import Modules
 from ..cli import cli
-from ..cli import scriptor_config
+from ..conf import scriptor_config
 from .login import ensure_login
 
 # Global modules instance that will be initialized when needed
@@ -62,9 +60,9 @@ def script():
 
 
 @script.command()
-@click.option('--url', default=None, help='Set the server url')
-@click.option('--username', default=None, help='Set the username')
-@click.option('--working_dir', default=None, help='Set the working directory where scripts are stored to')
+@click.option("--url", default=None, help="Set the server url")
+@click.option("--username", default=None, help="Set the username")
+@click.option("--working_dir", default=None, help="Set the working directory where scripts are stored to")
 def configure(url: str, username: str, working_dir: str):
     """Update Scriptor connection settings (base URL, username, working dir).
 
@@ -127,11 +125,10 @@ def setup():
 
         password: str = click.prompt("Enter the password", hide_input=True)
 
-        response = session.post(base_url + "/json/user/auth_userpassword/login", data={
-            "skey": skey.json(),
-            "name": username,
-            "password": password
-        })
+        response = session.post(
+            base_url + "/json/user/auth_userpassword/login",
+            data={"skey": skey.json(), "name": username, "password": password},
+        )
 
         if response.json() != "FAILURE":
             scriptor_config["cookies"] = session.cookies.get_dict()
@@ -158,9 +155,9 @@ def check_session(ctx: click.Context):
     # init modules
     get_modules()
 
+
 @script.command()
-@click.option('--force', default=False, is_flag=True,
-              help='Overwrite local files without asking for confirmation')
+@click.option("--force", default=False, is_flag=True, help="Overwrite local files without asking for confirmation")
 @click.pass_context
 def pull(ctx: click.Context, force: bool):
     """Download all server-side Scriptor scripts into the local working_dir.
@@ -209,13 +206,15 @@ def pull(ctx: click.Context, force: bool):
                         with open(_path, "r") as f:
                             local_content = f.read()
                         remote_content = entry["script"] or ""
-                        diff = list(difflib.unified_diff(
-                            remote_content.splitlines(),
-                            local_content.splitlines(),
-                            fromfile=f"server/{entry['path'].lstrip('/')}",
-                            tofile=f"local/{entry['path'].lstrip('/')}",
-                            lineterm="",
-                        ))
+                        diff = list(
+                            difflib.unified_diff(
+                                remote_content.splitlines(),
+                                local_content.splitlines(),
+                                fromfile=f"server/{entry['path'].lstrip('/')}",
+                                tofile=f"local/{entry['path'].lstrip('/')}",
+                                lineterm="",
+                            )
+                        )
                         if diff:
                             click.echo(click.style("  [diff]", fg="yellow"))
                             for line in diff:
@@ -264,10 +263,20 @@ def pull(ctx: click.Context, force: bool):
 
 
 @script.command()
-@click.option('--force', '-f', is_flag=True, default=False,
-              help='Force push files from the local working directory onto the server')
-@click.option('--watch', '-w', is_flag=True, default=False,
-              help="Watch for file changes in the script folder and push them to the server")
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    default=False,
+    help="Force push files from the local working directory onto the server",
+)
+@click.option(
+    "--watch",
+    "-w",
+    is_flag=True,
+    default=False,
+    help="Watch for file changes in the script folder and push them to the server",
+)
 @click.pass_context
 def push(ctx: click.Context, force: bool, watch: bool):
     """Upload local working_dir scripts to the server.
@@ -327,10 +336,8 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
                             if can_push:
                                 date = datetime.datetime.now().strftime("%H:%M:%S")
-                                click.echo(f"{date if watch else ""} Push {_real_file}")
-                                await tree.edit(entry["key"], {
-                                    "script": file_content
-                                }, skel_type=_type)
+                                click.echo(f"{date if watch else ''} Push {_real_file}")
+                                await tree.edit(entry["key"], {"script": file_content}, skel_type=_type)
 
             except StopAsyncIteration:
                 text = "folder"
@@ -350,12 +357,14 @@ def push(ctx: click.Context, force: bool, watch: bool):
                             break
 
                     if root_node_entry is None:
-                        click.echo(click.style(
-                            "Unable to determine the root node of the script tree. "
-                            "Make sure the server is reachable and the session is still valid, "
-                            "otherwise run `viur script setup` again.",
-                            fg="red"
-                        ))
+                        click.echo(
+                            click.style(
+                                "Unable to determine the root node of the script tree. "
+                                "Make sure the server is reachable and the session is still valid, "
+                                "otherwise run `viur script setup` again.",
+                                fg="red",
+                            )
+                        )
                         return
 
                     parent_entry = root_node_entry
@@ -368,10 +377,13 @@ def push(ctx: click.Context, force: bool, watch: bool):
                                 break
 
                         if parent_entry is None:
-                            click.echo(click.style(
-                                f"Skipping {file}, because its parent folder {parent} does not exist on the server.",
-                                fg="red"
-                            ))
+                            click.echo(
+                                click.style(
+                                    f"Skipping {file}, because its parent folder {parent} "
+                                    "does not exist on the server.",
+                                    fg="red",
+                                )
+                            )
                             continue
 
                     last = file
@@ -385,15 +397,13 @@ def push(ctx: click.Context, force: bool, watch: bool):
                         # "parententry": parent_entry["key"],
                         "node": parent_entry["key"],
                         "path": file,
-                        "plugin": False
+                        "plugin": False,
                     }
 
                     if _type != "node":
                         update_file = False
                         with open(_real_file, "r") as f:
-                            args.update({
-                                "script": f.read()
-                            })
+                            args.update({"script": f.read()})
 
                             if not args["script"]:
                                 args["script"] = "#### scriptor ####"
@@ -413,6 +423,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
             from watchdog.events import RegexMatchingEventHandler
             from watchdog.observers import Observer
             import time
+
             modified_files = {}
 
             def on_modified(event):
@@ -429,6 +440,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                     asyncio.run(main(event.src_path))
                 except Exception as e:
                     import traceback
+
                     print(f"Error: on file {event.src_path} {e}")
                     traceback.print_exc()
 
@@ -440,7 +452,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
                 regexes=regexes,
                 ignore_regexes=ignore_regexes,
                 ignore_directories=ignore_directories,
-                case_sensitive=case_sensitive
+                case_sensitive=case_sensitive,
             )
             event_handler.on_modified = on_modified
 
@@ -460,7 +472,7 @@ def push(ctx: click.Context, force: bool, watch: bool):
 
 
 @script.command()
-@click.argument('path', required=True)
+@click.argument("path", required=True)
 @click.argument("args", nargs=-1)
 @click.pass_context
 def run(ctx: click.Context, path: str, args=None):
@@ -475,12 +487,12 @@ def run(ctx: click.Context, path: str, args=None):
         # The new API doesn't need explicit init
         import logging
         import importlib
+
         logging.getLogger().setLevel(logging.INFO)
         import viur.scriptor
+
         await viur.scriptor._init_modules(
-            script_params=args,
-            base_url=scriptor_config["base_url"],
-            cookies=scriptor_config["cookies"]
+            script_params=args, base_url=scriptor_config["base_url"], cookies=scriptor_config["cookies"]
         )
         # fixme: there should be a better method than this below
         module = importlib.import_module(path.replace("/", ".").removesuffix(".py"))

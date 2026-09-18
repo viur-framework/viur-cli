@@ -4,11 +4,12 @@ import subprocess
 import os
 import string
 import time
+from datetime import datetime
 import click
 import yaml
 from .conf import config
 from .cli import cli
-from .utils import echo_success, echo_warning, echo_fatal, echo_error, echo_info, replace_vars
+from .utils import echo_success, echo_fatal, echo_error, echo_info, replace_vars
 from .update import create_req
 
 
@@ -43,8 +44,8 @@ def user_check_login():
 def storage_copy():
     """Interactively copy a Cloud Storage bucket to another bucket via `gsutil cp -r`."""
     # https://console.cloud.google.com/transfer/jobs
-    source = click.prompt('Source bucketname')
-    target = click.prompt('Target bucketname')
+    source = click.prompt("Source bucketname")
+    target = click.prompt("Target bucketname")
     if not click.confirm(text=f"Copy from {source} to {target}", default=True):
         print("Abort ...")
         return 0
@@ -58,7 +59,7 @@ def storage_copy():
 def datastore_import(profile):
     """Import a Datastore export (referenced by `overall_export_metadata`) into the profile's project."""
     conf = config.get_profile(profile)
-    target = click.prompt('path to overall_export_metadata')
+    target = click.prompt("path to overall_export_metadata")
     subprocess.run(
         ["gcloud", "datastore", "import", f"gs://{target}", f"--project={conf['application_name']}"],
         check=False,
@@ -68,12 +69,18 @@ def datastore_import(profile):
 def datastore_export(profile):
     """Export the profile's Datastore to a bucket, suffixed with a manual timestamp."""
     conf = config.get_profile(profile)
-    target = click.prompt('bucketname')
-    timestamp = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-manual'
+    target = click.prompt("bucketname")
+    timestamp = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-manual"
     format = "default"
     subprocess.run(
-        ["gcloud", "datastore", "export", f"gs://{target}/{timestamp}-{format}",
-         f"--format={format}", f"--project={conf['application_name']}"],
+        [
+            "gcloud",
+            "datastore",
+            "export",
+            f"gs://{target}/{timestamp}-{format}",
+            f"--format={format}",
+            f"--project={conf['application_name']}",
+        ],
         check=False,
     )
 
@@ -106,7 +113,7 @@ def enable_gcp_backup():
 
     # Create helper Variables
     project_id = conf["application_name"]
-    bucket_name = f'backup-dot-{project_id}'
+    bucket_name = f"backup-dot-{project_id}"
 
     # Create the Backup Bucket
     try:
@@ -115,30 +122,38 @@ def enable_gcp_backup():
             capture_output=True,
         )
         if result.returncode != 0:
-            echo_error('Error creating bucket.')
+            echo_error("Error creating bucket.")
 
     except Exception as e:
-        print(f'An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights')
+        print(f"An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights")
 
     # Helper Variables for IAM
     iam_roles = ["roles/storage.admin", "roles/datastore.importExportAdmin"]
-    service_worker_mail = f'{project_id}@appspot.gserviceaccount.com'
+    service_worker_mail = f"{project_id}@appspot.gserviceaccount.com"
 
     for r in iam_roles:
         try:
             subprocess.run(
-                ["gcloud", "projects", "add-iam-policy-binding", project_id,
-                 "--member", f"serviceAccount:{service_worker_mail}", "--role", r],
+                [
+                    "gcloud",
+                    "projects",
+                    "add-iam-policy-binding",
+                    project_id,
+                    "--member",
+                    f"serviceAccount:{service_worker_mail}",
+                    "--role",
+                    r,
+                ],
                 capture_output=True,
             )
 
         except Exception as e:
-            print(f'An Error Occured during Roles {e}\n '
-                  f'Please make sure you have the correct Google Cloud Access rights'
-                  )
+            print(
+                f"An Error Occured during Roles {e}\n Please make sure you have the correct Google Cloud Access rights"
+            )
             return
 
-    print('Success! It may take a while until you can use Gcloud Backups')
+    print("Success! It may take a while until you can use Gcloud Backups")
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
@@ -161,10 +176,16 @@ def cleanup(service, option, profile):
     conf = config.get_profile(profile)
 
     if service == "gcloud" and option == "datastore":
-        run_command([
-            "gcloud", "datastore", "indexes", "cleanup", "deploy/index.yaml",
-            f"--project={conf['application_name']}",
-        ])
+        run_command(
+            [
+                "gcloud",
+                "datastore",
+                "indexes",
+                "cleanup",
+                "deploy/index.yaml",
+                f"--project={conf['application_name']}",
+            ]
+        )
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
@@ -190,7 +211,7 @@ def disable_gcp_backup():
 
     # Create helper Variables
     project_id = conf["application_name"]
-    bucket_name = f'backup-dot-{project_id}'
+    bucket_name = f"backup-dot-{project_id}"
 
     # Remove the Backup Bucket
     try:
@@ -200,30 +221,38 @@ def disable_gcp_backup():
         )
         print(result)
         if result.returncode != 0:
-            print('Error removing bucket.')
+            print("Error removing bucket.")
 
     except Exception as e:
-        print(f'An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights')
+        print(f"An Error Occured:\n {e} Please make sure you have the correct Google Cloud Access rights")
 
     # Helper Variables for IAM
     iam_roles = ["roles/storage.admin", "roles/datastore.importExportAdmin"]
-    service_worker_mail = f'{project_id}@appspot.gserviceaccount.com'
+    service_worker_mail = f"{project_id}@appspot.gserviceaccount.com"
 
     for r in iam_roles:
         try:
             subprocess.run(
-                ["gcloud", "projects", "remove-iam-policy-binding", project_id,
-                 "--member", f"serviceAccount:{service_worker_mail}", "--role", r],
+                [
+                    "gcloud",
+                    "projects",
+                    "remove-iam-policy-binding",
+                    project_id,
+                    "--member",
+                    f"serviceAccount:{service_worker_mail}",
+                    "--role",
+                    r,
+                ],
                 capture_output=True,
             )
 
         except Exception as e:
-            print(f'An Error Occured during Roles {e}\n '
-                  f'Please make sure you have the correct Google Cloud Access rights'
-                  )
+            print(
+                f"An Error Occured during Roles {e}\n Please make sure you have the correct Google Cloud Access rights"
+            )
             return
 
-    echo_info('Success! Gcloud Backups have been disabled')
+    echo_info("Success! Gcloud Backups have been disabled")
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
@@ -231,20 +260,13 @@ def disable_gcp_backup():
 @click.argument("profile", default="default")
 def setup(action, profile):
     """Apply IAM-role bindings from `<profile>_roles.json` back to the project."""
-    if action == "gcloud":
-        if os.path.exists('deploy'):
-            gcloud_setup()
-        else:
-            echo_error("No 'deploy' directory found in your current working directory."
-                       "\n Please make sure you are in the correct directory."
-                       "\n If you want to create a new ViUR Project use 'viur create {name}'")
     if action == "gcroles":
         gcloud_setup_roles(profile)
 
 
 @cloud.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["gcroles"]))
-@click.argument("profile", default='default')
+@click.argument("profile", default="default")
 def get(action, profile):
     """Read information from the active cloud project (currently: IAM roles)."""
 
@@ -282,7 +304,7 @@ def gcloud_get_roles(profile):
 
                 # Save the transformed dictionary to a JSON file
                 json_file_path = f"./{profile}_roles.json"
-                with open(json_file_path, 'w') as json_file:
+                with open(json_file_path, "w") as json_file:
                     json.dump(usable_dict, json_file, indent=4)
 
                 echo_success(f"You can now watch your gcloud Roles Setup in your '{json_file_path}' file ")
@@ -326,7 +348,7 @@ def gcloud_setup_roles(profile):
             yaml_file_path = f"./{conf['application_name']}.yaml"
 
             # Save YAML data to a file
-            with open(yaml_file_path, 'w') as yaml_file:
+            with open(yaml_file_path, "w") as yaml_file:
                 yaml.dump(yaml_data, yaml_file, default_flow_style=False)
 
                 try:
@@ -343,19 +365,19 @@ def gcloud_setup_roles(profile):
 
 def transform_yaml_to_dict(dict_data):
     """Reshape `bindings: [{role, members}]` into member-keyed form for editing."""
-    transformed_data = {'bindings': []}
+    transformed_data = {"bindings": []}
 
     # Create a dictionary to store unique members and their corresponding roles
     member_roles = {}
 
     # Iterate through the original data and organize it
-    for binding in dict_data['bindings']:
-        role = binding['role']
-        for member in binding['members']:
+    for binding in dict_data["bindings"]:
+        role = binding["role"]
+        for member in binding["members"]:
             member_roles.setdefault(member, []).append(role)
 
     # Create the transformed data structure
-    transformed_data['bindings'] = [{'members': member, 'role': roles} for member, roles in member_roles.items()]
+    transformed_data["bindings"] = [{"members": member, "role": roles} for member, roles in member_roles.items()]
 
     # Add E-Tag and Version
     transformed_data.update({"etag": dict_data["etag"], "version": dict_data["version"]})
@@ -365,15 +387,15 @@ def transform_yaml_to_dict(dict_data):
 
 def transform_dict_to_yaml(transformed_data):
     """Inverse of :func:`transform_yaml_to_dict` — reshape member-keyed back to role-keyed."""
-    original_data = {'bindings': []}
+    original_data = {"bindings": []}
 
     # Create a dictionary to store roles and their corresponding members
     role_members = {}
 
     # Iterate through the transformed data and organize it
-    for binding in transformed_data['bindings']:
-        members = binding['members']
-        roles = binding['role']
+    for binding in transformed_data["bindings"]:
+        members = binding["members"]
+        roles = binding["role"]
 
         # Ensure members is a list
         members = [members] if not isinstance(members, list) else members
@@ -382,8 +404,8 @@ def transform_dict_to_yaml(transformed_data):
             role_members.setdefault(role, []).extend(members)
 
     # Create the original data structure
-    original_data['bindings'] = [
-        {'members': list(set(members)), 'role': role} for role, members in role_members.items()
+    original_data["bindings"] = [
+        {"members": list(set(members)), "role": role} for role, members in role_members.items()
     ]
 
     # Add E-Tag and Version
@@ -410,8 +432,8 @@ def run_command(command):
 
 
 @cloud.command()
-@click.argument("action", type=click.Choice(['app', 'index', 'cron', 'queue', 'cloudfunction']))
-@click.argument("profile", default='default')
+@click.argument("action", type=click.Choice(["app", "index", "cron", "queue", "cloudfunction"]))
+@click.argument("profile", default="default")
 @click.argument("additional_args", nargs=-1)
 @click.option("--ext", "-e", default=None)
 @click.option("--yes", "-y", is_flag=True, default=False)
@@ -444,17 +466,15 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
     if action == "app":
         if not skip_checks:
             from .local import do_checks
+
             if not do_checks(dev=False):
                 # --yes will not be implemented here because deploying security issues should be an explicit decission
-                if not click.confirm(f"The checks were not successful, do you want to continue?"):
+                if not click.confirm("The checks were not successful, do you want to continue?"):
                     return
             else:
                 echo_info("\U00002714 No vulnerabilities found.")
 
-        version = replace_vars(
-            conf["version"],
-            {k: v for k, v in conf.items() if k not in ["version"]}
-        )
+        version = replace_vars(conf["version"], {k: v for k, v in conf.items() if k not in ["version"]})
 
         # gcloud only allows for version identifiers in lower-case order and only accepting these characters
         version = "".join([c for c in version.lower() if c in string.ascii_lowercase + string.digits + "-"])
@@ -497,7 +517,9 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
 
         try:
             deploy_argv = [
-                "gcloud", "app", "deploy",
+                "gcloud",
+                "app",
+                "deploy",
                 f"--project={conf['application_name']}",
                 f"--version={version}",
                 "--no-promote",
@@ -520,7 +542,7 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
         if action not in ["index", "queue", "cron"]:
             echo_error(f"{action} is not a valid action. Valid is app, index, queue, cron")
 
-        yaml_file = f'{conf["distribution_folder"]}/{action}.yaml'
+        yaml_file = f"{conf['distribution_folder']}/{action}.yaml"
 
         # Sort index.yaml by kind name, making it more clean to view.
         if action == "index":
@@ -532,19 +554,14 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
                         raise ValueError("indexes section missing in index.yaml")
 
                     indexes = sorted(
-                        data["indexes"],
-                        key=lambda k: k["kind"] if isinstance(k, dict) and "kind" in k else k
+                        data["indexes"], key=lambda k: k["kind"] if isinstance(k, dict) and "kind" in k else k
                     )
 
                     # Remove duplicate entries with the help of dict,
                     # where keys can only occur once.
                     # The keys are a hashable representation of an entry.
                     indexes = {
-                        (
-                            entry.get("kind"),
-                            tuple(tuple(prop.items())
-                                  for prop in entry.get("properties", []))
-                        ): entry
+                        (entry.get("kind"), tuple(tuple(prop.items()) for prop in entry.get("properties", []))): entry
                         for entry in indexes
                     }
                     indexes = list(indexes.values())
@@ -556,9 +573,7 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
                         with open(yaml_file, "a+") as dst_file:
                             dst_file.seek(0)
                             dst_file.truncate()
-                            dst_file.write(
-                                yaml.dump(data).replace("- kind: ", "\n- kind: ")
-                            )
+                            dst_file.write(yaml.dump(data).replace("- kind: ", "\n- kind: "))
 
                         echo_info(f"{yaml_file} has been sorted by kind and duplicates have been removed")
 
@@ -570,7 +585,9 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
                 return
 
         deploy_argv = [
-            "gcloud", "app", "deploy",
+            "gcloud",
+            "app",
+            "deploy",
             f"--project={conf['application_name']}",
             *additional_args,
             yaml_file,
@@ -603,11 +620,16 @@ def build_deploy_command(name, conf):
         name = click.prompt("Please enter the name of the cloudfunction you want to deploy")
 
     if name not in conf["functions"]:
-        echo_fatal(f"The cloudfunction {name} was not found your project.json\n "
-                   f"You can create a cloudfunction entry by calling 'viur cloud create function'")
+        echo_fatal(
+            f"The cloudfunction {name} was not found your project.json\n "
+            f"You can create a cloudfunction entry by calling 'viur cloud create function'"
+        )
 
     command = [
-        "gcloud", "run", "deploy", name,
+        "gcloud",
+        "run",
+        "deploy",
+        name,
         f"--region={conf['region']}",
         f"--max-instances={conf['max-instances']}",
     ]
@@ -626,7 +648,7 @@ def build_deploy_command(name, conf):
 
 
 @cloud.command()
-@click.argument("action", type=click.Choice(['function']))
+@click.argument("action", type=click.Choice(["function"]))
 @click.argument("profile", default="default")
 @click.option("--gen", "-g")
 @click.option("--source", "-src")
@@ -648,62 +670,61 @@ def create(profile, action, gen, source, name, entrypoint, env_vars_file, memory
         conf["gcloud"] = conf.get("gcloud", {})
         conf["gcloud"]["functions"] = conf["gcloud"].get("functions", {})
 
-        conf["gcloud"]["max-instances"] = conf["gcloud"].get("max-instances", click.prompt(
-            "Please input the Max Instances your cloud functions should run on", default="1"))
+        conf["gcloud"]["max-instances"] = conf["gcloud"].get(
+            "max-instances",
+            click.prompt("Please input the Max Instances your cloud functions should run on", default="1"),
+        )
 
-        conf["gcloud"]["region"] = conf["gcloud"].get("region", click.prompt(
-            "Please enter your default cloud function region", default="europe-west3"))
+        conf["gcloud"]["region"] = conf["gcloud"].get(
+            "region", click.prompt("Please enter your default cloud function region", default="europe-west3")
+        )
 
         # function layer
         function_name = name if name else click.prompt("Please enter the Name of your cloud function")
         function_dict = conf["gcloud"]["functions"].get(function_name, {})
 
-        function_dict["gen"] = function_dict.get("gen",
-                                                 gen if gen else click.prompt(
-                                                     "Please enter your cloud function generation",
-                                                     default="2")
-                                                 )
+        function_dict["gen"] = function_dict.get(
+            "gen", gen if gen else click.prompt("Please enter your cloud function generation", default="2")
+        )
 
-        function_dict["entry-point"] = function_dict.get("entry-point",
-                                                         entrypoint if entrypoint else click.prompt(
-                                                             "Please enter your cloud function entrypoint ",
-                                                             default="main")
-                                                         )
+        function_dict["entry-point"] = function_dict.get(
+            "entry-point",
+            entrypoint if entrypoint else click.prompt("Please enter your cloud function entrypoint ", default="main"),
+        )
 
-        function_dict["env-vars-file"] = function_dict.get("env-vars-file",
-                                                           env_vars_file if env_vars_file else click.prompt(
-                                                               "Enter the name of your environment variables file",
-                                                               default="env.yaml")
-                                                           )
+        function_dict["env-vars-file"] = function_dict.get(
+            "env-vars-file",
+            env_vars_file
+            if env_vars_file
+            else click.prompt("Enter the name of your environment variables file", default="env.yaml"),
+        )
 
-        function_dict["memory"] = function_dict.get("memory",
-                                                    memory if memory else click.prompt(
-                                                        "Please enter your cloud function memory usage",
-                                                        default="512MB")
-                                                    )
+        function_dict["memory"] = function_dict.get(
+            "memory",
+            memory if memory else click.prompt("Please enter your cloud function memory usage", default="512MB"),
+        )
 
-        function_dict["runtime"] = function_dict.get("runtime",
-                                                     runtime if runtime else click.prompt(
-                                                         "Please enter your cloud function runtime",
-                                                         default="python312")
-                                                     )
+        function_dict["runtime"] = function_dict.get(
+            "runtime",
+            runtime if runtime else click.prompt("Please enter your cloud function runtime", default="python312"),
+        )
 
-        function_dict["trigger"] = function_dict.get("trigger",
-                                                     trigger if trigger else click.prompt(
-                                                         "Please enter your cloud function trigger type",
-                                                         default="https")
+        function_dict["trigger"] = function_dict.get(
+            "trigger",
+            trigger if trigger else click.prompt("Please enter your cloud function trigger type", default="https"),
+        )
 
-                                                     )
-
-        function_dict["source"] = function_dict.get("source",
-                                                    source if source else click.prompt(
-                                                        "Enter the directory of your cloud function"
-                                                        "(deploy/cloudfunction/{FileName})")
-                                                    )
+        function_dict["source"] = function_dict.get(
+            "source",
+            source
+            if source
+            else click.prompt("Enter the directory of your cloud function(deploy/cloudfunction/{FileName})"),
+        )
 
         conf["gcloud"]["functions"][function_name] = function_dict
 
         config[profile] = conf
         config.migrate()
-        echo_success("Your cloud function creation was successful, if you want to add more flags, "
-                      "add them in your project.json")
+        echo_success(
+            "Your cloud function creation was successful, if you want to add more flags, add them in your project.json"
+        )

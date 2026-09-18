@@ -34,9 +34,9 @@ def _build(conf, name, build_cfg, additional_args):
             utils.system(
                 " && ".join(
                     (
-                        f'cd {os.path.join(conf["sources_folder"], build_cfg["source"])}',
+                        f"cd {os.path.join(conf['sources_folder'], build_cfg['source'])}",
                         "npm install",
-                        f'npm run {build_cfg["command"]}'
+                        f"npm run {build_cfg['command']}",
                     )
                 )
             )
@@ -99,7 +99,7 @@ def build():
 
 
 @build.command(context_settings={"ignore_unknown_options": True})
-@click.argument("profile", default='default')
+@click.argument("profile", default="default")
 @click.argument("additional_args", nargs=-1)
 def release(profile, additional_args):
     """Build every entry in the profile's `builds` section, in declaration order."""

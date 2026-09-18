@@ -10,7 +10,7 @@ from .utils import echo_error, echo_info, echo_warning
 
 @cli.command(context_settings={"ignore_unknown_options": True})
 @click.argument("action", type=click.Choice(["requirements"]))
-@click.argument("profile", default='default')
+@click.argument("profile", default="default")
 @click.argument("additional_args", nargs=-1)
 def update(action, profile, additional_args):
     """Regenerate project-managed deploy files (currently `deploy/requirements.txt`).
@@ -78,20 +78,12 @@ dependencies = [
     # Ensure distribution folder exists
     dist_folder.mkdir(parents=True, exist_ok=True)
 
-    if not yes and not click.confirm(
-        text=f"Would you like to regenerate {requirements_file}?",
-        default=confirm_value
-    ):
+    if not yes and not click.confirm(text=f"Would you like to regenerate {requirements_file}?", default=confirm_value):
         return
 
     # Check if uv is installed
     try:
-        result = subprocess.run(
-            ["uv", "--version"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(["uv", "--version"], capture_output=True, text=True, check=True)
         echo_info(f"Using {result.stdout.strip()}")
     except FileNotFoundError:
         echo_error("uv is not installed!")
@@ -118,12 +110,7 @@ dependencies = [
     ]
 
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
         if result.stdout:
             echo_info(result.stdout.strip())
@@ -131,7 +118,7 @@ dependencies = [
         echo_info(f"✓ Successfully generated {requirements_file}")
 
     except subprocess.CalledProcessError as e:
-        echo_error(f"Error running uv compile:")
+        echo_error("Error running uv compile:")
         if e.stderr:
             echo_error(e.stderr)
         echo_error("Please check your pyproject.toml for syntax errors or dependency conflicts")
@@ -177,12 +164,11 @@ def verify_requirements(requirements_file: Path):
             echo_warning("Requirements file is empty!")
             return
 
-        lines = [line.strip() for line in content.splitlines()
-                if line.strip() and not line.strip().startswith('#')]
+        lines = [line.strip() for line in content.splitlines() if line.strip() and not line.strip().startswith("#")]
 
         # Count dependencies (lines with ==)
-        dependencies = [line for line in lines if '==' in line]
-        hashed_deps = [line for line in lines if '--hash=' in line]
+        dependencies = [line for line in lines if "==" in line]
+        hashed_deps = [line for line in lines if "--hash=" in line]
 
         echo_info(f"✓ Verified {len(dependencies)} dependencies")
         if hashed_deps:
