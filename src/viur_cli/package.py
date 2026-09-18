@@ -94,15 +94,23 @@ def _run_op(operation: str, component: str, profile: str, version: str = "latest
         profile: Profile name from ``project.json``.
         version: Used only for single-component installs. Defaults to
             ``"latest"``.
+
+    The install folder below ``distribution_folder`` defaults to the
+    component name and can be overridden per build via
+    ``builds.<component>.target`` in ``project.json``.
     """
     conf = config.get_profile(profile)
     handlers = {"vi": _install_vi, "admin": _install_admin, "scriptor": _install_scriptor}
 
     def perform(comp: str, ver: str) -> None:
+        target = conf.get("builds", {}).get(comp, {}).get("target", comp)
+        # target ends up in shutil.rmtree(); only a plain folder name is allowed
+        if not isinstance(target, str) or not target or target in (".", "..") or Path(target).name != target:
+            echo_fatal(f"builds.{comp}.target must be a plain folder name, got {target!r}")
         if operation == "install":
-            handlers[comp](ver, target=comp, profile=profile)
+            handlers[comp](ver, target=target, profile=profile)
         else:  # update
-            handlers[comp](version="latest", target=comp, profile=profile)
+            handlers[comp](version="latest", target=target, profile=profile)
 
     if component == "all":
         if operation == "update":
