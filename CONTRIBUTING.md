@@ -77,6 +77,18 @@ and locked in `uv.lock`. Dependencies are managed with [uv](https://docs.astral.
 
 Try to keep external dependencies low.
 
+## Code style
+
+Linting and formatting are done with [ruff](https://docs.astral.sh/ruff/); the configuration
+lives in [`pyproject.toml`](/pyproject.toml) under `[tool.ruff]`. A
+[pre-commit](https://pre-commit.com) hook runs both on every commit:
+
+- `uv sync` installs ruff and pre-commit (dev dependency group)
+- `uv run pre-commit install` activates the git hook, once per clone
+- `ruff check` blocks the commit on lint errors; `ruff format` rewrites the staged files,
+  re-stage them and commit again
+- Run both manually with `uv run ruff check src` and `uv run ruff format src`
+
 ## Releasing
 
 In case you have appropriate permissions, a release can be done this way:

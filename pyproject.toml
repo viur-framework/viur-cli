@@ -41,7 +41,19 @@ packages = { find = { where = ["src"] } }
 version = { attr = "viur_cli.version.__version__" }
 
 [dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
+    "ruff>=0.16.8",
+]
 docs = [
     "mkdocs-shadcn",
     "mkdocs-click~=0.8",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F"]
