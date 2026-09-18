@@ -1,7 +1,8 @@
 import re
 import subprocess
 import click
-from .conf import *
+from .conf import config
+from .utils import echo_error, echo_info, echo_success, echo_warning
 from .version import __version__
 from .version import MINIMAL_UV
 import semver
@@ -10,8 +11,9 @@ import os
 from pathlib import Path
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True,
-             context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(
+    invoke_without_command=True, no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]}
+)
 @click.version_option(__version__)
 @click.pass_context
 def cli(ctx):
@@ -35,7 +37,7 @@ def cli(ctx):
 
 
 @cli.command()
-@click.argument("action", type=click.Choice(['list']))
+@click.argument("action", type=click.Choice(["list"]))
 @click.argument("profile", default="default")
 def project(action, profile):
     """Inspect the resolved project.json configuration for a profile."""
@@ -46,8 +48,12 @@ def project(action, profile):
 
 
 @cli.command()
-@click.option('--shell', type=click.Choice(['bash', 'zsh', 'fish', 'auto']),
-              default='auto', help='Shell type (auto-detect if not specified)')
+@click.option(
+    "--shell",
+    type=click.Choice(["bash", "zsh", "fish", "auto"]),
+    default="auto",
+    help="Shell type (auto-detect if not specified)",
+)
 def setup_autocomplete(shell):
     """Install shell tab-completion for the viur CLI.
 
@@ -59,14 +65,14 @@ def setup_autocomplete(shell):
         shell: ``bash``, ``zsh``, ``fish``, or ``auto`` (detect from $SHELL).
     """
     # Auto-detect shell if not specified
-    if shell == 'auto':
-        shell_env = os.environ.get('SHELL', '')
-        if 'bash' in shell_env:
-            shell = 'bash'
-        elif 'zsh' in shell_env:
-            shell = 'zsh'
-        elif 'fish' in shell_env:
-            shell = 'fish'
+    if shell == "auto":
+        shell_env = os.environ.get("SHELL", "")
+        if "bash" in shell_env:
+            shell = "bash"
+        elif "zsh" in shell_env:
+            shell = "zsh"
+        elif "fish" in shell_env:
+            shell = "fish"
         else:
             echo_error("Could not auto-detect shell. Please specify with --shell")
             return
@@ -75,16 +81,13 @@ def setup_autocomplete(shell):
 
     home = Path.home()
 
-    if shell == 'bash':
-        completion_file = home / '.viur-completion.bash'
-        rc_file = home / '.bashrc'
+    if shell == "bash":
+        completion_file = home / ".viur-completion.bash"
+        rc_file = home / ".bashrc"
 
         # Generate completion script
         completion_script = subprocess.run(
-            ['viur'],
-            env={**os.environ, '_VIUR_COMPLETE': 'bash_source'},
-            capture_output=True,
-            text=True
+            ["viur"], env={**os.environ, "_VIUR_COMPLETE": "bash_source"}, capture_output=True, text=True
         )
 
         if completion_script.returncode != 0:
@@ -95,12 +98,12 @@ def setup_autocomplete(shell):
         completion_file.write_text(completion_script.stdout)
 
         # Add to .bashrc if not already present
-        source_line = f'source {completion_file}\n'
+        source_line = f"source {completion_file}\n"
         if rc_file.exists():
             rc_content = rc_file.read_text()
             if str(completion_file) not in rc_content:
-                with rc_file.open('a') as f:
-                    f.write(f'\n# viur CLI autocompletion\n')
+                with rc_file.open("a") as f:
+                    f.write("\n# viur CLI autocompletion\n")
                     f.write(source_line)
                 echo_success(f"Added autocompletion to {rc_file}")
             else:
@@ -109,16 +112,13 @@ def setup_autocomplete(shell):
             echo_warning(".bashrc not found. Please add the following line manually:")
             echo_info(source_line)
 
-    elif shell == 'zsh':
-        completion_file = home / '.viur-completion.zsh'
-        rc_file = home / '.zshrc'
+    elif shell == "zsh":
+        completion_file = home / ".viur-completion.zsh"
+        rc_file = home / ".zshrc"
 
         # Generate completion script
         completion_script = subprocess.run(
-            ['viur'],
-            env={**os.environ, '_VIUR_COMPLETE': 'zsh_source'},
-            capture_output=True,
-            text=True
+            ["viur"], env={**os.environ, "_VIUR_COMPLETE": "zsh_source"}, capture_output=True, text=True
         )
 
         if completion_script.returncode != 0:
@@ -129,12 +129,12 @@ def setup_autocomplete(shell):
         completion_file.write_text(completion_script.stdout)
 
         # Add to .zshrc if not already present
-        source_line = f'source {completion_file}\n'
+        source_line = f"source {completion_file}\n"
         if rc_file.exists():
             rc_content = rc_file.read_text()
             if str(completion_file) not in rc_content:
-                with rc_file.open('a') as f:
-                    f.write(f'\n# viur CLI autocompletion\n')
+                with rc_file.open("a") as f:
+                    f.write("\n# viur CLI autocompletion\n")
                     f.write(source_line)
                 echo_success(f"Added autocompletion to {rc_file}")
             else:
@@ -143,19 +143,16 @@ def setup_autocomplete(shell):
             echo_warning(".zshrc not found. Please add the following line manually:")
             echo_info(source_line)
 
-    elif shell == 'fish':
-        completion_dir = home / '.config' / 'fish' / 'completions'
-        completion_file = completion_dir / 'viur.fish'
+    elif shell == "fish":
+        completion_dir = home / ".config" / "fish" / "completions"
+        completion_file = completion_dir / "viur.fish"
 
         # Create directory if it doesn't exist
         completion_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate completion script
         completion_script = subprocess.run(
-            ['viur'],
-            env={**os.environ, '_VIUR_COMPLETE': 'fish_source'},
-            capture_output=True,
-            text=True
+            ["viur"], env={**os.environ, "_VIUR_COMPLETE": "fish_source"}, capture_output=True, text=True
         )
 
         if completion_script.returncode != 0:
@@ -168,7 +165,7 @@ def setup_autocomplete(shell):
 
     echo_info("\nAutocompletion setup complete!")
     echo_info("Please restart your shell or run:")
-    if shell in ['bash', 'zsh']:
+    if shell in ["bash", "zsh"]:
         echo_info(f"  source {completion_file}")
 
 
@@ -180,9 +177,9 @@ def uninstall_autocomplete():
 
     # Remove completion files
     completion_files = [
-        home / '.viur-completion.bash',
-        home / '.viur-completion.zsh',
-        home / '.config' / 'fish' / 'completions' / 'viur.fish'
+        home / ".viur-completion.bash",
+        home / ".viur-completion.zsh",
+        home / ".config" / "fish" / "completions" / "viur.fish",
     ]
 
     for file in completion_files:
@@ -192,10 +189,7 @@ def uninstall_autocomplete():
             removed = True
 
     # Clean up shell rc files
-    rc_files = [
-        (home / '.bashrc', '.viur-completion.bash'),
-        (home / '.zshrc', '.viur-completion.zsh')
-    ]
+    rc_files = [(home / ".bashrc", ".viur-completion.bash"), (home / ".zshrc", ".viur-completion.zsh")]
 
     for rc_file, completion_name in rc_files:
         if rc_file.exists():
@@ -207,7 +201,7 @@ def uninstall_autocomplete():
                 skip_next = False
 
                 for i, line in enumerate(lines):
-                    if '# viur CLI autocompletion' in line:
+                    if "# viur CLI autocompletion" in line:
                         skip_next = True
                         continue
                     if skip_next and completion_name in line:
@@ -215,7 +209,7 @@ def uninstall_autocomplete():
                         continue
                     new_lines.append(line)
 
-                rc_file.write_text('\n'.join(new_lines))
+                rc_file.write_text("\n".join(new_lines))
                 echo_info(f"Cleaned up {rc_file}")
                 removed = True
 
@@ -231,14 +225,14 @@ def autocomplete_info():
     echo_info("viur CLI Autocompletion Information")
     echo_info("=" * 40)
 
-    shell = os.environ.get('SHELL', 'unknown')
+    shell = os.environ.get("SHELL", "unknown")
     echo_info(f"Current shell: {shell}")
 
     home = Path.home()
     completion_files = {
-        'bash': home / '.viur-completion.bash',
-        'zsh': home / '.viur-completion.zsh',
-        'fish': home / '.config' / 'fish' / 'completions' / 'viur.fish'
+        "bash": home / ".viur-completion.bash",
+        "zsh": home / ".viur-completion.zsh",
+        "fish": home / ".config" / "fish" / "completions" / "viur.fish",
     }
 
     installed = []

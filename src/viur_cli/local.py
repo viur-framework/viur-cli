@@ -47,13 +47,11 @@ def run(profile, additional_args):
     if they are set.
     """
     try:
-        echo_warning(
-            f"You are using the development Server with your default account: {get_user_info()['email']}"
-        )
-    except:
+        echo_warning(f"You are using the development Server with your default account: {get_user_info()['email']}")
+    except Exception:
         echo_fatal(
-            f"It seems you are not Using an appropriate account. "
-            f"Please install the 'gcloud' tool or Log in with an appropriate account."
+            "It seems you are not Using an appropriate account. "
+            "Please install the 'gcloud' tool or Log in with an appropriate account."
         )
 
     conf = config.get_profile(profile)
@@ -66,9 +64,7 @@ def run(profile, additional_args):
     if conf.get("gunicorn_port"):
         additional_args.append(f"--gunicorn_port={conf['gunicorn_port']}")
 
-    utils.system(
-        f"app_server -A={conf['application_name']} {conf['distribution_folder']} {' '.join(additional_args)}"
-    )
+    utils.system(f"app_server -A={conf['application_name']} {conf['distribution_folder']} {' '.join(additional_args)}")
 
 
 @cli.command()
@@ -80,33 +76,29 @@ def env(profile):
     failed_icon = "\U0000274c"
 
     conf = config.get_profile(profile)
-    click.echo(f"Project Info:\n--------------------------------")
+    click.echo("Project Info:\n--------------------------------")
     try:
         click.echo(f"format: {config['format']}")
         for entry in conf["builds"]:
             if entry in conf["builds"]:
-                click.echo(f"\n {entry}: {conf['builds'][entry]['version'] } ")
+                click.echo(f"\n {entry}: {conf['builds'][entry]['version']} ")
 
     except Exception as e:
         echo_error("Error while collecting viur info")
 
         echo_error(str(e))
-    click.echo(f"\nCurrent Environment:\n--------------------------------")
+    click.echo("\nCurrent Environment:\n--------------------------------")
 
     # viur-cli
     if shutil.which("viur"):
-        app_server_version = subprocess.check_output(["viur", "--version"]).decode(
-            "utf-8"
-        )
+        app_server_version = subprocess.check_output(["viur", "--version"]).decode("utf-8")
         click.echo(f"{valid_icon} {app_server_version}")
     else:
         click.echo(f"{failed_icon} ViUR-CLI")
 
     # app_server
     if shutil.which("app_server"):
-        app_server_version = subprocess.check_output(["app_server", "-V"]).decode(
-            "utf-8"
-        )
+        app_server_version = subprocess.check_output(["app_server", "-V"]).decode("utf-8")
         click.echo(f"{valid_icon} {app_server_version}")
     else:
         click.echo(f"{failed_icon} app_server")
@@ -162,9 +154,7 @@ def env(profile):
 
     # gcloud
     if shutil.which("gcloud"):
-        gcloud_version = (
-            subprocess.check_output(["gcloud", "-v"]).decode("utf-8").split("\n\n")[0]
-        )
+        gcloud_version = subprocess.check_output(["gcloud", "-v"]).decode("utf-8").split("\n\n")[0]
         versionList = []
         for line in gcloud_version.split("\n"):
             if not line:
@@ -177,7 +167,7 @@ def env(profile):
     else:
         click.echo(f"{failed_icon} gcloud")
 
-    click.echo(f"\nYour default gcloud user Info:\n--------------------------------")
+    click.echo("\nYour default gcloud user Info:\n--------------------------------")
     for k, v in get_user_info().items():
         click.echo(f"{k}: {v}")
 
@@ -255,10 +245,7 @@ def do_checks(dev=True):
     else:
         # pip-audit returncode: 0 = no vulns, 1 = vulns found, anything else = real error.
         if result.returncode not in (0, 1):
-            echo_error(
-                f"pip-audit failed (exit {result.returncode}): "
-                f"{(result.stderr or result.stdout)[:500]}"
-            )
+            echo_error(f"pip-audit failed (exit {result.returncode}): {(result.stderr or result.stdout)[:500]}")
         else:
             try:
                 data = json.loads(result.stdout)
@@ -320,7 +307,7 @@ def do_checks(dev=True):
                     npm_data = json.loads(npm_result.stdout, strict=False)
 
                     metadata = npm_data.get("metadata", {})
-                    npm_vulnerabilities = npm_data.get("vulnerabilities", {})
+                    npm_data.get("vulnerabilities", {})
 
                     vuln_counts = metadata.get("vulnerabilities", {})
                     dependencies = metadata.get("dependencies", {})
@@ -335,17 +322,11 @@ def do_checks(dev=True):
                     click.echo(f"npm Security Scan Results - {build['name']}")
                     click.echo("=" * 60)
                     click.echo(f"Build Path:             {npm_audit_dir}")
-                    click.echo(
-                        f"Total Dependencies:     {dependencies.get('total', 0)}"
-                    )
+                    click.echo(f"Total Dependencies:     {dependencies.get('total', 0)}")
                     click.echo(f"Total Vulnerabilities:  {total_npm_vulns}")
-                    click.echo(
-                        f"  Critical:             {vuln_counts.get('critical', 0)}"
-                    )
+                    click.echo(f"  Critical:             {vuln_counts.get('critical', 0)}")
                     click.echo(f"  High:                 {vuln_counts.get('high', 0)}")
-                    click.echo(
-                        f"  Moderate:             {vuln_counts.get('moderate', 0)}"
-                    )
+                    click.echo(f"  Moderate:             {vuln_counts.get('moderate', 0)}")
                     click.echo(f"  Low:                  {vuln_counts.get('low', 0)}")
                     click.echo(f"  Info:                 {vuln_counts.get('info', 0)}")
                     click.echo("=" * 60)
@@ -357,13 +338,9 @@ def do_checks(dev=True):
                 except FileNotFoundError:
                     echo_warning(f"npm audit directory not found: {build['path']}")
                 except json.JSONDecodeError as e:
-                    echo_error(
-                        f"Error parsing npm audit output for {build['name']}: {e}"
-                    )
+                    echo_error(f"Error parsing npm audit output for {build['name']}: {e}")
                 except Exception as e:
-                    echo_error(
-                        f"Unexpected error during npm security check for {build['name']}: {e}"
-                    )
+                    echo_error(f"Unexpected error during npm security check for {build['name']}: {e}")
     else:
         click.echo("\n\n" + "=" * 60)
         click.echo("npm not found - skipping npm audit")

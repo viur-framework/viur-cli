@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-import io, os, sys, json, shutil, argparse, pathlib, zipfile
+import io
+import os
+import sys
+import json
+import shutil
+import argparse
+import pathlib
+import zipfile
 from urllib.request import urlopen
 
 # Defaults
@@ -11,8 +18,8 @@ SUPPORTED = [
     # Current development version of the Pyodide standard
     "dev",
     # Pyodide-nano is shipped as a zip-file
-    #"v0.18.0-nano",
-    #"v0.18.1-nano",
+    # "v0.18.0-nano",
+    # "v0.18.1-nano",
 ]
 
 VERSION = SUPPORTED[0]
@@ -20,30 +27,15 @@ CDN = "https://cdn.jsdelivr.net/pyodide"
 URL = "{CDN}/{VERSION}/full/{file}"
 
 # Primarily required Pyodide distribution files
-FILES = [
-    "pyodide.asm.data",
-    "pyodide.asm.js",
-    "pyodide.asm.wasm",
-    "pyodide.js",
-    "pyodide_py.tar"
-]
+FILES = ["pyodide.asm.data", "pyodide.asm.js", "pyodide.asm.wasm", "pyodide.js", "pyodide_py.tar"]
 
 # Primarily required Pyodide packages
-PACKAGES = [
-    "distlib",
-    "distutils",
-    "micropip",
-    "packaging",
-    "pyparsing",
-    "setuptools"
-]
+PACKAGES = ["distlib", "distutils", "micropip", "packaging", "pyparsing", "setuptools"]
 
 
 def main():
     # Parse command line arguments
-    ap = argparse.ArgumentParser(
-        description="Service program to obtain self-hosted, stripped copy of Pyodide from CDN"
-    )
+    ap = argparse.ArgumentParser(description="Service program to obtain self-hosted, stripped copy of Pyodide from CDN")
     ap.add_argument(
         "-v", "--pyodide", dest="version", default=VERSION, choices=SUPPORTED, help="Pyodide version to download"
     )
@@ -58,7 +50,7 @@ def main():
         packages = []
 
     # Allow to install additional Pyodide pre-built packages by command-line arguments
-    packages += (args.packages or [])
+    packages += args.packages or []
 
     if is_nano and packages:
         raise EnvironmentError("Pyodide-nano does not support additionally packages currently!")
@@ -105,7 +97,7 @@ def main():
         print("Done")
 
         # Unpack ZIP file from memory
-        sys.stdout.write(f"Unpacking...")
+        sys.stdout.write("Unpacking...")
         sys.stdout.flush()
 
         zip = zipfile.ZipFile(io.BytesIO(zip))
@@ -142,9 +134,7 @@ def main():
         content = f.read()
 
     with open(file, "w") as f:
-        f.write(
-            content.replace('config.indexURL || "./"', 'config.indexURL || "./pyodide/"')
-        )
+        f.write(content.replace('config.indexURL || "./"', 'config.indexURL || "./pyodide/"'))
 
     print("Done")
 

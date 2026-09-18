@@ -2,7 +2,9 @@ import json
 import click
 import requests
 import os
-from .utils import *
+import contextlib as _contextlib
+import io as _io
+from .utils import echo_error, echo_fatal, echo_info
 from .version import __version__ as cli_version
 
 
@@ -52,7 +54,6 @@ class Config(dict):
             changed = True
 
             if os.getcwd() == "/":
-
                 if self.path:
                     self.save()
                     self.load()
@@ -68,13 +69,13 @@ class Config(dict):
             self.path = os.getcwd()
             self.update(json.loads(f.read()))
 
-
         except FileNotFoundError:
             echo_fatal(f"Can't open {self.FILENAME} for reading")
 
         except json.decoder.JSONDecodeError as e:
             echo_fatal(
-                f"The configuration in {self.FILENAME} contains invalid JSON: {str(e)}. Please verify right syntax.")
+                f"The configuration in {self.FILENAME} contains invalid JSON: {str(e)}. Please verify right syntax."
+            )
 
         self.migrate()
 
@@ -87,7 +88,7 @@ class Config(dict):
         os.chdir(self.path)
         with open(self.FILENAME, "w") as f:
             json.dump(self, f, indent=4)
-            f.write('\n')
+            f.write("\n")
 
 
 class ProjectConfig(Config):
@@ -154,19 +155,20 @@ class ProjectConfig(Config):
             self["format"] = old_format
             del self["default"]["format"]
 
-        assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", self.VERSION], \
+        assert self["format"] in ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", self.VERSION], (
             "Invalid formatversion, you have to fix it manually"
+        )
 
         # Version 1.0.1
         if (pyodide_version := self["default"].get("pyodide")) and pyodide_version.startswith("v"):
             self["default"]["pyodide"] = pyodide_version[1:]  # remove v prefix
 
         if not self.get("cli-version"):
-            print_changelog_from_github('viur-framework', 'viur-cli', None)
+            print_changelog_from_github("viur-framework", "viur-cli", None)
             self["cli-version"] = cli_version
 
         elif self.get("cli-version") != cli_version:
-            print_changelog_from_github('viur-framework', 'viur-cli', self.get("cli-version"))
+            print_changelog_from_github("viur-framework", "viur-cli", self.get("cli-version"))
             self["cli-version"] = cli_version
 
         if self["format"] == "1.0.0":
@@ -197,7 +199,7 @@ class ProjectConfig(Config):
                 self["default"]["builds"][entry] = {
                     "command": f"viur package install {entry}",
                     "kind": "exec",
-                    "version": version_value
+                    "version": version_value,
                 }
                 del self["default"][entry]
 
@@ -205,7 +207,7 @@ class ProjectConfig(Config):
             response = click.prompt(
                 text="Do you want to enforce use of admin only? (yes/no/keep)",
                 type=click.Choice(["yes", "no", "keep"]),
-                default="yes"
+                default="yes",
             )
 
             if response == "yes":
@@ -236,8 +238,7 @@ def print_changelog_from_github(user, repo, last_version):
         echo_error(f"Unable to fetch the release notes: {e}")
         return
 
-    echo_info("It seems you have updated your viur-cli!\n "
-              f"Release notes: https://github.com/{user}/{repo}/releases")
+    echo_info(f"It seems you have updated your viur-cli!\n Release notes: https://github.com/{user}/{repo}/releases")
 
     for release in releases:
         if last_version is not None and release["tag_name"].lstrip("v") == last_version:
@@ -250,17 +251,20 @@ def print_changelog_from_github(user, repo, last_version):
 
 class ScriptorConfig(Config):
     """Persistent settings for `viur script` (base URL, username, working dir, cookies)."""
+
     # TODO: merge with the project-level Config layout
     FILENAME = "viur_scriptor_config.json"
     DEFAULT_BASE_URL = "http://localhost:8080"
     DEFAULT_WORKING_DIR = "scripts/"
 
     def __init__(self, **kwargs):
-        self.update({
-            "base_url": self.DEFAULT_BASE_URL,
-            "working_dir": self.DEFAULT_WORKING_DIR,
-            "cookies": {},
-        })
+        self.update(
+            {
+                "base_url": self.DEFAULT_BASE_URL,
+                "working_dir": self.DEFAULT_WORKING_DIR,
+                "cookies": {},
+            }
+        )
         super().__init__(**kwargs)
 
 
@@ -273,9 +277,6 @@ class ScriptorConfig(Config):
 # use these globals will hit the original error path on first access — that's
 # the right place to surface the message. The proper fix (lazy / dataclass
 # config) is deferred to a later branch.
-import contextlib as _contextlib
-import io as _io
-
 with _contextlib.redirect_stderr(_io.StringIO()), _contextlib.redirect_stdout(_io.StringIO()):
     try:
         config = ProjectConfig()

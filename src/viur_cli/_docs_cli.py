@@ -10,6 +10,7 @@ This module performs the same side-effect imports so that `from
 viur_cli._docs_cli import cli` returns a fully populated Click group —
 suitable for static introspection by mkdocs-click.
 """
+
 from viur_cli import build  # noqa: F401
 from viur_cli import cloud  # noqa: F401
 from viur_cli import deprecated  # noqa: F401
