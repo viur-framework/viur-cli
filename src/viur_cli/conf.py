@@ -1,7 +1,6 @@
 import json
 import click
 import requests
-import difflib
 import os
 from .utils import *
 from .version import __version__ as cli_version
@@ -220,42 +219,33 @@ class ProjectConfig(Config):
 
 
 def print_changelog_from_github(user, repo, last_version):
-    """Fetch CHANGELOG.md from GitHub and either print it or diff it against `last_version`.
+    """Print the GitHub release notes published since `last_version`.
 
-    On a fresh install (``last_version is None``) the first 20 lines of
-    ``main``'s ``CHANGELOG.md`` are printed and the user is prompted to
-    acknowledge. On an upgrade, the diff between ``v{last_version}``
-    and ``main`` is rendered via :func:`get_changelog_difference`.
+    Reads the public releases API of ``{user}/{repo}`` (newest first) and
+    prints name and body of every release down to, but excluding, the tag
+    ``v{last_version}``. On a fresh install (``last_version is None``) only
+    the latest release is printed. Network or API errors are reported via
+    ``echo_error`` and never abort the command.
     """
-    version_url = f"https://raw.githubusercontent.com/{user}/{repo}/refs/heads/main/CHANGELOG.md"
-    response = requests.get(version_url)
+    url = f"https://api.github.com/repos/{user}/{repo}/releases?per_page=20"
+    try:
+        response = requests.get(url, headers={"Accept": "application/vnd.github+json"}, timeout=10)
+        response.raise_for_status()
+        releases = response.json()
+    except (requests.RequestException, ValueError) as e:
+        echo_error(f"Unable to fetch the release notes: {e}")
+        return
 
-    if last_version is not None:
-        version_url1 = f"https://raw.githubusercontent.com/{user}/{repo}/refs/tags/v{last_version}/CHANGELOG.md"
-        echo_warning(version_url1)
-        response1 = requests.get(version_url1)
+    echo_info("It seems you have updated your viur-cli!\n "
+              f"Release notes: https://github.com/{user}/{repo}/releases")
 
-    if last_version is None and response.ok:
-        changelog_lines = response.text.split("\n")[:20]
-        echo_info("It seems you have updated your viur-cli!\n "
-                  "Please consider reading the changelog: https://github.com/viur-framework/viur-cli/blob/main/CHANGELOG.md")
-        click.echo("\n".join(changelog_lines))
-        click.confirm("Done?", default=True)
-
-    elif response.ok and response1.ok:
-        get_changelog_difference(response.text.split('\n'), response1.text.split('\n'))
-
-    else:
-        echo_error("Unable to fetch the changelog.")
-
-
-def get_changelog_difference(response, response1):
-    """Print the unified diff between two changelog line lists, hiding diff metadata."""
-    diff = difflib.unified_diff(response, response1)
-    for line in diff:  # Skip the first 2 lines
-        if line.startswith('@@') or line.startswith('---') or line.startswith('+++'):
-            continue
-        echo_info(line[1:])
+    for release in releases:
+        if last_version is not None and release["tag_name"].lstrip("v") == last_version:
+            break
+        click.echo(f"\n## {release['name'] or release['tag_name']}\n")
+        click.echo((release["body"] or "").strip())
+        if last_version is None:
+            break
 
 
 class ScriptorConfig(Config):
