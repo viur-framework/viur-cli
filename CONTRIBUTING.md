@@ -8,8 +8,16 @@ In case you encounter a bug, or you miss a feature, please [file an issue](https
 
 ## Pull Requests
 
-If you created a solution for a problem or added a feature, please make a pull request.
-This can also be done as a draft, in case you want to discuss a change or aren't finished.
+If you created a solution for a problem or added a feature, please make a pull request
+against `develop` (the default branch). This can also be done as a draft, in case you want to
+discuss a change or aren't finished.
+
+Both `develop` and `main` are protected: changes land through pull requests with at least one
+approving review, history is kept linear (squash or rebase, no merge commits) and force pushes
+are rejected.
+
+Label breaking changes with `breaking-changes`; the label decides where the change shows up in
+the generated release notes.
 
 ### Conventional Commits
 
@@ -59,11 +67,13 @@ In all cases, `N` is a number counted upwards for every pre-release kind.
 
 ## Dependency management
 
-`viur-cli` has several dependencies, which are maintained by the [`Pipfile`](/Pipfile).
+`viur-cli` has several dependencies, which are declared in [`pyproject.toml`](/pyproject.toml)
+and locked in `uv.lock`. Dependencies are managed with [uv](https://docs.astral.sh/uv/).
 
-- For local development and dependency management, run `pipenv install --dev`
-- Update dependencies with `pipenv update`
-- Regenerate requirements.txt from locked pipenv using `pipenv requirements --hash >requirements.txt`
+- For local development, run `uv sync` to create the virtual environment and install the CLI
+  in editable mode; run it with `uv run viur ...`
+- Add a dependency with `uv add <package>`, update the lockfile with `uv lock --upgrade`
+- Commit `uv.lock` together with the `pyproject.toml` change
 
 Try to keep external dependencies low.
 
@@ -72,7 +82,7 @@ Try to keep external dependencies low.
 In case you have appropriate permissions, a release can be done this way:
 
 - Bump version number in `src/viur_cli/version.py`
-- Commit and tag version with `f"v{__version__}`
+- Tag the release commit with `f"v{__version__}"` and push the tag
 - Pushing the tag publishes to PyPI and creates a GitHub release whose notes are
   generated from the merged pull requests (grouped by label, see `.github/release.yml`)
 
@@ -80,8 +90,10 @@ In case you have appropriate permissions, a release can be done this way:
 
 `viur-cli` has two actively maintained branches:
 
-- **main** is the current stable version as released on PyPI.
-- **develop**  is the next minor version and may be released as release candidates to PyPI.
+- **develop** is the default branch and target for all pull requests. It holds the next
+  release and may be published as pre-release to PyPI.
+- **main** is the current stable version as released on PyPI. The maintainer brings `develop`
+  into `main` at release time.
 
 ## Maintenance
 
