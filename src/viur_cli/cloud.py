@@ -417,13 +417,15 @@ def run_command(command):
 @click.option("--yes", "-y", is_flag=True, default=False)
 @click.option("--skip_checks", is_flag=True, help="Skip the security checks before the deployment")
 @click.option("--name", "-n", default=None)
-def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
+@click.option("--database", "-d", default=None, help="Target Datastore database for `index` (default: `(default)`)")
+def deploy(action, profile, name, ext, yes, skip_checks: bool, database, additional_args):
     """Deploy app, index, cron, queue, or a cloudfunction to Google Cloud.
 
     \b
     Examples:
       viur cloud deploy app dev
       viur cloud deploy index live --yes
+      viur cloud deploy index live --database=archive
       viur cloud deploy cloudfunction dev --name=billing
       viur cloud deploy app dev --skip_checks --ext=hotfix-2026-05-05
 
@@ -434,12 +436,18 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
       version label resolves ``$(...)`` variables in
       ``project.json``'s ``version`` field. ``--ext`` appends a suffix.
     * ``index`` reads ``deploy/index.yaml`` and sorts/dedupes index
-      definitions by kind before deploy.
+      definitions by kind before deploy. ``--database`` deploys the indexes
+      to a named Datastore database via ``gcloud datastore indexes create``,
+      because ``gcloud app deploy`` only ever targets ``(default)``.
     * ``cron`` / ``queue`` deploy the matching ``deploy/<action>.yaml``.
     * ``cloudfunction`` requires ``--name`` to point at a function entry
       defined in ``project.json`` under ``gcloud.functions``.
     """
     conf = config.get_profile(profile)
+
+    if database and action != "index":
+        echo_error("--database is only supported for `viur cloud deploy index`")
+        return
 
     if action == "app":
         if not skip_checks:
@@ -569,12 +577,21 @@ def deploy(action, profile, name, ext, yes, skip_checks: bool, additional_args):
                 echo_error(f"{yaml_file} is not a valid")
                 return
 
-        deploy_argv = [
-            "gcloud", "app", "deploy",
-            f"--project={conf['application_name']}",
-            *additional_args,
-            yaml_file,
-        ]
+        if database:
+            deploy_argv = [
+                "gcloud", "datastore", "indexes", "create",
+                f"--project={conf['application_name']}",
+                f"--database={database}",
+                *additional_args,
+                yaml_file,
+            ]
+        else:
+            deploy_argv = [
+                "gcloud", "app", "deploy",
+                f"--project={conf['application_name']}",
+                *additional_args,
+                yaml_file,
+            ]
         if yes:
             deploy_argv.append("-q")
         subprocess.run(deploy_argv, check=False)
