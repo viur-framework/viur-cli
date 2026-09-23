@@ -110,7 +110,7 @@ The reference is generated from the code and lives at
 | `viur build app <name>` | run a single build entry |
 | `viur build clean [name]` | drop build artifacts of one or all entries |
 | `viur admin`, `viur vi`, `viur scriptor` | `install [version]` or `update` the respective frontend bundle |
-| `viur cloud deploy <app\|index\|cron\|queue\|cloudfunction>` | deploy to Google Cloud; `--ext` appends to the version, `--yes` skips prompts, `--skip_checks` skips the audit |
+| `viur cloud deploy <app\|index\|cron\|queue\|cloudfunction>` | deploy to Google Cloud; `--ext` appends to the version, `--yes` skips prompts, `--skip_checks` skips the audit, `--database` deploys `index` to a named Datastore database |
 | `viur cloud init` | bootstrap a fresh App Engine project by deploying its cron and queue configs |
 | `viur cloud create function` | add a cloud function entry to `project.json` |
 | `viur cloud enable\|disable backup` | manage the backup buckets of the active project |
