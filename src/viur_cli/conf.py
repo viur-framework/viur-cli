@@ -276,10 +276,13 @@ class ScriptorConfig(Config):
 import contextlib as _contextlib
 import io as _io
 
+_cwd = os.getcwd()
 with _contextlib.redirect_stderr(_io.StringIO()), _contextlib.redirect_stdout(_io.StringIO()):
     try:
         config = ProjectConfig()
         scriptor_config = ScriptorConfig(path=config.path)
     except SystemExit:
+        # the lookup walked up to `/`; return to where the user called us (e.g. for `viur create`)
+        os.chdir(_cwd)
         config = None
         scriptor_config = None
