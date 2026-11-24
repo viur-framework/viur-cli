@@ -37,7 +37,7 @@ What comes with it:
 - **Version strings with placeholders.** `live-$(year)-$(month)-$(day)` or
   `dev-$(user)-$(ref)` are resolved at deploy time.
 - **A security gate.** `viur check` runs `pip-audit` over the Python
-  environment and `npm audit` over every npm build; `viur cloud deploy app`
+  environment and `npm audit` / `pnpm audit` over every npm/pnpm build; `viur cloud deploy app`
   runs it first, then regenerates `deploy/requirements.txt`, then uploads.
 
 ## Requirements
@@ -49,6 +49,7 @@ What comes with it:
 | [`gcloud`](https://cloud.google.com/sdk) | `viur run` (login check) and everything under `viur cloud` |
 | `git` | `viur create` and the `$(ref)` placeholder |
 | `npm` | builds of `kind: npm` and their audit in `viur check` |
+| `pnpm` | builds of `kind: pnpm` and their audit in `viur check`; the audit needs pnpm 11.28.13 / 12.22.0 or newer, older versions can report advisories as clean |
 | [`app_server`](https://github.com/viur-framework/viur-app_server) | the local development server behind `viur run`; installed as a dependency of `viur-cli` |
 
 macOS and Linux. The CLI warns at start when `uv` is older than the version it
@@ -105,7 +106,7 @@ The reference is generated from the code and lives at
 |---|---|
 | `viur create <name>` | clone `viur-base` into `./<name>` and run its setup wizard |
 | `viur run [profile]` | start the app locally via `app_server` |
-| `viur check [--dev]` | audit Python and npm dependencies for known vulnerabilities |
+| `viur check [--dev]` | audit Python and npm/pnpm dependencies for known vulnerabilities |
 | `viur build release [profile]` | run every entry of the profile's `builds` section in declaration order |
 | `viur build app <name>` | run a single build entry |
 | `viur build clean [name]` | drop build artifacts of one or all entries |
@@ -173,7 +174,7 @@ of named profiles, each of which is `default` overlaid with its own keys.
 | `application_name` | the App Engine project id; `viur run` and `viur cloud` act on it |
 | `version` | the App Engine version to deploy; placeholders are resolved first, then the result is lowercased and stripped to `a-z`, `0-9` and `-` |
 | `distribution_folder` | the folder uploaded to App Engine, default `./deploy` in `viur-base` |
-| `sources_folder` | where npm builds find their `source` |
+| `sources_folder` | where npm/pnpm builds find their `source` |
 | `builds` | build steps, see below |
 | `gcloud.region`, `gcloud.max-instances` | passed to `gcloud app deploy` |
 | `gcloud.functions.<name>` | cloud function definitions for `viur cloud deploy cloudfunction`, written by `viur cloud create function` |
@@ -192,9 +193,10 @@ step that depends on another one has to come after it.
 | Kind | Needs | Does |
 |---|---|---|
 | `npm` | `source`, `command` | `npm install` and `npm run <command>` in `<sources_folder>/<source>` |
+| `pnpm` | `source`, `command` | same as `npm`, using `pnpm install` and `pnpm run <command>` |
 | `exec` | `command` | runs the shell command in the project root |
 
-Two optional keys apply to both kinds: `clean` is a shell command that
+Two optional keys apply to all kinds: `clean` is a shell command that
 `viur build clean` runs after its own cleanup, and `target` overrides the
 folder below the deploy folder into which `viur admin|vi|scriptor install`
 unpacks a bundle, defaulting to the component name. `version` on a frontend

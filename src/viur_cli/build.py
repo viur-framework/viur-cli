@@ -1,4 +1,4 @@
-"""Build pipeline for ViUR projects: orchestrates npm and exec build steps."""
+"""Build pipeline for ViUR projects: orchestrates npm, pnpm and exec build steps."""
 
 import click
 import os
@@ -16,7 +16,7 @@ def _build(conf, name, build_cfg, additional_args):
         build_cfg: The build entry itself. Required keys depend on
             ``kind``:
 
-            * ``kind == "npm"`` — needs ``source`` (relative to
+            * ``kind == "npm"`` / ``"pnpm"`` — needs ``source`` (relative to
               ``conf['sources_folder']``) and ``command`` (the npm
               script name to run).
             * ``kind == "exec"`` — needs ``command`` (a shell string
@@ -30,13 +30,13 @@ def _build(conf, name, build_cfg, additional_args):
     """
     utils.echo_info(f"""- {build_cfg["kind"]} {name}""")
     match build_cfg["kind"]:
-        case "npm":
+        case "npm" | "pnpm" as tool:
             utils.system(
                 " && ".join(
                     (
                         f'cd {os.path.join(conf["sources_folder"], build_cfg["source"])}',
-                        "npm install",
-                        f'npm run {build_cfg["command"]}'
+                        f"{tool} install",
+                        f'{tool} run {build_cfg["command"]}'
                     )
                 )
             )
@@ -56,9 +56,9 @@ def _clean(conf, name, build_cfg):
         name: The build entry's key (used only for log output).
         build_cfg: The build entry. Recognized keys:
 
-            * ``target`` (npm only) — deleted under
+            * ``target`` (npm/pnpm only) — deleted under
               ``conf['distribution_folder']``
-            * ``source`` (npm only) — its ``node_modules`` is dropped
+            * ``source`` (npm/pnpm only) — its ``node_modules`` is dropped
             * ``clean`` (any kind) — explicit shell command run after
               the kind-specific cleanup
 
@@ -68,18 +68,16 @@ def _clean(conf, name, build_cfg):
 
     match build_cfg["kind"]:
         # for npm, drop the target folder and node_modules (npm)
-        case "npm":
+        case "npm" | "pnpm":
             if target_dir := build_cfg.get("target"):
                 target_dir = os.path.join(conf["distribution_folder"], target_dir)
                 utils.echo_info(f"  - dropping {target_dir}")
                 utils.rmdir(target_dir)
 
-            if build_cfg["kind"] == "npm":
-                # todo: Later, call "npm run clean" or a similar command when it exists
-
-                node_modules = os.path.join(conf["sources_folder"], build_cfg["source"], "node_modules")
-                utils.echo_info(f"  - dropping {node_modules}")
-                utils.rmdir(os.path.join(node_modules))
+            # todo: Later, call "npm run clean" or a similar command when it exists
+            node_modules = os.path.join(conf["sources_folder"], build_cfg["source"], "node_modules")
+            utils.echo_info(f"  - dropping {node_modules}")
+            utils.rmdir(node_modules)
 
         case "exec":
             pass

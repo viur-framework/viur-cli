@@ -38,6 +38,6 @@ Vollständige Befehlsreferenz: [Befehle](commands/index.md).
 
 - **Project-Lifecycle** — `viur create`, `viur run`, `viur build`, `viur cloud deploy`
 - **Frontend-Bundle-Management** — `viur admin/vi/scriptor install` für die ViUR-Frontends
-- **Security-Audit** — `viur check` führt `pip-audit` (Python) und `npm audit` (npm-Builds) parallel aus
+- **Security-Audit** — `viur check` führt `pip-audit` (Python) und `npm audit` bzw. `pnpm audit` (npm-/pnpm-Builds) parallel aus
 - **Cloud-Funktionen** — Deploy, IAM-Setup, Backup-Bucket-Management
 - **Skripting** — `viur script` für Pull/Push/Run von ViUR-Scriptor-Skripten
