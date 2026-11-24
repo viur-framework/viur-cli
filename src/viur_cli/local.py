@@ -185,7 +185,7 @@ def env(profile):
 @cli.command()
 @click.option("--dev", "-d", is_flag=True, default=False)
 def check(dev):
-    """Audit Python (pip-audit) and npm (npm audit) dependencies for known vulnerabilities."""
+    """Audit Python (pip-audit) and npm/pnpm (npm/pnpm audit) dependencies for known vulnerabilities."""
 
     if do_checks(dev):
         utils.echo_info("\U00002714 No vulnerabilities found.")
@@ -227,7 +227,7 @@ def _spinner(message):
 
 
 def do_checks(dev=True):
-    """Run Python (pip-audit) and npm (npm audit) vulnerability scans.
+    """Run Python (pip-audit) and npm/pnpm (npm/pnpm audit) vulnerability scans.
 
     Args:
         dev: Reserved for future filtering between dev/prod-only deps.
@@ -283,90 +283,87 @@ def do_checks(dev=True):
                     click.echo("Run `uvx pip-audit --vulnerability-service osv` for per-package detail.")
                 click.echo()
 
-    # --- npm vulnerability check ---
-    if shutil.which("npm"):
-        conf = config.get_profile("default")
-        builds = conf.get("builds", {})
-        sources_folder = conf.get("sources_folder", "./sources")
+    # --- npm / pnpm vulnerability check ---
+    conf = config.get_profile("default")
+    builds = conf.get("builds", {})
+    sources_folder = conf.get("sources_folder", "./sources")
 
-        # Collect all npm builds. Empty `source` is valid and means
-        # "audit at the sources_folder root" (npm workspace root).
-        npm_builds = []
-        for build_name, build_config in builds.items():
-            if build_config.get("kind") != "npm":
-                continue
-            source_path = build_config.get("source") or ""
-            audit_path = f"{sources_folder}/{source_path}".rstrip("/") if source_path else sources_folder
-            npm_builds.append({"name": build_name, "path": audit_path})
+    # Collect all npm/pnpm builds. Empty `source` is valid and means
+    # "audit at the sources_folder root" (workspace root).
+    npm_builds = []
+    for build_name, build_config in builds.items():
+        if (tool := build_config.get("kind")) not in ("npm", "pnpm"):
+            continue
+        source_path = build_config.get("source") or ""
+        audit_path = f"{sources_folder}/{source_path}".rstrip("/") if source_path else sources_folder
+        npm_builds.append({"name": build_name, "path": audit_path, "tool": tool})
 
-        if not npm_builds:
-            click.echo("\n\n" + "=" * 60)
-            click.echo("No npm builds found in config - skipping npm audit")
-            click.echo("=" * 60)
-        else:
-            # Run audit for each npm build
-            for build in npm_builds:
-                try:
-                    npm_audit_dir = build["path"]
-
-                    with _spinner(f"Scanning npm dependencies ({build['name']})"):
-                        npm_result = subprocess.run(
-                            ["npm", "audit", "--json"],
-                            capture_output=True,
-                            text=True,
-                            cwd=npm_audit_dir,
-                        )
-
-                    npm_data = json.loads(npm_result.stdout, strict=False)
-
-                    metadata = npm_data.get("metadata", {})
-                    npm_vulnerabilities = npm_data.get("vulnerabilities", {})
-
-                    vuln_counts = metadata.get("vulnerabilities", {})
-                    dependencies = metadata.get("dependencies", {})
-
-                    total_npm_vulns = vuln_counts.get("total", 0)
-
-                    if total_npm_vulns > 0:
-                        has_vulnerabilities = True
-
-                    # Display npm scan summary
-                    click.echo("\n\n" + "=" * 60)
-                    click.echo(f"npm Security Scan Results - {build['name']}")
-                    click.echo("=" * 60)
-                    click.echo(f"Build Path:             {npm_audit_dir}")
-                    click.echo(
-                        f"Total Dependencies:     {dependencies.get('total', 0)}"
-                    )
-                    click.echo(f"Total Vulnerabilities:  {total_npm_vulns}")
-                    click.echo(
-                        f"  Critical:             {vuln_counts.get('critical', 0)}"
-                    )
-                    click.echo(f"  High:                 {vuln_counts.get('high', 0)}")
-                    click.echo(
-                        f"  Moderate:             {vuln_counts.get('moderate', 0)}"
-                    )
-                    click.echo(f"  Low:                  {vuln_counts.get('low', 0)}")
-                    click.echo(f"  Info:                 {vuln_counts.get('info', 0)}")
-                    click.echo("=" * 60)
-
-                    if total_npm_vulns > 0:
-                        click.echo(f"Run `npm audit` in {build['path']} for per-package detail.")
-                    click.echo()
-
-                except FileNotFoundError:
-                    echo_warning(f"npm audit directory not found: {build['path']}")
-                except json.JSONDecodeError as e:
-                    echo_error(
-                        f"Error parsing npm audit output for {build['name']}: {e}"
-                    )
-                except Exception as e:
-                    echo_error(
-                        f"Unexpected error during npm security check for {build['name']}: {e}"
-                    )
-    else:
+    if not npm_builds:
         click.echo("\n\n" + "=" * 60)
-        click.echo("npm not found - skipping npm audit")
+        click.echo("No npm/pnpm builds found in config - skipping npm audit")
         click.echo("=" * 60)
+
+    for build in npm_builds:
+        tool = build["tool"]
+        if not shutil.which(tool):
+            click.echo("\n\n" + "=" * 60)
+            click.echo(f"{tool} not found - skipping {tool} audit ({build['name']})")
+            click.echo("=" * 60)
+            continue
+
+        try:
+            npm_audit_dir = build["path"]
+
+            with _spinner(f"Scanning {tool} dependencies ({build['name']})"):
+                npm_result = subprocess.run(
+                    [tool, "audit", "--json"],
+                    capture_output=True,
+                    text=True,
+                    cwd=npm_audit_dir,
+                )
+
+            npm_data = json.loads(npm_result.stdout, strict=False)
+
+            metadata = npm_data.get("metadata", {})
+            vuln_counts = metadata.get("vulnerabilities", {})
+            severities = ("critical", "high", "moderate", "low", "info")
+
+            # npm reports a "total" and dependencies as {"total": n, ...};
+            # pnpm has no "total" and its overall count in "totalDependencies".
+            total_npm_vulns = vuln_counts.get("total", sum(vuln_counts.get(k, 0) for k in severities))
+            dependencies = metadata.get("dependencies", 0)
+            if isinstance(dependencies, dict):
+                dependencies = dependencies.get("total", 0)
+            else:
+                dependencies = metadata.get("totalDependencies", dependencies)
+
+            if total_npm_vulns > 0:
+                has_vulnerabilities = True
+
+            # Display scan summary
+            click.echo("\n\n" + "=" * 60)
+            click.echo(f"{tool} Security Scan Results - {build['name']}")
+            click.echo("=" * 60)
+            click.echo(f"Build Path:             {npm_audit_dir}")
+            click.echo(f"Total Dependencies:     {dependencies}")
+            click.echo(f"Total Vulnerabilities:  {total_npm_vulns}")
+            for severity in severities:
+                click.echo(f"  {severity.capitalize() + ':':<22}{vuln_counts.get(severity, 0)}")
+            click.echo("=" * 60)
+
+            if total_npm_vulns > 0:
+                click.echo(f"Run `{tool} audit` in {build['path']} for per-package detail.")
+            click.echo()
+
+        except FileNotFoundError:
+            echo_warning(f"{tool} audit directory not found: {build['path']}")
+        except json.JSONDecodeError as e:
+            echo_error(
+                f"Error parsing {tool} audit output for {build['name']}: {e}"
+            )
+        except Exception as e:
+            echo_error(
+                f"Unexpected error during {tool} security check for {build['name']}: {e}"
+            )
 
     return not has_vulnerabilities
